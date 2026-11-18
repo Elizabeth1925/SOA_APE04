@@ -1,63 +1,67 @@
-# notificaciones-service
+# Microservicio de Notificaciones - Consumidor RabbitMQ y Consulta de Avisos
 
-Servicio REST independiente para el taller **Construcción de un Servicio en SOA**.
+Microservicio backend desarrollado en Java con Spring Boot, responsable de consumir los eventos asíncronos de venta publicados en RabbitMQ, persistir el historial de notificaciones evitando duplicados por identificador de evento (`eventoId`) y exponer endpoints REST para la consulta de avisos por parte del cliente JavaFX.
 
-## Importante
+---
 
-Este proyecto **NO se conecta con `venta-vehiculos-api`**.  
-Solo crea y prueba el servicio de notificaciones solicitado en las Actividades 1 a 5.
+## 1. Requisitos Previos
 
-## Requisitos
+* **Kit de desarrollo:** Java JDK 17 o superior (LTS).
+* **Gestor de proyectos:** Apache Maven 3.9.0 o superior.
+* **Broker de mensajería:** RabbitMQ 3.13+ en ejecución con plugin de administración activo.
+* **Puertos de red requeridos:**
+  * Puerto de servicio: `8081`.
+  * Puerto AMQP de RabbitMQ: `5672`.
 
-- Java 17
-- Maven
-- Postman
+---
 
-## Ejecutar
+## 2. Configuración
+
+* **Archivo de configuración:** `src/main/resources/application.properties`.
+* **Propiedades principales:**
+  * `server.port=8081` (Puerto HTTP del microservicio).
+  * `spring.rabbitmq.host=localhost` (Host del servidor RabbitMQ).
+  * `spring.rabbitmq.port=5672` (Puerto de conexión AMQP).
+  * `spring.rabbitmq.username=guest`
+  * `spring.rabbitmq.password=guest`
+  * `app.rabbitmq.queue=notificaciones.ventas` (Cola durable de eventos de venta).
+  * `servicios.notificaciones.key=avisos-java-python-aula-2026-key-` (Clave de seguridad para peticiones internas).
+* **Endpoints expuestos:**
+  * `GET /api/notificaciones`: Retorna la lista histórica de notificaciones procesadas para JavaFX.
+  * `POST /api/notificaciones`: Canal REST directo para recepción y registro de avisos.
+
+---
+
+## 3. Compilación
+
+Para compilar las fuentes y generar el archivo empaquetado mediante Maven:
 
 ```bash
+# Navegar al directorio del microservicio
+cd notificaciones-service
+
+# Compilar código fuente
+mvn clean compile -DskipTests
+
+# Empaquetar en archivo ejecutable .jar
+mvn clean package -DskipTests
+```
+
+---
+
+## 4. Ejecución
+
+Para iniciar el microservicio desde la consola:
+
+```bash
+# Iniciar mediante Spring Boot Maven Plugin
 mvn spring-boot:run
 ```
 
-El servicio queda disponible en:
+O ejecutando el paquete binario generado:
 
-```text
-http://localhost:8081
+```bash
+java -jar target/notificaciones-service-0.0.1-SNAPSHOT.jar
 ```
 
-## Endpoint
-
-```http
-POST http://localhost:8081/api/notificaciones
-Content-Type: application/json
-```
-
-### Ejemplo correcto
-
-```json
-{
-  "vehiculoId": 5,
-  "destinatario": "usuario@correo.com",
-  "tipo": "REGISTRO",
-  "mensaje": "Vehículo registrado correctamente"
-}
-```
-
-Respuesta esperada: **201 Created**
-
-```json
-{
-  "success": true,
-  "estado": "ENVIADA",
-  "mensaje": "Notificación procesada correctamente"
-}
-```
-
-## Validaciones
-
-- `vehiculoId` debe estar presente y ser mayor que 0.
-- `destinatario` no puede estar vacío.
-- `mensaje` no puede estar vacío.
-- `tipo` solo acepta `REGISTRO`, `ACTUALIZACION` o `ELIMINACION`.
-
-Cuando falla una validación, la respuesta es **400 Bad Request**.
+El servicio iniciará el listener de RabbitMQ y quedará escuchando en `http://localhost:8081`.
