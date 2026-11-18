@@ -1,0 +1,96 @@
+# ==============================================================================
+# ARCHIVO .gitignore PARA APE 04 - SOA
+# Exclusiones estrictas para cumplir con las normas de entrega y la rúbrica
+# ==============================================================================
+
+# Compilaciones y artefactos de Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Entornos virtuales, cachés y artefactos de Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# Dependencias y compilaciones de Node.js / React / PWA
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.vite/
+
+# Compilaciones y binarios de .NET / C# / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+[Dd]ebug/
+[Rr]elease/
+_ReSharper*/
+*.DotSettings.user
+
+# Secretos y variables de entorno reales (se conserva .env.example)
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-secrets.properties
+
+# Archivos de registro y temporales
+logs/
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# IDEs y sistemas operativos
+.idea/
+.vscode/
+*.ipr
+*.iws
+*.iml
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/

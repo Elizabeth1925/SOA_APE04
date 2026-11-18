@@ -1,0 +1,5 @@
+# Incluye todas las dependencias base de produccion definidas en requirements.txt
+-r requirements.txt
+
+# Framework de pruebas unitarias y de integracion para Python
+pytest>=8,<10

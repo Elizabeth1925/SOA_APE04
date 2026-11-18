@@ -1,0 +1,23 @@
+# Framework principal para construccion de APIs REST asincronas de alto rendimiento
+fastapi>=0.115,<1
+
+# Servidor ASGI para ejecutar y servir la aplicacion FastAPI
+uvicorn>=0.30,<1
+
+# ORM (Object Relational Mapper) para interactuar con la base de datos relacional
+SQLAlchemy>=2.0,<2.2
+
+# Driver/conector MySQL para Python con soporte para autenticacion basada en RSA
+PyMySQL[rsa]>=1.1,<2
+
+# Cliente HTTP asincrono y sincrono para consumir las APIs externas (Java y Notificaciones)
+httpx>=0.28,<1
+
+# Biblioteca para definicion y validacion de esquemas de datos mediante tipos en Python
+pydantic>=2.9,<3
+
+# Biblioteca para cargar variables de entorno desde el archivo .env
+python-dotenv>=1,<2
+
+# Herramienta para gestion de migraciones y versiones del esquema de base de datos
+alembic>=1.13,<2

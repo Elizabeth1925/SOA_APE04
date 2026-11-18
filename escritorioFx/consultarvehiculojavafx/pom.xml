@@ -1,0 +1,100 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!-- Versión del modelo de configuración de Maven (estándar 4.0.0) -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Identificador del grupo o paquete raíz de la aplicación -->
+    <groupId>ec.edu.com</groupId>
+    <!-- Nombre del proyecto / artefacto que genera la compilación -->
+    <artifactId>consultarvehiculojavafx</artifactId>
+    <!-- Versión actual de desarrollo del proyecto -->
+    <version>1.0-SNAPSHOT</version>
+
+    <!-- Propiedades y variables reutilizables en todo el proyecto -->
+    <properties>
+        <!-- Codificación de caracteres UTF-8 para evitar problemas con acentos o símbolos -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Versión del compilador de Java (JDK 25) -->
+        <maven.compiler.release>25</maven.compiler.release>
+        <!-- Versión de las librerías de JavaFX -->
+        <javafx.version>21.0.13</javafx.version>
+    </properties>
+
+    <!-- Librerías externas (dependencias) requeridas por la aplicación -->
+    <dependencies>
+        <!-- Dependencia para los controles gráficos de JavaFX (Button, TableView, Label, PasswordField) -->
+        <!-- CORREGIDO: Se cambió ${javafx-controls} por la propiedad válida ${javafx.version} -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Dependencia opcional para soporte de vistas FXML si se requiere -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Dependencia de Jackson para procesar y deserializar JSON proveniente de la API REST -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.3</version>
+        </dependency>
+    </dependencies>
+
+    <!-- Configuración del proceso de construcción (Build) y plugins de Maven -->
+    <build>
+        <plugins>
+            <!-- Plugin para la limpieza del directorio target antes de compilar -->
+            <plugin>
+                <!-- Grupo del plugin oficial de limpieza de Apache Maven -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <!-- Artefacto del plugin encargado de ejecutar 'mvn clean' -->
+                <artifactId>maven-clean-plugin</artifactId>
+                <!-- Versión estable del plugin de limpieza -->
+                <version>3.2.0</version>
+                <configuration>
+                    <!-- Evita que el proceso falle si OneDrive o VS Code mantienen bloqueada alguna carpeta temporal -->
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+
+            <!-- Plugin para la compilación del código fuente de Java -->
+            <plugin>
+                <!-- Grupo oficial de plugins de Apache Maven -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <!-- Artefacto del compilador de Java para Maven -->
+                <artifactId>maven-compiler-plugin</artifactId>
+                <!-- Versión del compilador de Maven -->
+                <version>3.13.0</version>
+                <configuration>
+                    <!-- Versión de Java a utilizar durante la compilación -->
+                    <release>25</release>
+                </configuration>
+            </plugin>
+
+            <!-- Plugin oficial de OpenJFX para compilar y ejecutar aplicaciones JavaFX -->
+            <plugin>
+                <!-- Grupo de OpenJFX para plugins de Maven -->
+                <groupId>org.openjfx</groupId>
+                <!-- Artefacto para la integración y ejecución de JavaFX -->
+                <artifactId>javafx-maven-plugin</artifactId>
+                <!-- Versión del plugin de JavaFX -->
+                <version>0.0.6</version>
+                <executions>
+                    <execution>
+                        <!-- Configuración de ejecución por defecto mediante la terminal: mvn javafx:run -->
+                        <id>default-cli</id>
+                        <configuration>
+                            <!-- CORREGIDO: Se cambió ec.edu.com.App por ec.edu.com.Launcher (la clase que contiene main) -->
+                            <mainClass>ec.edu.com.Launcher</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
