@@ -854,47 +854,77 @@ escritorioFx & VehiculosApiClient, VehiculosApp, NotificacionVentaDto & Sondeo a
 \noindent Con el propósito de no exponer credenciales reales ni claves privadas en el repositorio Git, se aisló la configuración mediante plantillas de entorno \texttt{.env.example} y archivos de propiedades parametrizados. Ningún token JWT en texto claro, contraseña de base de datos MySQL o credencial de RabbitMQ se encuentra versionada, cumpliendo estrictamente con el principio de seguridad en el ciclo de vida del software.
 
 \vspace{0.2cm}
-\noindent\textbf{D. Verificación de compilación de los proyectos}
+\noindent\textbf{D. Verificación de compilación y ejecución de los proyectos}
 
-\noindent Se verificó la capacidad de compilación limpia e independiente de cada uno de los subsistemas tecnológicos:
-\begin{itemize}[leftmargin=*,itemsep=3pt,topsep=2pt]
-  \item \textbf{Servicios Java (Spring Boot y JavaFX):} Como se aprecia en la Figura \ref{fig:act2_compilacion_java}, la ejecución del comando \texttt{mvn clean compile} (o \texttt{mvn package}) culminó con estado \texttt{BUILD SUCCESS} sin errores sintácticos ni dependencias faltantes.
+\noindent Se verificó la capacidad de compilación limpia, empaquetado y arranque independiente de cada uno de los subsistemas tecnológicos:
+\begin{itemize}[leftmargin=*,itemsep=4pt,topsep=2pt]
+  \item \textbf{Servicios Java (Spring Boot y JavaFX):} En la Figura \ref{fig:act2_compilacion_java} se documenta el levantamiento y compilación del servicio de vehículos en la terminal mediante \texttt{.\textbackslash mvnw.cmd spring-boot:run}, alcanzando estado operativo sobre Tomcat en el puerto 8080 sin discrepancias de dependencias.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_compilacion_java.png}
-    \caption{Compilación limpia y exitosa de los microservicios Java mediante Maven (\texttt{BUILD SUCCESS}).}
+    \caption{Ejecución y compilación exitosa del microservicio de vehículos Java en terminal (\texttt{Tomcat started on port 8080}).}
     \label{fig:act2_compilacion_java}
   \end{figure}
 
-  \item \textbf{Aplicación de escritorio .NET (C\# Windows Forms):} En la Figura \ref{fig:act2_compilacion_dotnet} se evidencia la compilación del proyecto administrativo mediante el comando \texttt{dotnet build}, logrando 0 Errores y 0 Advertencias sobre el SDK .NET 8.
-  
+  \item \textbf{Aplicación de escritorio .NET (C\# Windows Forms):} Se verificó la compilación y ejecución del cliente administrativo mediante tres evidencias:
+  \begin{enumerate}[label=\alph*),itemsep=2pt,topsep=1pt]
+    \item En la Figura \ref{fig:act2_compilacion_dotnet_build} se muestra la compilación exitosa por línea de comandos mediante \texttt{dotnet build} en Developer PowerShell, completada en 8.5 segundos sin errores.
+    \item En la Figura \ref{fig:act2_compilacion_dotnet_vs} se aprecia el entorno de desarrollo y depuración en Visual Studio 2026 con la solución cargada.
+    \item En la Figura \ref{fig:act2_compilacion_dotnet_form} se documenta la aplicación Windows Forms ejecutándose en primer plano, mostrando sus pestañas de gestión (\textit{1. Vehículos}, \textit{2. Compradores} y \textit{3. Ventas - Consulta Exclusiva}).
+  \end{enumerate}
+
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet.png}
-    \caption{Compilación exitosa del cliente Windows Forms con el SDK de .NET 8 (\texttt{0 Errores}).}
-    \label{fig:act2_compilacion_dotnet}
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet_build.png}
+    \caption{Compilación exitosa por consola con \texttt{dotnet build} en Developer PowerShell.}
+    \label{fig:act2_compilacion_dotnet_build}
   \end{figure}
 
-  \item \textbf{Clientes Web (React 19 y PWA Móvil):} En la Figura \ref{fig:act2_compilacion_node} se comprueba el empaquetado de producción de React mediante \texttt{npm run build} con Vite y la ejecución satisfactoria de las pruebas unitarias automatizadas de la PWA (\texttt{npm test}, 7/7 superadas).
-  
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{act2_compilacion_node.png}
-    \caption{Empaquetado de producción en React (\texttt{npm run build}) y paso exitoso de pruebas unitarias en la PWA (\texttt{npm test}).}
-    \label{fig:act2_compilacion_node}
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet_vs.png}
+    \caption{Entorno de desarrollo y depuración de la solución Windows Forms en Visual Studio 2026.}
+    \label{fig:act2_compilacion_dotnet_vs}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{act2_compilacion_dotnet_form.png}
+    \caption{Ventana operativa del cliente administrativo Windows Forms (.NET 8).}
+    \label{fig:act2_compilacion_dotnet_form}
+  \end{figure}
+
+  \item \textbf{Clientes Web (React 19 y Node.js):} Se comprobó el ciclo de vida del cliente web mediante dos evidencias:
+  \begin{enumerate}[label=\alph*),itemsep=2pt,topsep=1pt]
+    \item En la Figura \ref{fig:act2_compilacion_node_terminal} se evidencia la instalación limpia de dependencias (\texttt{npm install}, 0 vulnerabilidades) y la ejecución del servidor de desarrollo con Vite v8.3.8 mediante \texttt{npm run dev} sobre \texttt{http://localhost:5173/}.
+    \item En la Figura \ref{fig:act2_compilacion_node_browser} se documenta la interfaz de usuario del \textit{Portal Web de Consulta y Auditoría} renderizada en el navegador en \texttt{localhost:5173}, lista para interactuar con NGINX.
+  \end{enumerate}
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_node_terminal.png}
+    \caption{Resolución de paquetes (\texttt{npm install}) y servidor Vite activo (\texttt{npm run dev}) en terminal.}
+    \label{fig:act2_compilacion_node_terminal}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{act2_compilacion_node_browser.png}
+    \caption{Portal Web React de Consulta y Auditoría en ejecución en el navegador web sobre el puerto 5173.}
+    \label{fig:act2_compilacion_node_browser}
   \end{figure}
 \end{itemize}
 
 \vspace{0.2cm}
 \noindent\textbf{E. Control de versiones y exclusión de artefactos generados}
 
-\noindent Se auditó el archivo \texttt{.gitignore} en la raíz del repositorio, comprobando la exclusión obligatoria de directorios pesados y temporales: \texttt{node\_modules}, \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{.venv}, archivos de depuración y cachés del sistema operativo. En la Figura \ref{fig:act2_git_status_limpio} se documenta la ejecución de \texttt{git status}, confirmando que el árbol de trabajo se conserva limpio y sin exposición de artefactos compilados o credenciales sensibles.
+\noindent Se auditó el archivo \texttt{.gitignore} en la raíz del repositorio, comprobando la exclusión obligatoria de directorios pesados y temporales: \texttt{node\_modules}, \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{.venv}, archivos de depuración y cachés del sistema operativo. En la Figura \ref{fig:act2_git_status_limpio} se documenta la ejecución de \texttt{git status} en Git Bash sobre la rama \texttt{main}, confirmando que el árbol de trabajo se encuentra 100\% limpio (\texttt{nothing to commit, working tree clean}) y libre de secretos o binarios compilados.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\textwidth]{act2_git_status_limpio.png}
-  \caption{Estado del control de versiones mediante \texttt{git status} evidenciando un árbol limpio sin artefactos pesados ni secretos.}
+  \caption{Estado del control de versiones en Git Bash (\texttt{git status}) evidenciando árbol de trabajo limpio sin artefactos sensibles ni binarios.}
   \label{fig:act2_git_status_limpio}
 \end{figure}
 
