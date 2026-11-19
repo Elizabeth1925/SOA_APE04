@@ -16,7 +16,7 @@ export async function loginOAuth(usuario, contrasena, ejecutarFetch = fetch) {
   parametros.set('username', String(usuario || '').trim());
   parametros.set('password', String(contrasena || ''));
 
-  const credencialesCliente = btoa('cliente-app:secreto123');
+  const credencialesCliente = btoa('vehiculos-cliente:cliente-local-aula-2026-key-');
   const encabezados = new Headers({
     'Accept': 'application/json',
     'Content-Type': 'application/x-www-form-urlencoded',

@@ -29,7 +29,12 @@ def crear_comprador(d: CrearComprador, u=Depends(identidad)):
     # Inicia una transaccion en la base de datos
     with SessionLocal.begin() as db:
         # Crea la instancia del comprador vinculandolo al usuario actual
-        c = Comprador(usuario=u["usuario"], **d.model_dump())
+        c = Comprador(
+            usuario=u["usuario"],
+            documento=d.documento,
+            nombre=d.nombre,
+            correo=d.correo
+        )
         db.add(c)
         # Hace flush para generar y obtener el ID autoincremental sin cerrar la transaccion
         db.flush()

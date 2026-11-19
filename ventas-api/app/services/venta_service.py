@@ -32,16 +32,20 @@ remote = VehiculosClient()
 
 # Formatea el objeto ORM Venta en un diccionario de respuesta JSON
 def salida(v):
+    precio_val = float(v.precio_acordado) if v.precio_acordado is not None else 0.0
+    fecha_val = v.fecha.isoformat() + "Z" if v.fecha else None
     return {
         "id": v.id,
         "operacionId": v.operacion_id,
         "vehiculoId": v.vehiculo_id,
         "compradorId": v.comprador_id,
+        "precio": precio_val,
         "precioAcordado": str(v.precio_acordado) if v.precio_acordado is not None else None,
         "moneda": v.moneda,
         "estado": v.estado,
         "notificacion": v.notificacion,
-        "fechaUTC": v.fecha.isoformat() + "Z" if v.fecha else None,
+        "fecha": fecha_val,
+        "fechaUTC": fecha_val,
     }
 
 # Logica de negocio principal para la creacion idempotente y coordinada de una venta
