@@ -18,12 +18,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 /**
- * Cliente HTTP encargado de comunicarse de forma asíncrona con el servicio web REST de vehículos.
+ * Cliente HTTP encargado de comunicarse de forma asíncrona con el Gateway NGINX
+ * para la consulta de vehículos y notificaciones de ventas en tiempo real (RabbitMQ).
  */
 public final class VehiculosApiClient {
     
-    // URL base de la API REST del microservicio de vehículos
-    private static final String URL_API = "http://127.0.0.1:8080/api/vehiculos";
+    // URL del catálogo de vehículos a través del Gateway NGINX (Puerto 8090, balanceo 3:1)
+    private static final String URL_API = "http://127.0.0.1:8090/api/vehiculos";
+
+    // URL del servicio de notificaciones a través de NGINX (Puerto 8090 / 8081)
+    private static final String URL_NOTIFICACIONES = "http://127.0.0.1:8090/api/notificaciones";
 
     // Cliente HTTP con tiempo de espera de conexión configurado a 5 segundos
     private final HttpClient clienteHttp = HttpClient.newBuilder()
@@ -40,36 +44,60 @@ public final class VehiculosApiClient {
      * @return CompletableFuture con el resultado de la consulta (código HTTP y lista de vehículos)
      */
     public CompletableFuture<ResultadoConsulta> consultarVehiculos(String jwt) {
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(URL_API))
+                                .timeout(Duration.ofSeconds(15))
+                                .GET();
 
-        // Construcción de la solicitud HTTP GET
-        HttpRequest solicitud = HttpRequest.newBuilder(URI.create(URL_API))
-                                .timeout(Duration.ofSeconds(15)) // Tiempo máximo de espera para la respuesta
-                                .header("Authorization", "Bearer " + jwt) // Encabezado de autenticación Bearer con espacio
-                                .GET() // Método HTTP GET
-                                .build();
+        if (jwt != null && !jwt.isBlank()) {
+            builder.header("Authorization", "Bearer " + jwt.trim());
+        }
 
-        // Envío asíncrono de la petición HTTP recibiendo el cuerpo como cadena de texto (String)
+        HttpRequest solicitud = builder.build();
+
         return clienteHttp.sendAsync(solicitud, HttpResponse.BodyHandlers.ofString())
                 .thenApply(respuesta -> {
-                    // Obtención del código de estado HTTP retornado por la API
                     int codigo = respuesta.statusCode();
 
-                    // Si el código no es 200 OK (ej: 401 Unauthorized, 403 Forbidden, 500 Error), retorna lista vacía
                     if (codigo != 200) {
                         return new ResultadoConsulta(codigo, List.of());
                     }
 
                     try {
-                        // Deserialización del cuerpo JSON a una lista de objetos Vehiculo
                         List<Vehiculo> vehiculos = mapper.readValue(
                             respuesta.body(), 
                             new TypeReference<List<Vehiculo>>() {}
                         );
-                        // Retorna el resultado exitoso con el código 200 y la lista de vehículos
                         return new ResultadoConsulta(codigo, vehiculos);
                     } catch (JsonProcessingException ex) {
-                        // En caso de error en el formato JSON, lanza una excepción de completación
                         throw new CompletionException(ex);
+                    }
+                });
+    }
+
+    /**
+     * Consulta las notificaciones de ventas recibidas vía RabbitMQ en Notificaciones-Service.
+     * 
+     * @return CompletableFuture con la lista de notificaciones deserializadas
+     */
+    public CompletableFuture<List<NotificacionVentaDto>> consultarNotificaciones() {
+        HttpRequest solicitud = HttpRequest.newBuilder(URI.create(URL_NOTIFICACIONES))
+                                .timeout(Duration.ofSeconds(8))
+                                .header("Accept", "application/json")
+                                .GET()
+                                .build();
+
+        return clienteHttp.sendAsync(solicitud, HttpResponse.BodyHandlers.ofString())
+                .thenApply(respuesta -> {
+                    if (respuesta.statusCode() != 200) {
+                        return List.<NotificacionVentaDto>of();
+                    }
+                    try {
+                        return mapper.readValue(
+                            respuesta.body(),
+                            new TypeReference<List<NotificacionVentaDto>>() {}
+                        );
+                    } catch (JsonProcessingException ex) {
+                        return List.<NotificacionVentaDto>of();
                     }
                 });
     }

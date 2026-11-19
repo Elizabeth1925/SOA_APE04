@@ -1,14 +1,19 @@
 package ec.edu.com;
 
 // Importaciones de Java estándar para funciones lambdas y manejo de datos
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
 // Importaciones de JavaFX para propiedades observables en tablas
 import javafx.beans.property.ReadOnlyObjectWrapper;
 
 // Importaciones base del ciclo de vida y despacho de hilos en JavaFX
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.util.Duration;
 
 // Importaciones de diseño (layout), alineación y márgenes
 import javafx.geometry.Insets;
@@ -20,187 +25,215 @@ import javafx.scene.layout.VBox;
 
 // Importaciones de controles visuales de JavaFX
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
-// Importación de colores oficial de JavaFX (reemplaza java.awt.Color)
+// Importación de colores oficial de JavaFX
 import javafx.scene.paint.Color;
 
 // Importación de la ventana principal
 import javafx.stage.Stage;
 
 /**
- * Ventana principal de la aplicación JavaFX encargada de la consulta y visualización de vehículos.
- * Equivale funcionalmente al FormPrincipal de Windows Forms.
+ * Ventana principal de la aplicación JavaFX (SOA APE 04).
+ * Permite la consulta de vehículos balanceados vía NGINX (3:1) y la supervisión
+ * en tiempo real de notificaciones de ventas asíncronas emitidas por RabbitMQ.
  */
 public final class VehiculosApp extends Application {
 
-    // Instancia del cliente HTTP para consumir el microservicio REST
     private final VehiculosApiClient api = new VehiculosApiClient();
 
-    // Campo de contraseña para ingresar el token JWT de forma segura
+    // Controles pestaña de Vehículos
     private final PasswordField txtToken = new PasswordField();
+    private final Button btnConsultar = new Button("Consultar Vehículos");
+    private final Label lblEstadoVehiculos = new Label("Listo para consultar vía NGINX");
+    private final Label lblTotalVehiculos = new Label("Total de Vehículos: 0");
+    private final TableView<Vehiculo> tablaVehiculos = new TableView<>();
 
-    // Botón para disparar la consulta al servidor
-    private final Button btnConsultar = new Button("Consultar");
+    // Controles pestaña de Notificaciones RabbitMQ
+    private final TableView<NotificacionVentaDto> tablaNotificaciones = new TableView<>();
+    private final Button btnActualizarNotificaciones = new Button("Actualizar Notificaciones");
+    private final CheckBox chkAutoRefresh = new CheckBox("Sincronización en tiempo real (cada 3s)");
+    private final Label lblTotalNotificaciones = new Label("Notificaciones recibidas: 0");
+    private final Label lblUltimaSync = new Label("Última sincronización: —");
 
-    // Etiqueta para informar el estado actual de la petición (cargando, errores, éxito)
-    private final Label lblEstado = new Label("Listo");
-
-    // Etiqueta para mostrar el conteo total de vehículos obtenidos
-    private final Label lblTotal = new Label("Total de Vehiculos: 0");
-
-    // Tabla visual parametrizada con el modelo record Vehiculo
-    private final TableView<Vehiculo> tabla = new TableView<>();
+    private Timeline temporizadorSync;
 
     @Override
     public void start(Stage ventana) {
-        // Etiqueta de título superior de la ventana
-        Label titulo = new Label("Ventana Vehiculos Registrados");
+        TabPane panelPestanas = new TabPane();
+        panelPestanas.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        // Texto informativo de ayuda dentro del campo de texto
-        txtToken.setPromptText("Ingrese su token JWT aqui");
+        // PESTAÑA 1: CATÁLOGO DE VEHÍCULOS
+        Tab pestanaVehiculos = new Tab("🚗 Catálogo de Vehículos", construirVistaVehiculos());
 
-        // Permitir que el campo de texto se expanda horizontalmente
-        txtToken.setMaxWidth(Double.MAX_VALUE);
+        // PESTAÑA 2: NOTIFICACIONES DE VENTAS RABBITMQ
+        Tab pestanaNotificaciones = new Tab("🔔 Notificaciones en Vivo (RabbitMQ)", construirVistaNotificaciones());
 
-        // Ancho sugerido para el botón consultar
-        btnConsultar.setMaxWidth(130);
+        panelPestanas.getTabs().addAll(pestanaVehiculos, pestanaNotificaciones);
 
-        // Evento que se dispara al hacer clic en el botón o presionar Enter
-        btnConsultar.setOnAction(evento -> consultar());
+        VBox raiz = new VBox(panelPestanas);
+        VBox.setVgrow(panelPestanas, Priority.ALWAYS);
 
-        // Contenedor horizontal que agrupa el botón y la etiqueta de estado en una sola línea
-        HBox acciones = new HBox(12, btnConsultar, lblEstado);
+        Scene escena = new Scene(raiz, 1080, 650);
+        ventana.setTitle("UTA SOA APE 04 - Cliente de Escritorio JavaFX");
+        ventana.setScene(escena);
 
-        // Alineación vertical centrada hacia la izquierda dentro del HBox
-        acciones.setAlignment(Pos.CENTER_LEFT);
+        // Iniciar temporizador de sincronización automática de notificaciones
+        iniciarAutoSync();
 
-        // Permitir que la etiqueta de estado ajuste el texto en varias líneas si es muy largo
-        lblEstado.setWrapText(true);
+        ventana.setOnCloseRequest(e -> {
+            if (temporizadorSync != null) {
+                temporizadorSync.stop();
+            }
+        });
 
-        // Definición y agregación de cada columna de la tabla vinculada a su atributo en Vehiculo
-        agregarColumna("ID", Vehiculo::idVehiculo, 65);
-        agregarColumna("Marca", Vehiculo::marca, 119);
-        agregarColumna("Modelo", Vehiculo::modelo, 135);
-        // CORREGIDO: Se usa el método Vehiculo::año correspondiente al campo 'año' del record
-        agregarColumna("Año", Vehiculo::año, 75);
-        agregarColumna("Color", Vehiculo::color, 105);
-        agregarColumna("Placa", Vehiculo::placa, 105);
-        agregarColumna("Chasis", Vehiculo::chasis, 165);
-        agregarColumna("Estado", Vehiculo::estado, 100);
-        agregarColumna("Precio", Vehiculo::precio, 100);
-
-        // Mensaje visible en la tabla cuando no existan registros cargados
-        tabla.setPlaceholder(new Label("No hay vehiculos para mostrar"));
-
-        // Hace que la tabla se expanda verticalmente ocupando el espacio disponible
-        VBox.setVgrow(tabla, Priority.ALWAYS);
-
-        // Contenedor vertical principal que organiza todos los componentes en orden
-        // CORREGIDO: Se añade 'acciones' en vez de duplicar 'btnConsultar' y 'lblEstado'
-        VBox contenido = new VBox(12, titulo, txtToken, acciones, lblTotal, tabla);
-
-        // Márgenes internos de 22 píxeles alrededor de todo el contenido
-        contenido.setPadding(new Insets(22));
-
-        // Establece el color de fondo de toda la ventana a un tono lila elegante (#E8DCF0)
-        contenido.setStyle("-fx-background-color: #e0bff7;");
-
-        // Título de la ventana en la barra del sistema operativo
-        ventana.setTitle("Consulta Vehiculos");
-
-        // Asignación de la escena con un tamaño inicial de 1024x600 píxeles
-        ventana.setScene(new Scene(contenido, 1024, 600));
-
-        // Muestra la ventana en la pantalla del usuario
         ventana.show();
     }
 
-    /**
-     * Método encargado de validar el token, llamar al servicio web y actualizar la interfaz.
-     */
-    private void consultar() {
-        // Obtiene el token ingresado eliminando espacios en blanco al inicio y al final
-        String jwt = txtToken.getText().trim();
+    private VBox construirVistaVehiculos() {
+        Label titulo = new Label("Catálogo de Vehículos - Gateway NGINX (Puerto 8090)");
+        titulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1a365d;");
 
-        // Si el usuario copió el token con la palabra "Bearer ", se la quitamos para no duplicarla
+        txtToken.setPromptText("Ingrese su token JWT aquí (sin Bearer)");
+        txtToken.setMaxWidth(Double.MAX_VALUE);
+
+        btnConsultar.setOnAction(evento -> consultarVehiculos());
+
+        HBox acciones = new HBox(12, btnConsultar, lblEstadoVehiculos);
+        acciones.setAlignment(Pos.CENTER_LEFT);
+        lblEstadoVehiculos.setWrapText(true);
+
+        agregarColumnaVehiculo("ID", Vehiculo::idVehiculo, 60);
+        agregarColumnaVehiculo("Marca", Vehiculo::marca, 110);
+        agregarColumnaVehiculo("Modelo", Vehiculo::modelo, 120);
+        agregarColumnaVehiculo("Año", Vehiculo::año, 70);
+        agregarColumnaVehiculo("Color", Vehiculo::color, 90);
+        agregarColumnaVehiculo("Placa", Vehiculo::placa, 100);
+        agregarColumnaVehiculo("Chasis", Vehiculo::chasis, 150);
+        agregarColumnaVehiculo("Estado", Vehiculo::estado, 100);
+        agregarColumnaVehiculo("Precio", Vehiculo::precio, 90);
+
+        tablaVehiculos.setPlaceholder(new Label("No hay vehículos para mostrar. Presione 'Consultar Vehículos'."));
+        VBox.setVgrow(tablaVehiculos, Priority.ALWAYS);
+
+        VBox contenedor = new VBox(12, titulo, txtToken, acciones, lblTotalVehiculos, tablaVehiculos);
+        contenedor.setPadding(new Insets(18));
+        contenedor.setStyle("-fx-background-color: #f7fafc;");
+        return contenedor;
+    }
+
+    private VBox construirVistaNotificaciones() {
+        Label titulo = new Label("Supervisión de Eventos y Notificaciones de Ventas (RabbitMQ)");
+        titulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c5282;");
+
+        Label explicacion = new Label("Recibe asíncronamente notificaciones de ventas publicadas a la cola 'notificaciones.ventas'.");
+        explicacion.setStyle("-fx-font-size: 12px; -fx-text-fill: #4a5568;");
+
+        chkAutoRefresh.setSelected(true);
+        chkAutoRefresh.setOnAction(e -> {
+            if (chkAutoRefresh.isSelected()) {
+                if (temporizadorSync != null) temporizadorSync.play();
+            } else {
+                if (temporizadorSync != null) temporizadorSync.pause();
+            }
+        });
+
+        btnActualizarNotificaciones.setOnAction(e -> consultarNotificaciones());
+
+        HBox barraAcciones = new HBox(15, btnActualizarNotificaciones, chkAutoRefresh, lblUltimaSync);
+        barraAcciones.setAlignment(Pos.CENTER_LEFT);
+
+        agregarColumnaNotificacion("ID", NotificacionVentaDto::id, 50);
+        agregarColumnaNotificacion("Evento ID", NotificacionVentaDto::eventoId, 180);
+        agregarColumnaNotificacion("Tipo", NotificacionVentaDto::tipo, 120);
+        agregarColumnaNotificacion("ID Venta", NotificacionVentaDto::ventaId, 70);
+        agregarColumnaNotificacion("ID Vehículo", NotificacionVentaDto::vehiculoId, 80);
+        agregarColumnaNotificacion("ID Comprador", NotificacionVentaDto::compradorId, 90);
+        agregarColumnaNotificacion("Mensaje", NotificacionVentaDto::mensaje, 230);
+        agregarColumnaNotificacion("Estado", NotificacionVentaDto::estado, 90);
+        agregarColumnaNotificacion("Fecha", NotificacionVentaDto::fecha, 150);
+
+        tablaNotificaciones.setPlaceholder(new Label("No se han recibido notificaciones de ventas en la cola RabbitMQ."));
+        VBox.setVgrow(tablaNotificaciones, Priority.ALWAYS);
+
+        VBox contenedor = new VBox(12, titulo, explicacion, barraAcciones, lblTotalNotificaciones, tablaNotificaciones);
+        contenedor.setPadding(new Insets(18));
+        contenedor.setStyle("-fx-background-color: #f7fafc;");
+        return contenedor;
+    }
+
+    private void iniciarAutoSync() {
+        temporizadorSync = new Timeline(new KeyFrame(Duration.seconds(3), e -> consultarNotificaciones()));
+        temporizadorSync.setCycleCount(Timeline.INDEFINITE);
+        temporizadorSync.play();
+    }
+
+    private void consultarVehiculos() {
+        String jwt = txtToken.getText().trim();
         if (jwt.regionMatches(true, 0, "Bearer ", 0, 7)) {
             jwt = jwt.substring(7).trim();
         }
 
-        // Deshabilita el botón temporalmente para evitar peticiones duplicadas mientras carga
         btnConsultar.setDisable(true);
+        mostrarEstadoVehiculos("Consultando catálogo a través de NGINX...", false);
 
-        // Muestra el mensaje informativo de que la consulta está en proceso
-        mostrarEstado("Consultando vehiculos...", false);
-
-        // Llamada asíncrona a la API REST a través del cliente HTTP
         api.consultarVehiculos(jwt).whenComplete((resultado, error) -> {
-            // Regresa al hilo principal de JavaFX para modificar los componentes gráficos
             Platform.runLater(() -> {
-                // Vuelve a habilitar el botón de consulta
                 btnConsultar.setDisable(false);
-
-                // Si ocurrió un error de red, conexión o tiempo de espera
                 if (error != null) {
-                    mostrarEstado("Error: No se pudo conectar con el servidor", true);
+                    mostrarEstadoVehiculos("Error de conexión: Verifique el Gateway NGINX (8090).", true);
                     return;
                 }
 
-                // Evaluación del código de respuesta HTTP devuelto por la API
                 if (resultado.codigoHttp() == 401) {
-                    mostrarEstado("Http 401: Token no valido o expirado", true);
+                    mostrarEstadoVehiculos("HTTP 401: Token JWT no válido o expirado.", true);
                 } else if (resultado.codigoHttp() == 403) {
-                    mostrarEstado("Http 403: No tienes permisos para consultar vehiculos", true);
+                    mostrarEstadoVehiculos("HTTP 403: Permisos insuficientes para consultar vehículos.", true);
                 } else if (resultado.codigoHttp() == 200) {
-                    // Carga la lista de vehículos en los ítems de la tabla
-                    tabla.getItems().setAll(resultado.vehiculos());
-                    // Actualiza la etiqueta con la cantidad de registros recibidos
-                    lblTotal.setText("Total de Vehiculos: " + resultado.vehiculos().size());
-                    // Muestra mensaje de éxito en color azul
-                    mostrarEstado("Consulta exitosa. Se cargaron los vehiculos.", false);
+                    tablaVehiculos.getItems().setAll(resultado.vehiculos());
+                    lblTotalVehiculos.setText("Total de Vehículos: " + resultado.vehiculos().size());
+                    mostrarEstadoVehiculos("Consulta completada con éxito vía NGINX (HTTP 200).", false);
                 } else {
-                    mostrarEstado("Respuesta HTTP inesperada: " + resultado.codigoHttp(), true);
+                    mostrarEstadoVehiculos("Respuesta HTTP inesperada: " + resultado.codigoHttp(), true);
                 }
             });
         });
     }
 
-    /**
-     * Método auxiliar para actualizar el texto y color de la etiqueta de estado.
-     * 
-     * @param texto Mensaje a mostrar
-     * @param error Si es true lo pinta de rojo, si es false de azul
-     */
-    private void mostrarEstado(String texto, boolean error) {
-        // Establece el texto en la etiqueta
-        lblEstado.setText(texto);
-        // CORREGIDO: Uso de javafx.scene.paint.Color (Color.RED / Color.BLUE)
-        lblEstado.setTextFill(error ? Color.RED : Color.BLUE);
+    private void consultarNotificaciones() {
+        api.consultarNotificaciones().whenComplete((lista, error) -> {
+            Platform.runLater(() -> {
+                if (error == null && lista != null) {
+                    tablaNotificaciones.getItems().setAll(lista);
+                    lblTotalNotificaciones.setText("Notificaciones recibidas: " + lista.size());
+                    lblUltimaSync.setText("Última sincronización: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                }
+            });
+        });
     }
 
-    /**
-     * Método genérico reutilizable para crear, configurar y registrar una columna en la tabla.
-     * 
-     * @param <T> Tipo de dato de la columna (String, Integer, BigDecimal, etc.)
-     * @param titulo Título de la cabecera de la columna
-     * @param valor Función extractora del valor desde el objeto Vehiculo
-     * @param ancho Ancho preferido en píxeles para la columna
-     */
-    private <T> void agregarColumna(String titulo, Function<Vehiculo, T> valor, double ancho) {
-        // Instancia de la columna con su título
+    private void mostrarEstadoVehiculos(String texto, boolean error) {
+        lblEstadoVehiculos.setText(texto);
+        lblEstadoVehiculos.setTextFill(error ? Color.RED : Color.DARKBLUE);
+    }
+
+    private <T> void agregarColumnaVehiculo(String titulo, Function<Vehiculo, T> valor, double ancho) {
         TableColumn<Vehiculo, T> columna = new TableColumn<>(titulo);
-
-        // CORREGIDO: Se usa ReadOnlyObjectWrapper para envolver el valor retornado por la Function
         columna.setCellValueFactory(fila -> new ReadOnlyObjectWrapper<>(valor.apply(fila.getValue())));
-
-        // Asignación del ancho preferido
         columna.setPrefWidth(ancho);
+        tablaVehiculos.getColumns().add(columna);
+    }
 
-        // Añade la columna configurada a la colección de columnas de la tabla
-        tabla.getColumns().add(columna);
+    private <T> void agregarColumnaNotificacion(String titulo, Function<NotificacionVentaDto, T> valor, double ancho) {
+        TableColumn<NotificacionVentaDto, T> columna = new TableColumn<>(titulo);
+        columna.setCellValueFactory(fila -> new ReadOnlyObjectWrapper<>(valor.apply(fila.getValue())));
+        columna.setPrefWidth(ancho);
+        tablaNotificaciones.getColumns().add(columna);
     }
 }
