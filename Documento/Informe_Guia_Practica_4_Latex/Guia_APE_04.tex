@@ -950,6 +950,84 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.3 Actividad 3. Vehículos, JWT, NGINX y disponibilidad}
+
+\vspace{0.2cm}
+\noindent En esta actividad se configuró y desplegó la capa de entrada unificada mediante el servidor proxy inverso y balanceador NGINX sobre el puerto 8090, orquestando el tráfico hacia dos instancias de la API de vehículos en Spring Boot (Instancia A en 8080 e Instancia B en 8082) bajo un algoritmo de balanceo ponderado 3:1 con tolerancia pasiva a fallos. Adicionalmente, se configuró el enrutamiento transparente hacia los microservicios de ventas (FastAPI en 8002) y notificaciones (Spring Boot en 8081), asegurando el registro de acceso seguro mediante directivas que previenen la fuga de parámetros confidenciales.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Configuración de NGINX Gateway (\texttt{nginx.conf}) y topología de balanceo}
+
+\noindent La configuración de NGINX en el puerto 8090 centraliza el acceso REST de los clientes multicanal. El bloque \texttt{upstream vehiculos\_backend} reparte la carga con pesos proporcionales de 3 a 1 entre las dos instancias Java, incorporando parámetros de desconexión pasiva (\texttt{max\_fails=1 fail\_timeout=5s}) y reintento automático (\texttt{proxy\_next\_upstream error timeout http\_502 http\_503 http\_504}). Para cumplir con las directivas de seguridad y no registrar tokens ni datos sensibles en los logs, el formato personalizado \texttt{monitor\_format} registra la variable \texttt{\$uri} en lugar de \texttt{\$request\_uri}. En la Figura \ref{fig:act3_nginx_conf} se documenta el archivo de configuración implementado.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act3_nginx_conf.png}
+  \caption{Configuración técnica de \texttt{nginx.conf} implementando upstream ponderado 3:1, proxying multicanal y logging seguro.}
+  \label{fig:act3_nginx_conf}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Verificación sintáctica y diagnóstico local (\texttt{nginx -t} y \texttt{/nginx-ping})}
+
+\noindent Previo a la puesta en marcha del servicio, se ejecutó la validación de integridad sintáctica mediante el comando \texttt{nginx -t}, confirmando que el archivo de configuración es válido y superó las pruebas del motor NGINX. Asimismo, se comprobó el endpoint de diagnóstico local \texttt{GET /nginx-ping}, el cual retorna una respuesta inmediata HTTP 200 OK en formato JSON (\texttt{\{"status":"UP","mensaje":"NGINX funcionando correctamente"\}}) directamente desde el servidor web, sin sobrecargar los upstreams backend. En la Figura \ref{fig:act3_nginx_test_ping} se evidencia dicha verificación.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act3_nginx_test_ping.png}
+  \caption{Comprobación de sintaxis con \texttt{nginx -t} y respuesta de salud local del endpoint \texttt{/nginx-ping}.}
+  \label{fig:act3_nginx_test_ping}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Despliegue simultáneo de dos instancias Spring Boot (8080 y 8082)}
+
+\noindent Se levantaron en paralelo dos procesos independientes del microservicio de vehículos: la Instancia A operando en el puerto 8080 y la Instancia B operando en el puerto 8082. Ambas instancias comparten la misma persistencia en la base de datos MySQL \texttt{venta\_vehiculos} en XAMPP y la misma clave simétrica HMAC-SHA256 para validación de tokens JWT sin estado (\textit{stateless}). Ambas exponen el endpoint Actuator \texttt{/actuator/health} reportando estado \texttt{\{"status":"UP"\}}, lo cual permite la supervisión continua de su ciclo de vida. En la Figura \ref{fig:act3_instancias_ab} se muestra la ejecución simultánea de ambas instancias y sus diagnósticos de salud.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act3_instancias_ab.png}
+  \caption{Ejecución simultánea de las dos instancias Spring Boot de vehículos (A en 8080 y B en 8082) con estado Actuator \texttt{UP}.}
+  \label{fig:act3_instancias_ab}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Evaluación empírica del balanceo ponderado 3:1 (Muestra de 100 GET)}
+
+\noindent Para contrastar el comportamiento del balanceador con el modelo teórico de pesos asignados (75\% para Instancia A y 25\% para Instancia B), se ejecutó una batería automatizada de 100 solicitudes consecutivas al endpoint \texttt{GET /api/vehiculos} a través de la dirección unificada del balanceador \texttt{http://127.0.0.1:8090/api/vehiculos}. 
+
+\vspace{0.1cm}
+\noindent A partir del análisis del archivo \texttt{access.log} de NGINX, se contabilizó la distribución efectiva de peticiones atendidas por cada nodo del upstream:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Instancia A (127.0.0.1:8080, peso 3):} Atendió un total de \textbf{74 peticiones (74.0\%)}.
+  \item \textbf{Instancia B (127.0.0.1:8082, peso 1):} Atendió un total de \textbf{26 peticiones (26.0\%)}.
+  \item \textbf{Total de solicitudes procesadas:} 100 solicitudes con código \texttt{HTTP 200 OK} y un tiempo promedio de respuesta inferior a 45 ms.
+\end{itemize}
+
+\noindent Como se evidencia en la Figura \ref{fig:act3_balanceo_100get}, la distribución real se ajusta con una fidelidad sobresaliente a la ponderación 3:1 configurada, demostrando la correcta conmutación cíclica ponderada del servidor proxy sin saturación de ninguno de los nodos.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act3_balanceo_100get.png}
+  \caption{Resultados del registro de acceso y monitor demostrando la distribución real de 100 peticiones GET entre las instancias A (74\%) y B (26\%).}
+  \label{fig:act3_balanceo_100get}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Prueba de continuidad operativa y tolerancia a fallos}
+
+\noindent Se evaluó la resiliencia de la arquitectura simulando la caída abrupta de la Instancia B (puerto 8082) mediante la interrupción de su proceso en el sistema operativo. Al realizar peticiones continuas hacia \texttt{http://localhost:8090/api/vehiculos}, NGINX detectó de forma pasiva la indisponibilidad del nodo en virtud de la directiva \texttt{max\_fails=1 fail\_timeout=5s} y conmutó de forma inmediata el 100\% del tráfico hacia la Instancia A (puerto 8080) mediante la regla \texttt{proxy\_next\_upstream}. 
+
+\noindent El cliente no experimentó ningún código de error HTTP 502 o 504 ni cortes en la sesión de usuario; todas las solicitudes continuaron respondiendo con código \texttt{HTTP 200 OK}. Posteriormente, al reiniciar la Instancia B, NGINX reintegró automáticamente el nodo al esquema ponderado 3:1 al expirar la ventana de penalización temporal, verificando la recuperación automática del clúster sin necesidad de reiniciar el balanceador. En la Figura \ref{fig:act3_tolerancia_fallos} se documenta la prueba de tolerancia a fallos.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act3_tolerancia_fallos.png}
+  \caption{Prueba de resiliencia y tolerancia a fallos: NGINX redirige el 100\% del tráfico a la Instancia A tras la detención de la Instancia B sin degradación de servicio.}
+  \label{fig:act3_tolerancia_fallos}
+\end{figure}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
