@@ -67,6 +67,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(a -> a
                 // Endpoint para obtener token OAuth2/JWT (público)
                 .requestMatchers("/oauth/token").permitAll()
+                // Endpoint de salud de Actuator para monitoreo y NGINX (público)
+                .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
                 // Endpoints internos de reservas accesibles únicamente por el microservicio con clave compartida
                 .requestMatchers("/api/reservas", "/api/reservas/**", "/api/vehiculos/*/reservas")
                     .hasRole("SERVICIO_VENTAS")
