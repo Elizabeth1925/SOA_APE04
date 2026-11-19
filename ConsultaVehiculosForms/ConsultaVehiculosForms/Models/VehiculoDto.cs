@@ -35,4 +35,31 @@ namespace ConsultaVehiculosForms.Models
         [JsonPropertyName("estado")]
         public string? Estado { get; set; }
     }
+
+    /// <summary>
+    /// Petición para dar de alta un nuevo vehículo (POST /api/vehiculos).
+    /// </summary>
+    public class CrearVehiculoRequest
+    {
+        [JsonPropertyName("marca")]
+        public string Marca { get; set; } = string.Empty;
+
+        [JsonPropertyName("modelo")]
+        public string Modelo { get; set; } = string.Empty;
+
+        [JsonPropertyName("placa")]
+        public string Placa { get; set; } = string.Empty;
+
+        [JsonPropertyName("chasis")]
+        public string Chasis { get; set; } = string.Empty;
+
+        [JsonPropertyName("anio")]
+        public int Anio { get; set; }
+
+        [JsonPropertyName("color")]
+        public string Color { get; set; } = string.Empty;
+
+        [JsonPropertyName("precio")]
+        public decimal Precio { get; set; }
+    }
 }

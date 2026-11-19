@@ -22,7 +22,27 @@
             lblToken = new Label();
             txtToken = new TextBox();
             tabControlPrincipal = new TabControl();
+            
+            // Tab 1: Vehiculos
             tabVehiculos = new TabPage();
+            grpCrearVehiculo = new GroupBox();
+            lblVMarga = new Label();
+            txtVMarca = new TextBox();
+            lblVModelo = new Label();
+            txtVModelo = new TextBox();
+            lblVPlaca = new Label();
+            txtVPlaca = new TextBox();
+            lblVChasis = new Label();
+            txtVChasis = new TextBox();
+            lblVAnio = new Label();
+            txtVAnio = new TextBox();
+            lblVColor = new Label();
+            txtVColor = new TextBox();
+            lblVPrecio = new Label();
+            txtVPrecio = new TextBox();
+            btnCrearVehiculo = new Button();
+            
+            grpListarVehiculos = new GroupBox();
             lblFiltroMarca = new Label();
             txtFiltroMarca = new TextBox();
             btnConsultar = new Button();
@@ -33,11 +53,33 @@
             lblEstado = new Label();
             dgcVehiculos = new DataGridView();
             lblTotal = new Label();
+
+            // Tab 2: Compradores
+            tabCompradores = new TabPage();
+            grpCrearComprador = new GroupBox();
+            lblCDocumento = new Label();
+            txtCDocumento = new TextBox();
+            lblCNombre = new Label();
+            txtCNombre = new TextBox();
+            lblCCorreo = new Label();
+            txtCCorreo = new TextBox();
+            btnCrearComprador = new Button();
+
+            grpListarCompradores = new GroupBox();
+            btnListarCompradores = new Button();
+            lblEstadoCompradores = new Label();
+            dgcCompradores = new DataGridView();
+            lblTotalCompradores = new Label();
+
+            // Tab 3: Ventas
             tabVentas = new TabPage();
+            lblAvisoVentas = new Label();
             lblIdVenta = new Label();
             txtIdVenta = new TextBox();
             btnConsultarVenta = new Button();
+            btnListarVentas = new Button();
             lblEstadoVenta = new Label();
+            dgcVentas = new DataGridView();
             grpDetalleVenta = new GroupBox();
             lblValorFecha = new Label();
             lblEtiqFecha = new Label();
@@ -57,162 +99,271 @@
             lblEtiqOperacionId = new Label();
             lblValorVentaId = new Label();
             lblEtiqVentaId = new Label();
+
             tabControlPrincipal.SuspendLayout();
             tabVehiculos.SuspendLayout();
+            grpCrearVehiculo.SuspendLayout();
+            grpListarVehiculos.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgcVehiculos).BeginInit();
+
+            tabCompradores.SuspendLayout();
+            grpCrearComprador.SuspendLayout();
+            grpListarCompradores.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgcCompradores).BeginInit();
+
             tabVentas.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgcVentas).BeginInit();
             grpDetalleVenta.SuspendLayout();
             SuspendLayout();
-            // 
+
             // lblTitulo
-            // 
             lblTitulo.AutoSize = true;
             lblTitulo.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
-            lblTitulo.Location = new Point(25, 15);
+            lblTitulo.Location = new Point(25, 12);
             lblTitulo.Name = "lblTitulo";
-            lblTitulo.Size = new Size(420, 25);
+            lblTitulo.Size = new Size(540, 25);
             lblTitulo.TabIndex = 0;
-            lblTitulo.Text = "SOA - Cliente Consumidor de Microservicios";
-            // 
+            lblTitulo.Text = "SOA APE 04 - Administración Multicanal (Windows Forms)";
+
             // lblSubtitulo
-            // 
             lblSubtitulo.AutoSize = true;
             lblSubtitulo.ForeColor = Color.DarkSlateGray;
-            lblSubtitulo.Location = new Point(26, 42);
+            lblSubtitulo.Location = new Point(26, 38);
             lblSubtitulo.Name = "lblSubtitulo";
-            lblSubtitulo.Size = new Size(440, 15);
+            lblSubtitulo.Size = new Size(620, 15);
             lblSubtitulo.TabIndex = 1;
-            lblSubtitulo.Text = "Catálogo de Vehículos (Java :8080) y Consulta de Ventas (Python :8002)";
-            // 
+            lblSubtitulo.Text = "Conectado al Gateway NGINX (:8090) hacia Spring Boot (:8080/:8082) y Python FastAPI (:8002)";
+
             // lblToken
-            // 
             lblToken.AutoSize = true;
             lblToken.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblToken.Location = new Point(26, 73);
+            lblToken.Location = new Point(26, 62);
             lblToken.Name = "lblToken";
             lblToken.Size = new Size(69, 15);
             lblToken.TabIndex = 2;
             lblToken.Text = "Token JWT:";
-            // 
+
             // txtToken
-            // 
             txtToken.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtToken.Location = new Point(101, 70);
+            txtToken.Location = new Point(101, 59);
             txtToken.Name = "txtToken";
-            txtToken.PlaceholderText = "Pegue aquí el Bearer Token JWT (ej. obtenido en /oauth/token de Java)";
-            txtToken.Size = new Size(743, 23);
+            txtToken.PlaceholderText = "Pegue aquí el Bearer Token JWT (obtenido en /oauth/token)";
+            txtToken.Size = new Size(865, 23);
             txtToken.TabIndex = 3;
-            // 
+
             // tabControlPrincipal
-            // 
             tabControlPrincipal.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tabControlPrincipal.Controls.Add(tabVehiculos);
+            tabControlPrincipal.Controls.Add(tabCompradores);
             tabControlPrincipal.Controls.Add(tabVentas);
-            tabControlPrincipal.Location = new Point(25, 105);
+            tabControlPrincipal.Location = new Point(25, 90);
             tabControlPrincipal.Name = "tabControlPrincipal";
             tabControlPrincipal.SelectedIndex = 0;
-            tabControlPrincipal.Size = new Size(823, 445);
+            tabControlPrincipal.Size = new Size(945, 540);
             tabControlPrincipal.TabIndex = 4;
-            // 
-            // tabVehiculos
-            // 
-            tabVehiculos.Controls.Add(lblFiltroMarca);
-            tabVehiculos.Controls.Add(txtFiltroMarca);
-            tabVehiculos.Controls.Add(btnConsultar);
-            tabVehiculos.Controls.Add(lblIdVehiculo);
-            tabVehiculos.Controls.Add(txtIdVehiculo);
-            tabVehiculos.Controls.Add(btnBuscarId);
-            tabVehiculos.Controls.Add(btnLimpiarVehiculos);
-            tabVehiculos.Controls.Add(lblEstado);
-            tabVehiculos.Controls.Add(dgcVehiculos);
-            tabVehiculos.Controls.Add(lblTotal);
+
+            // ==========================================
+            // TAB 1: VEHICULOS
+            // ==========================================
+            tabVehiculos.Controls.Add(grpCrearVehiculo);
+            tabVehiculos.Controls.Add(grpListarVehiculos);
             tabVehiculos.Location = new Point(4, 24);
             tabVehiculos.Name = "tabVehiculos";
-            tabVehiculos.Padding = new Padding(10);
-            tabVehiculos.Size = new Size(815, 417);
+            tabVehiculos.Padding = new Padding(8);
+            tabVehiculos.Size = new Size(937, 512);
             tabVehiculos.TabIndex = 0;
-            tabVehiculos.Text = "Catálogo de Vehículos (Java :8080)";
+            tabVehiculos.Text = "1. Vehículos (POST / GET)";
             tabVehiculos.UseVisualStyleBackColor = true;
-            // 
-            // lblFiltroMarca
-            // 
-            lblFiltroMarca.AutoSize = true;
-            lblFiltroMarca.Location = new Point(15, 16);
+
+            // grpCrearVehiculo
+            grpCrearVehiculo.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpCrearVehiculo.Controls.Add(lblVMarga);
+            grpCrearVehiculo.Controls.Add(txtVMarca);
+            grpCrearVehiculo.Controls.Add(lblVModelo);
+            grpCrearVehiculo.Controls.Add(txtVModelo);
+            grpCrearVehiculo.Controls.Add(lblVPlaca);
+            grpCrearVehiculo.Controls.Add(txtVPlaca);
+            grpCrearVehiculo.Controls.Add(lblVChasis);
+            grpCrearVehiculo.Controls.Add(txtVChasis);
+            grpCrearVehiculo.Controls.Add(lblVAnio);
+            grpCrearVehiculo.Controls.Add(txtVAnio);
+            grpCrearVehiculo.Controls.Add(lblVColor);
+            grpCrearVehiculo.Controls.Add(txtVColor);
+            grpCrearVehiculo.Controls.Add(lblVPrecio);
+            grpCrearVehiculo.Controls.Add(txtVPrecio);
+            grpCrearVehiculo.Controls.Add(btnCrearVehiculo);
+            grpCrearVehiculo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpCrearVehiculo.Location = new Point(10, 8);
+            grpCrearVehiculo.Name = "grpCrearVehiculo";
+            grpCrearVehiculo.Size = new Size(915, 95);
+            grpCrearVehiculo.TabIndex = 0;
+            grpCrearVehiculo.TabStop = false;
+            grpCrearVehiculo.Text = "Dar de Alta Vehículo (POST /api/vehiculos - Requiere OPERADOR o ADMIN)";
+
+            lblVMarga.Font = new Font("Segoe UI", 8.5F);
+            lblVMarga.Location = new Point(10, 25);
+            lblVMarga.Name = "lblVMarga";
+            lblVMarga.Size = new Size(45, 15);
+            lblVMarga.Text = "Marca:";
+
+            txtVMarca.Font = new Font("Segoe UI", 8.5F);
+            txtVMarca.Location = new Point(55, 22);
+            txtVMarca.Name = "txtVMarca";
+            txtVMarca.PlaceholderText = "Toyota";
+            txtVMarca.Size = new Size(95, 23);
+
+            lblVModelo.Font = new Font("Segoe UI", 8.5F);
+            lblVModelo.Location = new Point(155, 25);
+            lblVModelo.Name = "lblVModelo";
+            lblVModelo.Size = new Size(50, 15);
+            lblVModelo.Text = "Modelo:";
+
+            txtVModelo.Font = new Font("Segoe UI", 8.5F);
+            txtVModelo.Location = new Point(208, 22);
+            txtVModelo.Name = "txtVModelo";
+            txtVModelo.PlaceholderText = "Yaris";
+            txtVModelo.Size = new Size(95, 23);
+
+            lblVPlaca.Font = new Font("Segoe UI", 8.5F);
+            lblVPlaca.Location = new Point(310, 25);
+            lblVPlaca.Name = "lblVPlaca";
+            lblVPlaca.Size = new Size(40, 15);
+            lblVPlaca.Text = "Placa:";
+
+            txtVPlaca.Font = new Font("Segoe UI", 8.5F);
+            txtVPlaca.Location = new Point(350, 22);
+            txtVPlaca.Name = "txtVPlaca";
+            txtVPlaca.PlaceholderText = "PBA1234";
+            txtVPlaca.Size = new Size(80, 23);
+
+            lblVChasis.Font = new Font("Segoe UI", 8.5F);
+            lblVChasis.Location = new Point(435, 25);
+            lblVChasis.Name = "lblVChasis";
+            lblVChasis.Size = new Size(95, 15);
+            lblVChasis.Text = "Chasis (17 car):";
+
+            txtVChasis.Font = new Font("Segoe UI", 8.5F);
+            txtVChasis.Location = new Point(530, 22);
+            txtVChasis.Name = "txtVChasis";
+            txtVChasis.PlaceholderText = "17 caracteres";
+            txtVChasis.Size = new Size(140, 23);
+
+            lblVAnio.Font = new Font("Segoe UI", 8.5F);
+            lblVAnio.Location = new Point(10, 60);
+            lblVAnio.Name = "lblVAnio";
+            lblVAnio.Size = new Size(35, 15);
+            lblVAnio.Text = "Año:";
+
+            txtVAnio.Font = new Font("Segoe UI", 8.5F);
+            txtVAnio.Location = new Point(55, 57);
+            txtVAnio.Name = "txtVAnio";
+            txtVAnio.PlaceholderText = "2024";
+            txtVAnio.Size = new Size(60, 23);
+
+            lblVColor.Font = new Font("Segoe UI", 8.5F);
+            lblVColor.Location = new Point(125, 60);
+            lblVColor.Name = "lblVColor";
+            lblVColor.Size = new Size(40, 15);
+            lblVColor.Text = "Color:";
+
+            txtVColor.Font = new Font("Segoe UI", 8.5F);
+            txtVColor.Location = new Point(165, 57);
+            txtVColor.Name = "txtVColor";
+            txtVColor.PlaceholderText = "Blanco";
+            txtVColor.Size = new Size(90, 23);
+
+            lblVPrecio.Font = new Font("Segoe UI", 8.5F);
+            lblVPrecio.Location = new Point(265, 60);
+            lblVPrecio.Name = "lblVPrecio";
+            lblVPrecio.Size = new Size(45, 15);
+            lblVPrecio.Text = "Precio:";
+
+            txtVPrecio.Font = new Font("Segoe UI", 8.5F);
+            txtVPrecio.Location = new Point(310, 57);
+            txtVPrecio.Name = "txtVPrecio";
+            txtVPrecio.PlaceholderText = "18500.00";
+            txtVPrecio.Size = new Size(90, 23);
+
+            btnCrearVehiculo.BackColor = Color.FromArgb(0, 120, 215);
+            btnCrearVehiculo.ForeColor = Color.White;
+            btnCrearVehiculo.Location = new Point(430, 54);
+            btnCrearVehiculo.Name = "btnCrearVehiculo";
+            btnCrearVehiculo.Size = new Size(160, 30);
+            btnCrearVehiculo.TabIndex = 14;
+            btnCrearVehiculo.Text = "+ Crear Vehículo";
+            btnCrearVehiculo.UseVisualStyleBackColor = false;
+            btnCrearVehiculo.Click += btnCrearVehiculo_Click;
+
+            // grpListarVehiculos
+            grpListarVehiculos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpListarVehiculos.Controls.Add(lblFiltroMarca);
+            grpListarVehiculos.Controls.Add(txtFiltroMarca);
+            grpListarVehiculos.Controls.Add(btnConsultar);
+            grpListarVehiculos.Controls.Add(lblIdVehiculo);
+            grpListarVehiculos.Controls.Add(txtIdVehiculo);
+            grpListarVehiculos.Controls.Add(btnBuscarId);
+            grpListarVehiculos.Controls.Add(btnLimpiarVehiculos);
+            grpListarVehiculos.Controls.Add(lblEstado);
+            grpListarVehiculos.Controls.Add(dgcVehiculos);
+            grpListarVehiculos.Controls.Add(lblTotal);
+            grpListarVehiculos.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpListarVehiculos.Location = new Point(10, 110);
+            grpListarVehiculos.Name = "grpListarVehiculos";
+            grpListarVehiculos.Size = new Size(915, 395);
+            grpListarVehiculos.TabIndex = 1;
+            grpListarVehiculos.TabStop = false;
+            grpListarVehiculos.Text = "Catálogo y Consulta de Vehículos (GET /api/vehiculos)";
+
+            lblFiltroMarca.Font = new Font("Segoe UI", 8.5F);
+            lblFiltroMarca.Location = new Point(15, 25);
             lblFiltroMarca.Name = "lblFiltroMarca";
-            lblFiltroMarca.Size = new Size(43, 15);
-            lblFiltroMarca.TabIndex = 0;
+            lblFiltroMarca.Size = new Size(45, 15);
             lblFiltroMarca.Text = "Marca:";
-            // 
-            // txtFiltroMarca
-            // 
-            txtFiltroMarca.Location = new Point(64, 13);
+
+            txtFiltroMarca.Font = new Font("Segoe UI", 8.5F);
+            txtFiltroMarca.Location = new Point(65, 22);
             txtFiltroMarca.Name = "txtFiltroMarca";
-            txtFiltroMarca.PlaceholderText = "Ej: Toyota, Chevrolet...";
-            txtFiltroMarca.Size = new Size(130, 23);
-            txtFiltroMarca.TabIndex = 1;
-            // 
-            // btnConsultar
-            // 
-            btnConsultar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnConsultar.Location = new Point(205, 12);
+            txtFiltroMarca.PlaceholderText = "Toyota...";
+            txtFiltroMarca.Size = new Size(120, 23);
+
+            btnConsultar.Location = new Point(195, 20);
             btnConsultar.Name = "btnConsultar";
-            btnConsultar.Size = new Size(135, 26);
-            btnConsultar.TabIndex = 2;
+            btnConsultar.Size = new Size(130, 26);
             btnConsultar.Text = "Listar / Filtrar";
-            btnConsultar.UseVisualStyleBackColor = true;
             btnConsultar.Click += btnConsultar_Click;
-            // 
-            // lblIdVehiculo
-            // 
-            lblIdVehiculo.AutoSize = true;
-            lblIdVehiculo.Location = new Point(365, 16);
+
+            lblIdVehiculo.Font = new Font("Segoe UI", 8.5F);
+            lblIdVehiculo.Location = new Point(340, 25);
             lblIdVehiculo.Name = "lblIdVehiculo";
-            lblIdVehiculo.Size = new Size(69, 15);
-            lblIdVehiculo.TabIndex = 3;
+            lblIdVehiculo.Size = new Size(70, 15);
             lblIdVehiculo.Text = "ID Vehículo:";
-            // 
-            // txtIdVehiculo
-            // 
-            txtIdVehiculo.Location = new Point(440, 13);
+
+            txtIdVehiculo.Font = new Font("Segoe UI", 8.5F);
+            txtIdVehiculo.Location = new Point(415, 22);
             txtIdVehiculo.Name = "txtIdVehiculo";
-            txtIdVehiculo.PlaceholderText = "Ej: 1";
-            txtIdVehiculo.Size = new Size(60, 23);
-            txtIdVehiculo.TabIndex = 4;
-            // 
-            // btnBuscarId
-            // 
-            btnBuscarId.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnBuscarId.Location = new Point(510, 12);
+            txtIdVehiculo.PlaceholderText = "1";
+            txtIdVehiculo.Size = new Size(50, 23);
+
+            btnBuscarId.Location = new Point(475, 20);
             btnBuscarId.Name = "btnBuscarId";
             btnBuscarId.Size = new Size(110, 26);
-            btnBuscarId.TabIndex = 5;
             btnBuscarId.Text = "Buscar por ID";
-            btnBuscarId.UseVisualStyleBackColor = true;
             btnBuscarId.Click += btnBuscarId_Click;
-            // 
-            // btnLimpiarVehiculos
-            // 
-            btnLimpiarVehiculos.Location = new Point(630, 12);
+
+            btnLimpiarVehiculos.Font = new Font("Segoe UI", 8.5F);
+            btnLimpiarVehiculos.Location = new Point(595, 20);
             btnLimpiarVehiculos.Name = "btnLimpiarVehiculos";
             btnLimpiarVehiculos.Size = new Size(80, 26);
-            btnLimpiarVehiculos.TabIndex = 6;
             btnLimpiarVehiculos.Text = "Limpiar";
-            btnLimpiarVehiculos.UseVisualStyleBackColor = true;
             btnLimpiarVehiculos.Click += btnLimpiarVehiculos_Click;
-            // 
-            // lblEstado
-            // 
-            lblEstado.AutoSize = true;
+
             lblEstado.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
             lblEstado.ForeColor = Color.DimGray;
-            lblEstado.Location = new Point(15, 48);
+            lblEstado.Location = new Point(15, 52);
             lblEstado.Name = "lblEstado";
-            lblEstado.Size = new Size(160, 15);
-            lblEstado.TabIndex = 7;
+            lblEstado.Size = new Size(880, 18);
             lblEstado.Text = "Estado: En espera de consulta";
-            // 
-            // dgcVehiculos
-            // 
+
             dgcVehiculos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgcVehiculos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgcVehiculos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -220,78 +371,205 @@
             dgcVehiculos.Name = "dgcVehiculos";
             dgcVehiculos.ReadOnly = true;
             dgcVehiculos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgcVehiculos.Size = new Size(785, 300);
-            dgcVehiculos.TabIndex = 8;
-            // 
-            // lblTotal
-            // 
+            dgcVehiculos.Size = new Size(885, 285);
+
             lblTotal.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblTotal.AutoSize = true;
             lblTotal.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblTotal.Location = new Point(15, 388);
+            lblTotal.Location = new Point(15, 368);
             lblTotal.Name = "lblTotal";
-            lblTotal.Size = new Size(106, 15);
-            lblTotal.TabIndex = 9;
+            lblTotal.Size = new Size(300, 15);
             lblTotal.Text = "Total: 0 vehículos";
-            // 
-            // tabVentas
-            // 
+
+            // ==========================================
+            // TAB 2: COMPRADORES
+            // ==========================================
+            tabCompradores.Controls.Add(grpCrearComprador);
+            tabCompradores.Controls.Add(grpListarCompradores);
+            tabCompradores.Location = new Point(4, 24);
+            tabCompradores.Name = "tabCompradores";
+            tabCompradores.Padding = new Padding(8);
+            tabCompradores.Size = new Size(937, 512);
+            tabCompradores.TabIndex = 1;
+            tabCompradores.Text = "2. Compradores (POST / GET)";
+            tabCompradores.UseVisualStyleBackColor = true;
+
+            // grpCrearComprador
+            grpCrearComprador.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpCrearComprador.Controls.Add(lblCDocumento);
+            grpCrearComprador.Controls.Add(txtCDocumento);
+            grpCrearComprador.Controls.Add(lblCNombre);
+            grpCrearComprador.Controls.Add(txtCNombre);
+            grpCrearComprador.Controls.Add(lblCCorreo);
+            grpCrearComprador.Controls.Add(txtCCorreo);
+            grpCrearComprador.Controls.Add(btnCrearComprador);
+            grpCrearComprador.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpCrearComprador.Location = new Point(10, 8);
+            grpCrearComprador.Name = "grpCrearComprador";
+            grpCrearComprador.Size = new Size(915, 75);
+            grpCrearComprador.TabIndex = 0;
+            grpCrearComprador.TabStop = false;
+            grpCrearComprador.Text = "Registrar Comprador (POST /api/compradores - Requiere OPERADOR o ADMIN)";
+
+            lblCDocumento.Font = new Font("Segoe UI", 8.5F);
+            lblCDocumento.Location = new Point(15, 30);
+            lblCDocumento.Name = "lblCDocumento";
+            lblCDocumento.Size = new Size(75, 15);
+            lblCDocumento.Text = "Documento:";
+
+            txtCDocumento.Font = new Font("Segoe UI", 8.5F);
+            txtCDocumento.Location = new Point(95, 27);
+            txtCDocumento.Name = "txtCDocumento";
+            txtCDocumento.PlaceholderText = "1804567890";
+            txtCDocumento.Size = new Size(120, 23);
+
+            lblCNombre.Font = new Font("Segoe UI", 8.5F);
+            lblCNombre.Location = new Point(230, 30);
+            lblCNombre.Name = "lblCNombre";
+            lblCNombre.Size = new Size(55, 15);
+            lblCNombre.Text = "Nombre:";
+
+            txtCNombre.Font = new Font("Segoe UI", 8.5F);
+            txtCNombre.Location = new Point(290, 27);
+            txtCNombre.Name = "txtCNombre";
+            txtCNombre.PlaceholderText = "Juan Perez";
+            txtCNombre.Size = new Size(180, 23);
+
+            lblCCorreo.Font = new Font("Segoe UI", 8.5F);
+            lblCCorreo.Location = new Point(485, 30);
+            lblCCorreo.Name = "lblCCorreo";
+            lblCCorreo.Size = new Size(50, 15);
+            lblCCorreo.Text = "Correo:";
+
+            txtCCorreo.Font = new Font("Segoe UI", 8.5F);
+            txtCCorreo.Location = new Point(540, 27);
+            txtCCorreo.Name = "txtCCorreo";
+            txtCCorreo.PlaceholderText = "juan.perez@uta.edu";
+            txtCCorreo.Size = new Size(190, 23);
+
+            btnCrearComprador.BackColor = Color.FromArgb(0, 120, 215);
+            btnCrearComprador.ForeColor = Color.White;
+            btnCrearComprador.Location = new Point(745, 24);
+            btnCrearComprador.Name = "btnCrearComprador";
+            btnCrearComprador.Size = new Size(150, 28);
+            btnCrearComprador.Text = "+ Crear Comprador";
+            btnCrearComprador.UseVisualStyleBackColor = false;
+            btnCrearComprador.Click += btnCrearComprador_Click;
+
+            // grpListarCompradores
+            grpListarCompradores.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpListarCompradores.Controls.Add(btnListarCompradores);
+            grpListarCompradores.Controls.Add(lblEstadoCompradores);
+            grpListarCompradores.Controls.Add(dgcCompradores);
+            grpListarCompradores.Controls.Add(lblTotalCompradores);
+            grpListarCompradores.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpListarCompradores.Location = new Point(10, 95);
+            grpListarCompradores.Name = "grpListarCompradores";
+            grpListarCompradores.Size = new Size(915, 410);
+            grpListarCompradores.TabIndex = 1;
+            grpListarCompradores.TabStop = false;
+            grpListarCompradores.Text = "Catálogo de Compradores (GET /api/compradores)";
+
+            btnListarCompradores.Location = new Point(15, 25);
+            btnListarCompradores.Name = "btnListarCompradores";
+            btnListarCompradores.Size = new Size(160, 28);
+            btnListarCompradores.Text = "Listar Compradores";
+            btnListarCompradores.Click += btnListarCompradores_Click;
+
+            lblEstadoCompradores.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
+            lblEstadoCompradores.ForeColor = Color.DimGray;
+            lblEstadoCompradores.Location = new Point(190, 30);
+            lblEstadoCompradores.Name = "lblEstadoCompradores";
+            lblEstadoCompradores.Size = new Size(700, 18);
+            lblEstadoCompradores.Text = "Estado: En espera de consulta";
+
+            dgcCompradores.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgcCompradores.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgcCompradores.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgcCompradores.Location = new Point(15, 60);
+            dgcCompradores.Name = "dgcCompradores";
+            dgcCompradores.ReadOnly = true;
+            dgcCompradores.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgcCompradores.Size = new Size(885, 310);
+
+            lblTotalCompradores.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblTotalCompradores.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblTotalCompradores.Location = new Point(15, 380);
+            lblTotalCompradores.Name = "lblTotalCompradores";
+            lblTotalCompradores.Size = new Size(300, 15);
+            lblTotalCompradores.Text = "Total: 0 compradores";
+
+            // ==========================================
+            // TAB 3: VENTAS
+            // ==========================================
+            tabVentas.Controls.Add(lblAvisoVentas);
             tabVentas.Controls.Add(lblIdVenta);
             tabVentas.Controls.Add(txtIdVenta);
             tabVentas.Controls.Add(btnConsultarVenta);
+            tabVentas.Controls.Add(btnListarVentas);
             tabVentas.Controls.Add(lblEstadoVenta);
+            tabVentas.Controls.Add(dgcVentas);
             tabVentas.Controls.Add(grpDetalleVenta);
             tabVentas.Location = new Point(4, 24);
             tabVentas.Name = "tabVentas";
-            tabVentas.Padding = new Padding(10);
-            tabVentas.Size = new Size(815, 417);
-            tabVentas.TabIndex = 1;
-            tabVentas.Text = "Vista de Venta (Python :8002)";
+            tabVentas.Padding = new Padding(8);
+            tabVentas.Size = new Size(937, 512);
+            tabVentas.TabIndex = 2;
+            tabVentas.Text = "3. Ventas (GET - Consulta Exclusiva)";
             tabVentas.UseVisualStyleBackColor = true;
-            // 
-            // lblIdVenta
-            // 
+
+            lblAvisoVentas.AutoSize = true;
+            lblAvisoVentas.Font = new Font("Segoe UI", 8.5F, FontStyle.Italic);
+            lblAvisoVentas.ForeColor = Color.DarkRed;
+            lblAvisoVentas.Location = new Point(15, 8);
+            lblAvisoVentas.Name = "lblAvisoVentas";
+            lblAvisoVentas.Size = new Size(720, 15);
+            lblAvisoVentas.Text = "Nota de Arquitectura: La PWA móvil es el cliente exclusivo para registrar ventas. Esta interfaz administrativa solo permite consulta y seguimiento.";
+
             lblIdVenta.AutoSize = true;
-            lblIdVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblIdVenta.Location = new Point(20, 20);
+            lblIdVenta.Location = new Point(15, 33);
             lblIdVenta.Name = "lblIdVenta";
-            lblIdVenta.Size = new Size(72, 15);
-            lblIdVenta.TabIndex = 0;
-            lblIdVenta.Text = "ID de Venta:";
-            // 
-            // txtIdVenta
-            // 
-            txtIdVenta.Location = new Point(100, 17);
+            lblIdVenta.Size = new Size(54, 15);
+            lblIdVenta.Text = "ID Venta:";
+
+            txtIdVenta.Location = new Point(75, 30);
             txtIdVenta.Name = "txtIdVenta";
-            txtIdVenta.PlaceholderText = "Ej: 1, 2, 3...";
-            txtIdVenta.Size = new Size(100, 23);
-            txtIdVenta.TabIndex = 1;
-            // 
-            // btnConsultarVenta
-            // 
+            txtIdVenta.PlaceholderText = "Ej: 1";
+            txtIdVenta.Size = new Size(65, 23);
+
             btnConsultarVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnConsultarVenta.Location = new Point(215, 15);
+            btnConsultarVenta.Location = new Point(150, 28);
             btnConsultarVenta.Name = "btnConsultarVenta";
-            btnConsultarVenta.Size = new Size(130, 26);
-            btnConsultarVenta.TabIndex = 2;
-            btnConsultarVenta.Text = "Consultar Venta";
-            btnConsultarVenta.UseVisualStyleBackColor = true;
+            btnConsultarVenta.Size = new Size(130, 27);
+            btnConsultarVenta.Text = "Buscar por ID";
             btnConsultarVenta.Click += btnConsultarVenta_Click;
-            // 
-            // lblEstadoVenta
-            // 
+
+            btnListarVentas.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnListarVentas.Location = new Point(290, 28);
+            btnListarVentas.Name = "btnListarVentas";
+            btnListarVentas.Size = new Size(160, 27);
+            btnListarVentas.Text = "Listar Todas las Ventas";
+            btnListarVentas.Click += btnListarVentas_Click;
+
             lblEstadoVenta.AutoSize = true;
             lblEstadoVenta.Font = new Font("Segoe UI", 9F, FontStyle.Italic);
             lblEstadoVenta.ForeColor = Color.DimGray;
-            lblEstadoVenta.Location = new Point(20, 52);
+            lblEstadoVenta.Location = new Point(465, 34);
             lblEstadoVenta.Name = "lblEstadoVenta";
-            lblEstadoVenta.Size = new Size(160, 15);
-            lblEstadoVenta.TabIndex = 3;
+            lblEstadoVenta.Size = new Size(400, 15);
             lblEstadoVenta.Text = "Estado: En espera de consulta";
-            // 
+
+            dgcVentas.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            dgcVentas.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgcVentas.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgcVentas.Location = new Point(15, 65);
+            dgcVentas.Name = "dgcVentas";
+            dgcVentas.ReadOnly = true;
+            dgcVentas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgcVentas.Size = new Size(550, 435);
+            dgcVentas.SelectionChanged += dgcVentas_SelectionChanged;
+
             // grpDetalleVenta
-            // 
-            grpDetalleVenta.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpDetalleVenta.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             grpDetalleVenta.Controls.Add(lblValorFecha);
             grpDetalleVenta.Controls.Add(lblEtiqFecha);
             grpDetalleVenta.Controls.Add(lblValorNotificacion);
@@ -310,217 +588,93 @@
             grpDetalleVenta.Controls.Add(lblEtiqOperacionId);
             grpDetalleVenta.Controls.Add(lblValorVentaId);
             grpDetalleVenta.Controls.Add(lblEtiqVentaId);
-            grpDetalleVenta.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            grpDetalleVenta.Location = new Point(20, 85);
+            grpDetalleVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            grpDetalleVenta.Location = new Point(575, 60);
             grpDetalleVenta.Name = "grpDetalleVenta";
-            grpDetalleVenta.Size = new Size(775, 290);
-            grpDetalleVenta.TabIndex = 4;
+            grpDetalleVenta.Size = new Size(350, 440);
+            grpDetalleVenta.TabIndex = 5;
             grpDetalleVenta.TabStop = false;
-            grpDetalleVenta.Text = "Información de la Venta (GET /api/ventas/{id})";
-            // 
-            // lblValorFecha
-            // 
-            lblValorFecha.AutoSize = true;
-            lblValorFecha.Font = new Font("Segoe UI", 9.5F);
-            lblValorFecha.Location = new Point(500, 115);
-            lblValorFecha.Name = "lblValorFecha";
-            lblValorFecha.Size = new Size(13, 17);
-            lblValorFecha.TabIndex = 17;
-            lblValorFecha.Text = "-";
-            // 
-            // lblEtiqFecha
-            // 
-            lblEtiqFecha.AutoSize = true;
-            lblEtiqFecha.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqFecha.Location = new Point(390, 115);
-            lblEtiqFecha.Name = "lblEtiqFecha";
-            lblEtiqFecha.Size = new Size(74, 17);
-            lblEtiqFecha.TabIndex = 16;
-            lblEtiqFecha.Text = "Fecha UTC:";
-            // 
-            // lblValorNotificacion
-            // 
-            lblValorNotificacion.AutoSize = true;
-            lblValorNotificacion.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblValorNotificacion.ForeColor = Color.DarkSlateGray;
-            lblValorNotificacion.Location = new Point(500, 75);
-            lblValorNotificacion.Name = "lblValorNotificacion";
-            lblValorNotificacion.Size = new Size(15, 20);
-            lblValorNotificacion.TabIndex = 15;
-            lblValorNotificacion.Text = "-";
-            // 
-            // lblEtiqNotif
-            // 
-            lblEtiqNotif.AutoSize = true;
-            lblEtiqNotif.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqNotif.Location = new Point(390, 77);
-            lblEtiqNotif.Name = "lblEtiqNotif";
-            lblEtiqNotif.Size = new Size(88, 17);
-            lblEtiqNotif.TabIndex = 14;
-            lblEtiqNotif.Text = "Notificación:";
-            // 
-            // lblValorEstadoVenta
-            // 
-            lblValorEstadoVenta.AutoSize = true;
-            lblValorEstadoVenta.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-            lblValorEstadoVenta.ForeColor = Color.DarkSlateGray;
-            lblValorEstadoVenta.Location = new Point(500, 36);
-            lblValorEstadoVenta.Name = "lblValorEstadoVenta";
-            lblValorEstadoVenta.Size = new Size(16, 21);
-            lblValorEstadoVenta.TabIndex = 13;
-            lblValorEstadoVenta.Text = "-";
-            // 
-            // lblEtiqEstadoVenta
-            // 
-            lblEtiqEstadoVenta.AutoSize = true;
-            lblEtiqEstadoVenta.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqEstadoVenta.Location = new Point(390, 39);
-            lblEtiqEstadoVenta.Name = "lblEtiqEstadoVenta";
-            lblEtiqEstadoVenta.Size = new Size(53, 17);
-            lblEtiqEstadoVenta.TabIndex = 12;
-            lblEtiqEstadoVenta.Text = "Estado:";
-            // 
-            // lblValorMoneda
-            // 
-            lblValorMoneda.AutoSize = true;
-            lblValorMoneda.Font = new Font("Segoe UI", 9.5F);
-            lblValorMoneda.Location = new Point(140, 230);
-            lblValorMoneda.Name = "lblValorMoneda";
-            lblValorMoneda.Size = new Size(13, 17);
-            lblValorMoneda.TabIndex = 11;
-            lblValorMoneda.Text = "-";
-            // 
-            // lblEtiqMoneda
-            // 
-            lblEtiqMoneda.AutoSize = true;
-            lblEtiqMoneda.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqMoneda.Location = new Point(25, 230);
-            lblEtiqMoneda.Name = "lblEtiqMoneda";
-            lblEtiqMoneda.Size = new Size(62, 17);
-            lblEtiqMoneda.TabIndex = 10;
-            lblEtiqMoneda.Text = "Moneda:";
-            // 
-            // lblValorPrecio
-            // 
-            lblValorPrecio.AutoSize = true;
-            lblValorPrecio.Font = new Font("Segoe UI", 9.5F);
-            lblValorPrecio.Location = new Point(140, 192);
-            lblValorPrecio.Name = "lblValorPrecio";
-            lblValorPrecio.Size = new Size(13, 17);
-            lblValorPrecio.TabIndex = 9;
-            lblValorPrecio.Text = "-";
-            // 
-            // lblEtiqPrecio
-            // 
-            lblEtiqPrecio.AutoSize = true;
-            lblEtiqPrecio.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqPrecio.Location = new Point(25, 192);
-            lblEtiqPrecio.Name = "lblEtiqPrecio";
-            lblEtiqPrecio.Size = new Size(111, 17);
-            lblEtiqPrecio.TabIndex = 8;
-            lblEtiqPrecio.Text = "Precio Acordado:";
-            // 
-            // lblValorCompradorId
-            // 
-            lblValorCompradorId.AutoSize = true;
-            lblValorCompradorId.Font = new Font("Segoe UI", 9.5F);
-            lblValorCompradorId.Location = new Point(140, 154);
-            lblValorCompradorId.Name = "lblValorCompradorId";
-            lblValorCompradorId.Size = new Size(13, 17);
-            lblValorCompradorId.TabIndex = 7;
-            lblValorCompradorId.Text = "-";
-            // 
-            // lblEtiqCompradorId
-            // 
-            lblEtiqCompradorId.AutoSize = true;
-            lblEtiqCompradorId.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqCompradorId.Location = new Point(25, 154);
-            lblEtiqCompradorId.Name = "lblEtiqCompradorId";
-            lblEtiqCompradorId.Size = new Size(102, 17);
-            lblEtiqCompradorId.TabIndex = 6;
-            lblEtiqCompradorId.Text = "Comprador ID:";
-            // 
-            // lblValorVehiculoId
-            // 
-            lblValorVehiculoId.AutoSize = true;
-            lblValorVehiculoId.Font = new Font("Segoe UI", 9.5F);
-            lblValorVehiculoId.Location = new Point(140, 115);
-            lblValorVehiculoId.Name = "lblValorVehiculoId";
-            lblValorVehiculoId.Size = new Size(13, 17);
-            lblValorVehiculoId.TabIndex = 5;
-            lblValorVehiculoId.Text = "-";
-            // 
-            // lblEtiqVehiculoId
-            // 
-            lblEtiqVehiculoId.AutoSize = true;
-            lblEtiqVehiculoId.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqVehiculoId.Location = new Point(25, 115);
-            lblEtiqVehiculoId.Name = "lblEtiqVehiculoId";
-            lblEtiqVehiculoId.Size = new Size(84, 17);
-            lblEtiqVehiculoId.TabIndex = 4;
-            lblEtiqVehiculoId.Text = "Vehículo ID:";
-            // 
-            // lblValorOperacionId
-            // 
-            lblValorOperacionId.AutoSize = true;
-            lblValorOperacionId.Font = new Font("Segoe UI", 9.5F);
-            lblValorOperacionId.Location = new Point(140, 77);
-            lblValorOperacionId.Name = "lblValorOperacionId";
-            lblValorOperacionId.Size = new Size(13, 17);
-            lblValorOperacionId.TabIndex = 3;
-            lblValorOperacionId.Text = "-";
-            // 
-            // lblEtiqOperacionId
-            // 
-            lblEtiqOperacionId.AutoSize = true;
-            lblEtiqOperacionId.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqOperacionId.Location = new Point(25, 77);
-            lblEtiqOperacionId.Name = "lblEtiqOperacionId";
-            lblEtiqOperacionId.Size = new Size(95, 17);
-            lblEtiqOperacionId.TabIndex = 2;
-            lblEtiqOperacionId.Text = "Operación ID:";
-            // 
-            // lblValorVentaId
-            // 
-            lblValorVentaId.AutoSize = true;
-            lblValorVentaId.Font = new Font("Segoe UI", 9.5F);
-            lblValorVentaId.Location = new Point(140, 39);
-            lblValorVentaId.Name = "lblValorVentaId";
-            lblValorVentaId.Size = new Size(13, 17);
-            lblValorVentaId.TabIndex = 1;
+            grpDetalleVenta.Text = "Detalle Individual de Venta (GET /api/ventas/{id})";
+
+            lblEtiqVentaId.Location = new Point(15, 30);
+            lblEtiqVentaId.Text = "ID Venta:";
+            lblValorVentaId.Location = new Point(130, 30);
             lblValorVentaId.Text = "-";
-            // 
-            // lblEtiqVentaId
-            // 
-            lblEtiqVentaId.AutoSize = true;
-            lblEtiqVentaId.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-            lblEtiqVentaId.Location = new Point(25, 39);
-            lblEtiqVentaId.Name = "lblEtiqVentaId";
-            lblEtiqVentaId.Size = new Size(67, 17);
-            lblEtiqVentaId.TabIndex = 0;
-            lblEtiqVentaId.Text = "Venta ID:";
-            // 
+
+            lblEtiqOperacionId.Location = new Point(15, 60);
+            lblEtiqOperacionId.Text = "Operación UUID:";
+            lblValorOperacionId.Location = new Point(130, 60);
+            lblValorOperacionId.Size = new Size(210, 30);
+            lblValorOperacionId.Text = "-";
+
+            lblEtiqVehiculoId.Location = new Point(15, 100);
+            lblEtiqVehiculoId.Text = "ID Vehículo:";
+            lblValorVehiculoId.Location = new Point(130, 100);
+            lblValorVehiculoId.Text = "-";
+
+            lblEtiqCompradorId.Location = new Point(15, 130);
+            lblEtiqCompradorId.Text = "ID Comprador:";
+            lblValorCompradorId.Location = new Point(130, 130);
+            lblValorCompradorId.Text = "-";
+
+            lblEtiqPrecio.Location = new Point(15, 160);
+            lblEtiqPrecio.Text = "Precio Acordado:";
+            lblValorPrecio.Location = new Point(130, 160);
+            lblValorPrecio.Text = "-";
+
+            lblEtiqMoneda.Location = new Point(15, 190);
+            lblEtiqMoneda.Text = "Moneda:";
+            lblValorMoneda.Location = new Point(130, 190);
+            lblValorMoneda.Text = "-";
+
+            lblEtiqEstadoVenta.Location = new Point(15, 220);
+            lblEtiqEstadoVenta.Text = "Estado Venta:";
+            lblValorEstadoVenta.Location = new Point(130, 220);
+            lblValorEstadoVenta.Text = "-";
+
+            lblEtiqNotif.Location = new Point(15, 250);
+            lblEtiqNotif.Text = "Notificación:";
+            lblValorNotificacion.Location = new Point(130, 250);
+            lblValorNotificacion.Text = "-";
+
+            lblEtiqFecha.Location = new Point(15, 280);
+            lblEtiqFecha.Text = "Fecha UTC:";
+            lblValorFecha.Location = new Point(130, 280);
+            lblValorFecha.Size = new Size(210, 30);
+            lblValorFecha.Text = "-";
+
             // Form1
-            // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(875, 570);
+            ClientSize = new Size(990, 645);
             Controls.Add(tabControlPrincipal);
             Controls.Add(txtToken);
             Controls.Add(lblToken);
             Controls.Add(lblSubtitulo);
             Controls.Add(lblTitulo);
+            MinimumSize = new Size(900, 600);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Sistema de Consulta SOA - Vehículos y Ventas";
+            Text = "Administración Multicanal SOA - Windows Forms (.NET 8)";
+
             tabControlPrincipal.ResumeLayout(false);
             tabVehiculos.ResumeLayout(false);
-            tabVehiculos.PerformLayout();
+            grpCrearVehiculo.ResumeLayout(false);
+            grpCrearVehiculo.PerformLayout();
+            grpListarVehiculos.ResumeLayout(false);
+            grpListarVehiculos.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgcVehiculos).EndInit();
+
+            tabCompradores.ResumeLayout(false);
+            grpCrearComprador.ResumeLayout(false);
+            grpCrearComprador.PerformLayout();
+            grpListarCompradores.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgcCompradores).EndInit();
+
             tabVentas.ResumeLayout(false);
             tabVentas.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgcVentas).EndInit();
             grpDetalleVenta.ResumeLayout(false);
-            grpDetalleVenta.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -532,7 +686,27 @@
         private Label lblToken;
         private TextBox txtToken;
         private TabControl tabControlPrincipal;
+
+        // Tab Vehiculos
         private TabPage tabVehiculos;
+        private GroupBox grpCrearVehiculo;
+        private Label lblVMarga;
+        private TextBox txtVMarca;
+        private Label lblVModelo;
+        private TextBox txtVModelo;
+        private Label lblVPlaca;
+        private TextBox txtVPlaca;
+        private Label lblVChasis;
+        private TextBox txtVChasis;
+        private Label lblVAnio;
+        private TextBox txtVAnio;
+        private Label lblVColor;
+        private TextBox txtVColor;
+        private Label lblVPrecio;
+        private TextBox txtVPrecio;
+        private Button btnCrearVehiculo;
+
+        private GroupBox grpListarVehiculos;
         private Label lblFiltroMarca;
         private TextBox txtFiltroMarca;
         private Button btnConsultar;
@@ -543,29 +717,51 @@
         private Label lblEstado;
         private DataGridView dgcVehiculos;
         private Label lblTotal;
+
+        // Tab Compradores
+        private TabPage tabCompradores;
+        private GroupBox grpCrearComprador;
+        private Label lblCDocumento;
+        private TextBox txtCDocumento;
+        private Label lblCNombre;
+        private TextBox txtCNombre;
+        private Label lblCCorreo;
+        private TextBox txtCCorreo;
+        private Button btnCrearComprador;
+
+        private GroupBox grpListarCompradores;
+        private Button btnListarCompradores;
+        private Label lblEstadoCompradores;
+        private DataGridView dgcCompradores;
+        private Label lblTotalCompradores;
+
+        // Tab Ventas
         private TabPage tabVentas;
+        private Label lblAvisoVentas;
         private Label lblIdVenta;
         private TextBox txtIdVenta;
         private Button btnConsultarVenta;
+        private Button btnListarVentas;
         private Label lblEstadoVenta;
+        private DataGridView dgcVentas;
         private GroupBox grpDetalleVenta;
-        private Label lblEtiqVentaId;
-        private Label lblValorVentaId;
-        private Label lblEtiqOperacionId;
-        private Label lblValorOperacionId;
-        private Label lblEtiqVehiculoId;
-        private Label lblValorVehiculoId;
-        private Label lblEtiqCompradorId;
-        private Label lblValorCompradorId;
-        private Label lblEtiqPrecio;
-        private Label lblValorPrecio;
-        private Label lblEtiqMoneda;
-        private Label lblValorMoneda;
-        private Label lblEtiqEstadoVenta;
-        private Label lblValorEstadoVenta;
-        private Label lblEtiqNotif;
-        private Label lblValorNotificacion;
-        private Label lblEtiqFecha;
         private Label lblValorFecha;
+        private Label lblEtiqFecha;
+        private Label lblValorNotificacion;
+        private Label lblEtiqNotif;
+        private Label lblValorEstadoVenta;
+        private Label lblEtiqEstadoVenta;
+        private Label lblValorMoneda;
+        private Label lblEtiqMoneda;
+        private Label lblValorPrecio;
+        private Label lblEtiqPrecio;
+        private Label lblValorCompradorId;
+        private Label lblEtiqCompradorId;
+        private Label lblValorVehiculoId;
+        private Label lblEtiqVehiculoId;
+        private Label lblValorOperacionId;
+        private Label lblEtiqOperacionId;
+        private Label lblValorVentaId;
+        private Label lblEtiqVentaId;
     }
 }
