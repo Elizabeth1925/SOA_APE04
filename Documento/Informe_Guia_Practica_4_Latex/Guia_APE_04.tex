@@ -819,33 +819,54 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \vspace{0.2cm}
 \noindent\textbf{B. Registro de modificaciones y justificación funcional}
 
-\noindent En la Tabla \ref{tab:modificaciones_proyectos} se detalla la matriz de cambios técnicos implementados en cada uno de los proyectos base y su relación directa con los requisitos funcionales de la arquitectura multicanal.
+\noindent Para ofrecer una trazabilidad técnica rigurosa de las adaptaciones realizadas sobre los proyectos base, los cambios implementados se clasifican y detallan en dos matrices complementarias según la capa arquitectónica:
+
+\vspace{0.2cm}
+\noindent\textbf{1. Microservicios Backend y Componentes de Soporte}
+
+\noindent En la Tabla \ref{tab:modificaciones_backend} se detallan las refactorizaciones efectuadas en los servicios del lado servidor para cumplir con los contratos de persistencia, seguridad, durabilidad y tolerancia a fallos.
 
 \vspace{0.1cm}
 \noindent
 {\footnotesize
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sloppy}p{2.8cm}|>{\raggedright\arraybackslash\sloppy}p{3.4cm}|X|>{\raggedright\arraybackslash\sloppy}p{2.8cm}|}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sloppy}p{2.6cm}|>{\raggedright\arraybackslash\sloppy}p{3.2cm}|X|>{\raggedright\arraybackslash\sloppy}p{4.2cm}|}
 \hline
-\textbf{Proyecto} & \textbf{Archivos Clave} & \textbf{Modificación Implementada} & \textbf{Justificación Funcional} \\
+\textbf{Microservicio} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-venta-vehiculos-api\_security & VehiculoRepository, SecurityConfig, application.properties & Incorporación de Actuator (/actuator/health), dialecto MariaDBDialect y bloqueo pesimista nativo (SELECT ... FOR UPDATE). & Monitoreo de salud para NGINX y eliminación del error de bloqueo en MariaDB XAMPP. \\
+\textbf{venta-vehiculos-api\_security} \newline\textit{(Spring Boot 8080/8082)} & VehiculoRepository, SecurityConfig, application.properties & 1) Bloqueo pesimista nativo mediante SELECT * FROM vehiculos WHERE id\_vehiculo = :id FOR UPDATE con dialecto MariaDBDialect.\newline 2) Permiso público en seguridad para /actuator/health.\newline 3) Configuración de dos instancias (8080 y 8082). & Elimina el error sintáctico de bloqueo pesimista contra MariaDB 10.4 en XAMPP; permite que NGINX y el monitor supervisen la salud real del servicio; soporte de balanceo 3:1 (P01, P23, P24, P25). \\
 \hline
-ventas-api & venta\_service.py, ventas.py, schemas.py, rabbitmq\_publisher.py & Desacoplamiento transaccional antes de HTTP/AMQP; creación de GET /api/compradores y GET /api/ventas; esquemas flexibles Pydantic. & Consulta requerida para Forms/React; garantía de no emitir eventos ante ventas fallidas. \\
+\textbf{ventas-api} \newline\textit{(Python FastAPI 8002)} & venta\_service.py, ventas.py, schemas.py, rabbitmq\_publisher.py & 1) Desacoplamiento transaccional (db.commit()) antes de llamadas externas o publicación AMQP.\newline 2) Implementación de GET /api/compradores y GET /api/ventas.\newline 3) Esquemas Pydantic flexibles (documento/cedula).\newline 4) Publicador RabbitMQ con pika. & Garantiza no encolar eventos de venta ante transacciones rechazadas o errores de negocio; provee listados para Windows Forms y React; asegura idempotencia con Idempotency-Key (P05, P06, P10, P11, P12, P18). \\
 \hline
-notificaciones-service & VentasRabbitListener, NotificacionController, NotificacionKeyFilter & Listener AMQP sobre cola durable notificaciones.ventas con desduplicación por eventoId y endpoint GET /api/notificaciones. & Procesamiento asíncrono y persistente de avisos de venta sin duplicados para JavaFX. \\
+\textbf{notificaciones-service} \newline\textit{(Spring Boot 8081)} & VentasRabbitListener, NotificacionController, NotificacionKeyFilter, application.properties & 1) Consumidor AMQP @RabbitListener en cola durable notificaciones.ventas.\newline 2) Desduplicación de avisos por eventoId.\newline 3) Endpoint GET /api/notificaciones exento de filtros restrictivos. & Recepción confiable de mensajes aunque el consumidor se reinicie; evita registrar notificaciones duplicadas; abastece el sondeo de JavaFX (P17, P19, P20, P21, P22). \\
 \hline
-monitor-balancer-service & HealthCheckClient, NginxLogParserService & Validación estricta del JSON Actuator (status UP) y filtrado temporal en ventana de minutos sobre access.log. & Supervisión desacoplada y métricas de balanceo 3:1 basadas en registros reales. \\
-\hline
-ConsultaVehiculosForms & VehiculosApiClient, VentasApiClient, MainForm & Implementación de formularios para creación de vehículos/compradores y visualización de catálogos e históricos vía NGINX. & Cumplimiento del cliente administrativo exclusivo para personal autorizado. \\
-\hline
-AplicacionMovilPWA & server.mjs, api.js, main.js, index.html & Autenticación OAuth 2.0 en pantalla login, proxy inverso NGINX, formulario exclusivo de venta y generación UUID para Idempotency-Key. & Canal móvil exclusivo para registro de ventas comerciales con control de concurrencia. \\
-\hline
-reactweb & vite.config.js, ventasApi.js, App.jsx & Pestañas de catálogo y ventas, filtrado por marca en memoria, métricas acumuladas y vista de auditoría de solo lectura. & Plataforma web de supervisión y consulta sin capacidad de alteración de datos. \\
-\hline
-escritorioFx & VehiculosApiClient, VehiculosApp, NotificacionVentaDto & Sondeo asíncrono cada 3 segundos a /api/notificaciones y renderizado reactivo de la tabla de ventas. & Visualización inmediata de ventas en tiempo real sin recarga manual. \\
+\textbf{monitor-balancer-service} \newline\textit{(Spring Boot 8083)} & HealthCheckClient, NginxLogParserService, EstadisticasResponse & 1) Auditoría estricta de Actuator validando cuerpo JSON \{"status":"UP"\}.\newline 2) Filtrado temporal estricto en ventana móvil de minutos sobre el archivo access.log de NGINX. & Supervisión desacoplada que calcula la proporción real del balanceo 3:1 y emite alertas fidedignas ante caídas de nodos Java (P23, P26). \\
 \hline
 \end{tabularx}
-\label{tab:modificaciones_proyectos}
+\label{tab:modificaciones_backend}
+}
+
+\vspace{0.4cm}
+\noindent\textbf{2. Aplicaciones Clientes Multicanal}
+
+\noindent En la Tabla \ref{tab:modificaciones_clientes} se especifican las ampliaciones desarrolladas sobre los cuatro clientes de usuario, asegurando la coherencia transaccional y el cumplimiento estricto del perfil de cada canal.
+
+\vspace{0.1cm}
+\noindent
+{\footnotesize
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sloppy}p{2.6cm}|>{\raggedright\arraybackslash\sloppy}p{3.2cm}|X|>{\raggedright\arraybackslash\sloppy}p{4.2cm}|}
+\hline
+\textbf{Cliente} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
+\hline
+\textbf{ConsultaVehiculosForms} \newline\textit{(C\# .NET 8 Desktop)} & VehiculosApiClient.cs, VentasApiClient.cs, MainForm.cs, MainForm.Designer.cs & 1) Interfaz gráfica en pestañas para Vehículos, Compradores y Ventas.\newline 2) Cliente HTTP con token Bearer JWT hacia Gateway NGINX (8090).\newline 3) Manejo de códigos 400, 401, 403 y 404. & Proporciona la herramienta administrativa para roles ADMIN y OPERADOR; respeta la restricción de negocio: no registra ventas directamente (P02, P03, P04, P05, P06). \\
+\hline
+\textbf{AplicacionMovilPWA} \newline\textit{(HTML5 / JS PWA 5174)} & server.mjs, public/api.js, public/main.js, public/index.html & 1) Autenticación OAuth 2.0 en login con almacenamiento seguro de JWT.\newline 2) Formulario exclusivo de registro de ventas (POST /api/ventas).\newline 3) Inyección de UUID en cabecera Idempotency-Key.\newline 4) Proxy inverso hacia NGINX (8090). & Canal móvil mandatario y exclusivo para registrar ventas comerciales; previene duplicidad de transacciones ante reintentos de red por parte del vendedor (P07, P08, P09, P10, P11). \\
+\hline
+\textbf{reactweb} \newline\textit{(React 19 / Vite 5173)} & vite.config.js, src/api/ventasApi.js, src/App.jsx & 1) Proxy Vite hacia NGINX (8090).\newline 2) Vista de catálogo con filtrado por marca en memoria.\newline 3) Vista de auditoría de ventas con métricas agregadas (totales y montos acumulados). & Opera como canal web de consulta y auditoría sin facultades de mutación ni formularios de venta, preservando la seguridad de los datos (P14, P15, P16). \\
+\hline
+\textbf{escritorioFx} \newline\textit{(Java 25 / JavaFX Desktop)} & VehiculosApiClient.java, VehiculosApp.java, NotificacionVentaDto.java & 1) Sondeo asíncrono en segundo plano cada 3 segundos hacia GET /api/notificaciones.\newline 2) Mapeo de DTO y renderizado en TableView mediante Platform.runLater. & Permite a los supervisores visualizar en tiempo real los eventos de venta emitidos por RabbitMQ sin necesidad de recargar la ventana manualmente (P21, P22, P27). \\
+\hline
+\end{tabularx}
+\label{tab:modificaciones_clientes}
 }
 
 \vspace{0.3cm}
