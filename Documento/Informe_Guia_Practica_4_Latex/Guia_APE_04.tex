@@ -607,13 +607,15 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
   \item \textbf{NGINX Gateway (Puerto 8090) y RabbitMQ (Puertos 5672/15672):} Componentes de infraestructura que unifican el enrutamiento de peticiones, balanceo ponderado 3:1 y transporte durable de eventos desacoplados.
 \end{enumerate}
 
-\noindent Para garantizar un desarrollo modular y reproducible, se verificó la organización de los proyectos dentro del espacio de trabajo. Como se observa en la Figura \ref{fig:act1_estructura_proyectos}, el repositorio contiene las carpetas independientes de cada proyecto cliente y servidor, asegurando el desacoplamiento de dependencias y código fuente.
+\noindent Para garantizar un desarrollo modular y reproducible, se verificó la organización de los proyectos dentro del espacio de trabajo y en el control de versiones remoto. Como se observa en la Figura \ref{fig:act1_git_repo}, el repositorio privado en GitHub aloja de manera estructurada los siete proyectos base junto con los componentes de infraestructura y documentación, asegurando el desacoplamiento estricto de dependencias y código fuente.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.88\textwidth]{act1_estructura_proyectos.png}
-  \caption{Estructura general de directorios de los siete proyectos base y componentes de soporte en el repositorio.}
-  \label{fig:act1_estructura_proyectos}
+  \includegraphics[width=0.95\textwidth]{act1_git_repo1.png}
+  \vspace{0.15cm}
+  \includegraphics[width=0.95\textwidth]{act1_git_repo2.png}
+  \caption{Estructura integral del repositorio privado SOA\_APE04 en GitHub evidenciando la organización modular de los proyectos base y componentes desacoplados.}
+  \label{fig:act1_git_repo}
 \end{figure}
 
 \vspace{0.2cm}
@@ -626,15 +628,23 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
   \item \texttt{ventas}: Registra las transacciones comerciales (id, operacion\_id, usuario, vehiculo\_id, comprador\_id, precio\_acordado, moneda, estado, idempotency\_key, request\_hash, fecha).
   \item \texttt{reservas}: Controla las reservas intermedias de vehículos previo a la confirmación de la venta.
   \item \texttt{usuarios\_api}: Registra las cuentas autorizadas para autenticación OAuth 2.0.
+  \item \texttt{alembic\_version}: Gestiona el historial de migraciones de base de datos en SQLAlchemy.
 \end{itemize}
 
-\noindent En la Figura \ref{fig:act1_mysql_conexion} se evidencia la verificación de conectividad y estado operativo del motor MySQL administrado mediante XAMPP sobre el puerto estándar 3306, así como la consulta de las tablas del esquema relacional \texttt{venta\_vehiculos}.
+\noindent En la Figura \ref{fig:act1_mysql_conexion} se evidencia la verificación de conectividad y estado operativo del motor MySQL administrado mediante XAMPP sobre el puerto estándar 3306. Complementariamente, en la Figura \ref{fig:act1_mysql_phpmyadmin} se muestra la inspección directa en phpMyAdmin, confirmando la existencia de las tablas del esquema relacional \texttt{venta\_vehiculos} y sus registros persistidos.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.88\textwidth]{act1_mysql_conexion.png}
-  \caption{Verificación de operatividad del motor MySQL en XAMPP (puerto 3306) e inspección del esquema relacional \texttt{venta\_vehiculos}.}
+  \includegraphics[width=0.78\textwidth]{act1_mysql_conexion.png}
+  \caption{Verificación de operatividad del motor MySQL en XAMPP (puerto 3306).}
   \label{fig:act1_mysql_conexion}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{act1_mysql_phpmyadmin.jpg}
+  \caption{Inspección relacional en phpMyAdmin de las tablas de la base de datos \texttt{venta\_vehiculos}.}
+  \label{fig:act1_mysql_phpmyadmin}
 \end{figure}
 
 \vspace{0.2cm}
@@ -687,23 +697,41 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \vspace{0.3cm}
 \noindent\textbf{E. Validación de servicios en ejecución con respuestas reales}
 
-\noindent Para comprobar la comunicación inicial entre clientes y servicios, se ejecutaron pruebas de diagnóstico mediante Postman. En la Figura \ref{fig:act1_postman_login_vehiculos} se aprecia la autenticación exitosa en el endpoint \texttt{POST /oauth/token} obteniendo un token JWT portador válido con firma HMAC-SHA256, seguido por la invocación a \texttt{GET /api/vehiculos} con respuesta HTTP 200 OK y el catálogo real de vehículos proveniente de MySQL.
+\noindent Para comprobar la comunicación inicial entre clientes y servicios, se ejecutaron pruebas de diagnóstico levantando los microservicios y validando sus respuestas mediante Postman:
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.88\textwidth]{act1_postman_login_vehiculos.png}
-  \caption{Prueba en Postman de obtención de token JWT (\texttt{POST /oauth/token}) y consulta de catálogo (\texttt{GET /api/vehiculos}).}
-  \label{fig:act1_postman_login_vehiculos}
-\end{figure}
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Microservicio de Vehículos (Spring Boot):} En la Figura \ref{fig:act1_java_terminal_8080} se evidencia la ejecución del servicio en la terminal de Visual Studio Code mediante el comando \texttt{.\textbackslash mvnw.cmd spring-boot:run}, confirmando el inicio de Tomcat sobre el puerto 8080. En la Figura \ref{fig:act1_postman_login_vehiculos} se aprecia la autenticación exitosa en el endpoint \texttt{POST /oauth/token} enviando las credenciales de cliente Basic y los parámetros de formulario del usuario (\texttt{admin} / \texttt{admin123}), obteniendo una respuesta HTTP 200 OK con el token JWT portador (\texttt{access\_token}) y el token de refresco.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{act1_java_terminal_8080.png}
+    \caption{Ejecución de la API de vehículos Spring Boot en terminal mediante \texttt{mvnw.cmd spring-boot:run} levantada en puerto 8080.}
+    \label{fig:act1_java_terminal_8080}
+  \end{figure}
 
-\noindent De forma complementaria, en la Figura \ref{fig:act1_fastapi_compradores_ventas} se documenta la validación del microservicio FastAPI en el puerto 8002, demostrando la conectividad hacia la base de datos MySQL y la obtención de respuestas HTTP 200 en las rutas de consulta de clientes (\texttt{GET /api/compradores}) y ventas (\texttt{GET /api/ventas}).
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{act1_postman_login_vehiculos.png}
+    \caption{Prueba en Postman de obtención de token JWT (\texttt{POST /oauth/token}) con respuesta HTTP 200 OK.}
+    \label{fig:act1_postman_login_vehiculos}
+  \end{figure}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.88\textwidth]{act1_fastapi_compradores_ventas.png}
-  \caption{Ejecución de FastAPI en el puerto 8002 y validación de endpoints de compradores y ventas con respuestas HTTP 200 reales.}
-  \label{fig:act1_fastapi_compradores_ventas}
-\end{figure}
+  \item \textbf{Microservicio de Compradores y Ventas (FastAPI):} En la Figura \ref{fig:act1_fastapi_terminal_8002} se documenta el levantamiento del microservicio Python con el servidor ASGI Uvicorn escuchando activamente en \texttt{http://127.0.0.1:8002}. En la Figura \ref{fig:act1_fastapi_compradores_ventas} se observa la petición \texttt{GET /api/compradores} en Postman, retornando código HTTP 200 OK y el arreglo JSON con los registros reales de clientes persistidos en MySQL.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{act1_fastapi_terminal_8002.png}
+    \caption{Ejecución del microservicio Python FastAPI en terminal con Uvicorn en el puerto 8002.}
+    \label{fig:act1_fastapi_terminal_8002}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{act1_fastapi_compradores_ventas.png}
+    \caption{Prueba en Postman de consulta de compradores (\texttt{GET /api/compradores}) con respuesta HTTP 200 OK y datos reales de la base de datos.}
+    \label{fig:act1_fastapi_compradores_ventas}
+  \end{figure}
+\end{enumerate}
 
 \vspace{0.4cm}
 
