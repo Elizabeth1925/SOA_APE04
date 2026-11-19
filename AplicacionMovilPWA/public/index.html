@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#103b56" />
-    <meta name="description" content="Consulta móvil de vehículos a través de una API REST con autenticación JWT." />
+    <meta name="description" content="Canal móvil PWA para registro exclusivo de ventas y consulta de vehículos con OAuth 2.0 y NGINX." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>Vehículos Móvil · PWA</title>
+    <title>Ventas Móvil · PWA | UTA SOA</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -18,39 +18,148 @@
   <body>
     <div class="app">
       <header class="encabezado">
-        <div class="logo" aria-hidden="true">🚙</div>
+        <div class="logo" aria-hidden="true">🚗</div>
         <div>
-          <p class="eyebrow">APLICACIÓN MÓVIL · PWA</p>
-          <h1>Consulta de vehículos</h1>
-          <p class="subtitulo">Cliente de la API Java Spring Boot</p>
+          <p class="eyebrow">UNIVERSIDAD TÉCNICA DE AMBATO · FISEI · SOA</p>
+          <h1>Canal Móvil de Ventas · PWA</h1>
+          <p class="subtitulo">Único canal autorizado para registro transaccional de ventas (APE 04)</p>
         </div>
       </header>
 
       <main>
+        <!-- SECCIÓN 01: AUTENTICACIÓN OAUTH 2.0 / JWT -->
         <section class="panel" aria-labelledby="titulo-acceso">
           <div class="seccion-cabecera">
             <span class="paso">01</span>
-            <h2 id="titulo-acceso">Acceso con JWT</h2>
+            <h2 id="titulo-acceso">Autenticación OAuth 2.0 / JWT</h2>
           </div>
-          <p class="ayuda">Se utiliza un token obtenido mediante el servicio de autenticación.</p>
+          <p class="ayuda">Inicie sesión contra Spring Boot a través de NGINX o ingrese un token Bearer manualmente.</p>
+
+          <form id="formularioLogin" class="form-login" novalidate>
+            <div class="grilla-login">
+              <div>
+                <label for="usuario">Usuario</label>
+                <select id="usuario" class="campo-select">
+                  <option value="operador" selected>operador (Permiso de Ventas)</option>
+                  <option value="admin">admin (Administrador Total)</option>
+                  <option value="consulta">consulta (Solo Lectura - Rechazado en Ventas)</option>
+                </select>
+              </div>
+              <div>
+                <label for="contrasena">Contraseña</label>
+                <input id="contrasena" type="password" value="operador123" autocomplete="current-password" />
+              </div>
+            </div>
+            <div class="acciones">
+              <button id="botonLogin" class="boton-primario" type="submit">Iniciar Sesión (Obtener JWT)</button>
+            </div>
+          </form>
+
+          <div class="separador-o"><span>o gestionar token manualmente</span></div>
+
           <form id="formulario" novalidate>
-            <label for="jwt">Token de usuario</label>
+            <label for="jwt">Token JWT activo</label>
             <div class="fila-token">
-              <input id="jwt" type="password" placeholder="Pegar JWT de Postman" autocapitalize="none" autocomplete="off" spellcheck="false" />
+              <input id="jwt" type="password" placeholder="Pegar token JWT (Bearer ...)" autocapitalize="none" autocomplete="off" spellcheck="false" />
               <button id="alternarToken" type="button" class="boton-secundario" aria-label="Mostrar token" aria-pressed="false">Mostrar</button>
             </div>
             <div class="acciones">
-              <button id="consultar" class="boton-primario" type="submit">Consultar vehículos</button>
-              <button id="borrar" class="boton-discreto" type="button">Borrar token</button>
+              <button id="consultar" class="boton-secundario" type="submit">Validar Catálogo de Vehículos</button>
+              <button id="borrar" class="boton-discreto" type="button">Borrar sesión</button>
             </div>
           </form>
-          <div id="mensaje" class="mensaje neutro" role="status" aria-live="polite">Listo para consultar.</div>
-          <p class="seguridad">El token permanece en memoria; no se almacena en el dispositivo.</p>
+
+          <div id="infoSesion" class="info-sesion">Estado: No autenticado</div>
+          <div id="mensaje" class="mensaje neutro" role="status" aria-live="polite">Listo para operar.</div>
+          <p class="seguridad">🔒 El token permanece exclusivamente en memoria volátil; no se almacena en disco ni almacenamiento persistente.</p>
         </section>
 
+        <!-- SECCIÓN 02: REGISTRO TRANSACCIONAL DE VENTAS -->
+        <section class="panel panel-destacado" aria-labelledby="titulo-ventas">
+          <div class="seccion-cabecera">
+            <span class="paso">02</span>
+            <div class="titulo-con-badge">
+              <h2 id="titulo-ventas">Emisión de Ventas (Canal Móvil Exclusivo)</h2>
+              <span class="badge-autorizado">Canal Autorizado</span>
+            </div>
+          </div>
+          <p class="ayuda">
+            Registra una venta transaccional hacia FastAPI (8002) vía NGINX (8090). Publica evento asíncrono a RabbitMQ y garantiza idempotencia con <code>Idempotency-Key</code>.
+          </p>
+
+          <form id="formularioVenta" novalidate>
+            <div class="campo-grupo">
+              <div class="fila-etiqueta-accion">
+                <label for="selectVehiculo">Seleccionar Vehículo</label>
+                <button type="button" id="btnRecargarVehiculos" class="btn-micro">↻ Recargar</button>
+              </div>
+              <select id="selectVehiculo" class="campo-select" required>
+                <option value="">-- Cargando vehículos disponibles... --</option>
+              </select>
+            </div>
+
+            <div class="campo-grupo">
+              <div class="fila-etiqueta-accion">
+                <label for="selectComprador">Seleccionar Comprador</label>
+                <button type="button" id="btnRecargarCompradores" class="btn-micro">↻ Recargar</button>
+              </div>
+              <select id="selectComprador" class="campo-select" required>
+                <option value="">-- Cargando compradores... --</option>
+              </select>
+            </div>
+
+            <div class="campo-grupo">
+              <label for="precioVenta">Precio de Venta ($ USD)</label>
+              <input id="precioVenta" type="number" step="0.01" min="1" placeholder="Ej. 18500.00" required />
+            </div>
+
+            <div class="campo-grupo">
+              <div class="fila-etiqueta-accion">
+                <label for="idempotencyKey">Clave de Idempotencia (Idempotency-Key)</label>
+                <div class="acciones-micro">
+                  <button type="button" id="btnNuevoUuid" class="btn-micro">Nuevo UUID</button>
+                  <button type="button" id="btnClaveMisma" class="btn-micro" title="Mantiene la clave actual para probar HTTP 200 idempotente o HTTP 409 conflicto">Fijar Clave</button>
+                </div>
+              </div>
+              <input id="idempotencyKey" type="text" class="input-codigo" placeholder="UUID v4 para control de duplicados" required />
+              <small class="texto-ayuda">Repetir la misma clave con idéntico payload debe devolver HTTP 200/201 idéntico. Con payload distinto devolverá HTTP 409 Conflict.</small>
+            </div>
+
+            <div class="acciones">
+              <button id="btnRegistrarVenta" class="boton-primario boton-grande" type="submit">
+                ✓ Registrar Venta (POST /api/ventas)
+              </button>
+            </div>
+          </form>
+
+          <div id="contenedorResultadoVenta" class="resultado-caja" style="display: none;">
+            <div class="resultado-cabecera">
+              <span class="resultado-titulo">Respuesta del Gateway NGINX</span>
+              <span id="badgeEstadoVenta" class="badge-http">HTTP 201</span>
+            </div>
+            <pre id="codigoResultadoVenta" class="codigo-json"></pre>
+          </div>
+
+          <!-- SUBSECCIÓN: CONSULTAR ESTADO DE VENTA -->
+          <div class="subseccion-consulta-venta">
+            <h3 class="subtitulo-seccion">Consultar Venta Emitida por ID</h3>
+            <div class="fila-buscar">
+              <input id="idVentaBuscar" type="number" min="1" placeholder="Ej: 1" />
+              <button id="btnBuscarVenta" type="button" class="boton-secundario">Consultar (GET)</button>
+            </div>
+            <div id="contenedorDetalleVenta" class="resultado-caja" style="display: none;">
+              <pre id="codigoDetalleVenta" class="codigo-json"></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 03: CATÁLOGO DE VEHÍCULOS -->
         <section class="panel listado" aria-labelledby="titulo-vehiculos">
           <div class="seccion-cabecera resultados">
-            <div class="titulo-bloque"><span class="paso">02</span><h2 id="titulo-vehiculos">Vehículos registrados</h2></div>
+            <div class="titulo-bloque">
+              <span class="paso">03</span>
+              <h2 id="titulo-vehiculos">Vehículos Registrados</h2>
+            </div>
             <span id="contador" class="contador">0 vehículos</span>
           </div>
           <div id="vehiculos" class="vehiculos">
@@ -58,7 +167,10 @@
           </div>
         </section>
       </main>
-      <footer><span id="conexion">Comprobando conexión…</span> · Datos proporcionados por la API REST</footer>
+
+      <footer>
+        <span id="conexion">Comprobando conexión…</span> · Gateway NGINX 127.0.0.1:8090 · Universidad Técnica de Ambato
+      </footer>
     </div>
   </body>
 </html>

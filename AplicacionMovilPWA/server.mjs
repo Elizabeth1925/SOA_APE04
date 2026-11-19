@@ -1,6 +1,6 @@
 /**
- * Servidor de desarrollo local sin dependencias externas.
- * Sirve la PWA y reenvía únicamente GET /api/vehiculos hacia Spring Boot.
+ * Servidor de desarrollo local sin dependencias externas para la PWA de Ventas Móvil.
+ * Sirve la PWA y reenvía las peticiones de autenticación y API hacia NGINX (Puerto 8090).
  * La URL pública siempre es del mismo origen para evitar problemas CORS.
  */
 import { createServer } from 'node:http';
@@ -18,7 +18,7 @@ const TIPOS = {
 
 export function crearServidor({
   directorio = resolve(ROOT, 'public'),
-  apiBase = process.env.API_BASE_URL || 'http://127.0.0.1:8080',
+  apiBase = process.env.API_BASE_URL || 'http://127.0.0.1:8090',
 } = {}) {
   const carpeta = resolve(directorio);
 
@@ -28,32 +28,52 @@ export function crearServidor({
     respuesta.setHeader('Referrer-Policy', 'no-referrer');
     respuesta.setHeader('Cache-Control', 'no-store');
 
-    // El servidor no incorpora una API de ventas ni expone secretos internos.
-    if (url.pathname.startsWith('/api/')) {
-      if (url.pathname !== '/api/vehiculos' || peticion.method !== 'GET') {
-        respuesta.writeHead(404, { 'Content-Type': 'application/json' });
-        respuesta.end(JSON.stringify({ error: 'Endpoint no disponible' }));
-        return;
-      }
+    // Reenvío de rutas de API y OAuth hacia el Gateway NGINX
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/oauth/')) {
       const abortador = new AbortController();
-      const temporizador = setTimeout(() => abortador.abort(), 12000);
+      const temporizador = setTimeout(() => abortador.abort(), 15000);
       try {
-        const encabezados = { Accept: 'application/json' };
-        if (peticion.headers.authorization) {
-          encabezados.Authorization = peticion.headers.authorization;
+        const encabezados = {};
+        for (const [clave, valor] of Object.entries(peticion.headers)) {
+          if (clave.toLowerCase() !== 'host') {
+            encabezados[clave] = valor;
+          }
         }
-        const remoto = await fetch(`${apiBase.replace(/\/$/, '')}/api/vehiculos`, {
-          method: 'GET', headers: encabezados, signal: abortador.signal, cache: 'no-store',
+        if (!encabezados.accept) encabezados.accept = 'application/json';
+
+        // Leer cuerpo en caso de peticiones con payload (POST, PUT, etc.)
+        let cuerpo = undefined;
+        if (peticion.method !== 'GET' && peticion.method !== 'HEAD') {
+          const trozos = [];
+          for await (const trozo of peticion) {
+            trozos.push(trozo);
+          }
+          if (trozos.length > 0) {
+            cuerpo = Buffer.concat(trozos);
+          }
+        }
+
+        const destino = `${apiBase.replace(/\/$/, '')}${url.pathname}${url.search}`;
+        const remoto = await fetch(destino, {
+          method: peticion.method,
+          headers: encabezados,
+          body: cuerpo,
+          signal: abortador.signal,
+          cache: 'no-store',
         });
-        respuesta.writeHead(remoto.status, {
-          'Content-Type': remoto.headers.get('content-type') || 'application/json; charset=utf-8',
-          'Cache-Control': 'no-store', 'Vary': 'Authorization',
-        });
+
+        const cabecerasRespuesta = {
+          'Cache-Control': 'no-store',
+        };
+        const tipo = remoto.headers.get('content-type');
+        if (tipo) cabecerasRespuesta['Content-Type'] = tipo;
+
+        respuesta.writeHead(remoto.status, cabecerasRespuesta);
         respuesta.end(Buffer.from(await remoto.arrayBuffer()));
       } catch (error) {
         const tiempoAgotado = error.name === 'AbortError';
         respuesta.writeHead(tiempoAgotado ? 504 : 502, { 'Content-Type': 'application/json; charset=utf-8' });
-        respuesta.end(JSON.stringify({ error: tiempoAgotado ? 'Tiempo de espera agotado' : 'API Java no disponible' }));
+        respuesta.end(JSON.stringify({ error: tiempoAgotado ? 'Tiempo de espera agotado' : 'Gateway NGINX o API no disponible' }));
       } finally {
         clearTimeout(temporizador);
       }
@@ -94,7 +114,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const carpeta = resolve(ROOT, argCarpeta?.split('=')[1] || 'public');
   crearServidor({ directorio: carpeta }).listen(puerto, host, () => {
     console.log(`PWA disponible: http://localhost:${puerto}`);
-    console.log(`Proxy de consulta: /api/vehiculos -> ${process.env.API_BASE_URL || 'http://127.0.0.1:8080'}/api/vehiculos`);
+    console.log(`Gateway SOA NGINX: ${process.env.API_BASE_URL || 'http://127.0.0.1:8090'}`);
     console.log('Para cerrar: Ctrl + C');
   });
 }
