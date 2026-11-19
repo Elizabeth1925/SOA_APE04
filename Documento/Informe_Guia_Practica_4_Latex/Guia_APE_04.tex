@@ -592,7 +592,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \noindent En esta actividad se realizó una inspección exhaustiva de los siete proyectos base provistos, sus dependencias tecnológicas, sus mecanismos de persistencia en MySQL y sus interfaces REST. Se determinó qué componentes arquitectónicos requerían adaptación, refactorización o ampliación para consolidar la arquitectura multicanal exigida por la guía APE 04.
 
 \vspace{0.2cm}
-\noindent\textbf{A. Identificación de los proyectos base y componentes tecnológicos}
+\noindent\textbf{A. Identificación y estructura de los proyectos base}
 
 \noindent La solución integra siete subsistemas principales y dos componentes de soporte de infraestructura:
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
@@ -607,6 +607,15 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
   \item \textbf{NGINX Gateway (Puerto 8090) y RabbitMQ (Puertos 5672/15672):} Componentes de infraestructura que unifican el enrutamiento de peticiones, balanceo ponderado 3:1 y transporte durable de eventos desacoplados.
 \end{enumerate}
 
+\noindent Para garantizar un desarrollo modular y reproducible, se verificó la organización de los proyectos dentro del espacio de trabajo. Como se observa en la Figura \ref{fig:act1_estructura_proyectos}, el repositorio contiene las carpetas independientes de cada proyecto cliente y servidor, asegurando el desacoplamiento de dependencias y código fuente.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act1_estructura_proyectos.png}
+  \caption{Estructura general de directorios de los siete proyectos base y componentes de soporte en el repositorio.}
+  \label{fig:act1_estructura_proyectos}
+\end{figure}
+
 \vspace{0.2cm}
 \noindent\textbf{B. Verificación de la base de datos MySQL (XAMPP)}
 
@@ -618,6 +627,15 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
   \item \texttt{reservas}: Controla las reservas intermedias de vehículos previo a la confirmación de la venta.
   \item \texttt{usuarios\_api}: Registra las cuentas autorizadas para autenticación OAuth 2.0.
 \end{itemize}
+
+\noindent En la Figura \ref{fig:act1_mysql_conexion} se evidencia la verificación de conectividad y estado operativo del motor MySQL administrado mediante XAMPP sobre el puerto estándar 3306, así como la consulta de las tablas del esquema relacional \texttt{venta\_vehiculos}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act1_mysql_conexion.png}
+  \caption{Verificación de operatividad del motor MySQL en XAMPP (puerto 3306) e inspección del esquema relacional \texttt{venta\_vehiculos}.}
+  \label{fig:act1_mysql_conexion}
+\end{figure}
 
 \vspace{0.2cm}
 \noindent\textbf{C. Definición de roles y directivas de seguridad}
@@ -665,6 +683,27 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \hline
 \end{tabularx}
 }
+
+\vspace{0.3cm}
+\noindent\textbf{E. Validación de servicios en ejecución con respuestas reales}
+
+\noindent Para comprobar la comunicación inicial entre clientes y servicios, se ejecutaron pruebas de diagnóstico mediante Postman. En la Figura \ref{fig:act1_postman_login_vehiculos} se aprecia la autenticación exitosa en el endpoint \texttt{POST /oauth/token} obteniendo un token JWT portador válido con firma HMAC-SHA256, seguido por la invocación a \texttt{GET /api/vehiculos} con respuesta HTTP 200 OK y el catálogo real de vehículos proveniente de MySQL.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act1_postman_login_vehiculos.png}
+  \caption{Prueba en Postman de obtención de token JWT (\texttt{POST /oauth/token}) y consulta de catálogo (\texttt{GET /api/vehiculos}).}
+  \label{fig:act1_postman_login_vehiculos}
+\end{figure}
+
+\noindent De forma complementaria, en la Figura \ref{fig:act1_fastapi_compradores_ventas} se documenta la validación del microservicio FastAPI en el puerto 8002, demostrando la conectividad hacia la base de datos MySQL y la obtención de respuestas HTTP 200 en las rutas de consulta de clientes (\texttt{GET /api/compradores}) y ventas (\texttt{GET /api/ventas}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act1_fastapi_compradores_ventas.png}
+  \caption{Ejecución de FastAPI en el puerto 8002 y validación de endpoints de compradores y ventas con respuestas HTTP 200 reales.}
+  \label{fig:act1_fastapi_compradores_ventas}
+\end{figure}
 
 \vspace{0.4cm}
 
