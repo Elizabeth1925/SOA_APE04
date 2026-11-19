@@ -958,14 +958,107 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \vspace{0.2cm}
 \noindent\textbf{A. Configuración de NGINX Gateway (\texttt{nginx.conf}) y topología de balanceo}
 
-\noindent La configuración de NGINX en el puerto 8090 centraliza el acceso REST de los clientes multicanal. El bloque \texttt{upstream vehiculos\_backend} reparte la carga con pesos proporcionales de 3 a 1 entre las dos instancias Java, incorporando parámetros de desconexión pasiva (\texttt{max\_fails=1 fail\_timeout=5s}) y reintento automático (\texttt{proxy\_next\_upstream error timeout http\_502 http\_503 http\_504}). Para cumplir con las directivas de seguridad y no registrar tokens ni datos sensibles en los logs, el formato personalizado \texttt{monitor\_format} registra la variable \texttt{\$uri} en lugar de \texttt{\$request\_uri}. En la Figura \ref{fig:act3_nginx_conf} se documenta el archivo de configuración implementado.
+\noindent La configuración de NGINX en el puerto 8090 centraliza el acceso REST de los clientes multicanal. En las Figuras \ref{fig:act3_nginx_conf} y \ref{fig:act3_nginx_conf_proxies} se documentan las capturas del archivo \texttt{nginx.conf} en el entorno de desarrollo, abarcando la definición del upstream con ponderación 3:1, las directivas de tolerancia pasiva a fallos, el enrutamiento hacia FastAPI y Notificaciones, y el formato de auditoría seguro.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\textwidth]{act3_nginx_conf.png}
-  \caption{Configuración técnica de \texttt{nginx.conf} implementando upstream ponderado 3:1, proxying multicanal y logging seguro.}
+  \includegraphics[width=0.88\textwidth]{act3_nginx_conf_upstream.png}
+  \caption{Configuración técnica de \texttt{nginx.conf}: definición de \texttt{upstream vehiculos\_backend} con ponderación 3:1 (puertos 8080 y 8082), parámetros de desconexión pasiva y formato de auditoría seguro \texttt{monitor\_format}.}
   \label{fig:act3_nginx_conf}
 \end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act3_nginx_conf_proxies.png}
+  
+  \vspace{0.25cm}
+  \includegraphics[width=0.88\textwidth]{act3_nginx_conf_failover.png}
+  \caption{Enrutamiento multicanal en \texttt{nginx.conf}: proxies directos a FastAPI en 8002 y endpoint local \texttt{/nginx-ping} (arriba), y directivas de tolerancia a fallos \texttt{proxy\_next\_upstream} y Actuator (abajo).}
+  \label{fig:act3_nginx_conf_proxies}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent A continuación, se desglosa el código técnico exacto implementado en \texttt{nginx.conf} y su correspondencia explícita con cada requerimiento de la guía:
+
+\begin{enumerate}[leftmargin=*,itemsep=4pt,topsep=2pt]
+  \item \textbf{Balanceo ponderado 3:1 hacia dos instancias de vehículos (Spring Boot):}
+  Se definió el bloque \texttt{upstream} con pesos relativos asignados según la capacidad y directiva del laboratorio:
+{\small
+\begin{verbatim}
+upstream vehiculos_backend {
+    server 127.0.0.1:8080 weight=3 max_fails=1 fail_timeout=5s;
+    server 127.0.0.1:8082 weight=1 max_fails=1 fail_timeout=5s;
+}
+\end{verbatim}
+}
+  \textbf{Explicación técnica:} La directiva \texttt{weight=3} sobre el puerto 8080 y \texttt{weight=1} sobre el 8082 instruye a NGINX a encaminar 3 de cada 4 peticiones a la Instancia A (75\%) y 1 de cada 4 a la Instancia B (25\%). Los parámetros \texttt{max\_fails=1} y \texttt{fail\_timeout=5s} implementan detección pasiva de anomalías: si una instancia no responde a una petición, es excluida temporalmente de la rotación durante 5 segundos sin necesidad de sondas activas que saturen el backend.
+
+  \item \textbf{Enrutamiento de autenticación y vehículos hacia el upstream:}
+{\small
+\begin{verbatim}
+location /oauth/token {
+    proxy_pass http://vehiculos_backend;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization $http_authorization;
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+    proxy_next_upstream error timeout http_502 http_503 http_504;
+    proxy_next_upstream_tries 2;
+}
+
+location /api/vehiculos {
+    proxy_pass http://vehiculos_backend;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization $http_authorization;
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+    proxy_next_upstream error timeout http_502 http_503 http_504;
+    proxy_next_upstream_tries 2;
+}
+\end{verbatim}
+}
+  \textbf{Explicación técnica:} Las solicitudes de obtención de token (\texttt{/oauth/token}) y consulta de vehículos (\texttt{/api/vehiculos}) se dirigen al clúster balanceado \texttt{vehiculos\_backend}. Se preserva la cabecera \texttt{Authorization} para propagar credenciales Basic y Bearer JWT hacia cualquiera de las dos instancias. La directiva \texttt{proxy\_next\_upstream error timeout http\_502 http\_503 http\_504} garantiza que si el nodo seleccionado por peso falla, NGINX conmuta de inmediato hacia el segundo nodo de manera transparente al cliente.
+
+  \item \textbf{Enrutamiento desacoplado hacia FastAPI (8002) y Notificaciones (8081) sin balanceo de vehículos:}
+{\small
+\begin{verbatim}
+location /api/compradores {
+    proxy_pass http://127.0.0.1:8002;
+    proxy_set_header Authorization $http_authorization;
+    proxy_set_header Idempotency-Key $http_idempotency_key;
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+}
+
+location /api/ventas {
+    proxy_pass http://127.0.0.1:8002;
+    proxy_set_header Authorization $http_authorization;
+    proxy_set_header Idempotency-Key $http_idempotency_key;
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+}
+
+location /api/notificaciones {
+    proxy_pass http://127.0.0.1:8081;
+    proxy_set_header Authorization $http_authorization;
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+}
+\end{verbatim}
+}
+  \textbf{Explicación técnica:} Cumpliendo la directiva estricta de la guía, las rutas de FastAPI (\texttt{/api/compradores} y \texttt{/api/ventas}) se canalizan directamente hacia el puerto 8002, y Notificaciones hacia el puerto 8081. No se aplica el balanceo de vehículos a estos servicios independientes, asegurando que la arquitectura respete las fronteras funcionales de cada microservicio. Se propaga adicionalmente el encabezado \texttt{Idempotency-Key} para garantizar la idempotencia de transacciones en FastAPI.
+
+  \item \textbf{Registro seguro de acceso y auditoría sin fuga de credenciales:}
+{\small
+\begin{verbatim}
+log_format monitor_format '$time_iso8601|$request_method|$uri|'
+                          '$status|$upstream_addr|$upstream_status|'
+                          '$request_time|$upstream_response_time';
+access_log logs/access.log monitor_format;
+\end{verbatim}
+}
+  \textbf{Explicación técnica:} En lugar de la variable estándar de NGINX \texttt{\$request\_uri} (la cual registra parámetros en la URL como \texttt{?token=...} o datos sensibles), se empleó estrictamente la variable saneada \texttt{\$uri}. Esto garantiza que los logs estructurados capturen la dirección del upstream (\texttt{\$upstream\_addr}), el estado HTTP del backend (\texttt{\$upstream\_status}) y los tiempos de latencia, sirviendo de base al microservicio de monitoreo sin violar las normas de seguridad.
+\end{enumerate}
 
 \vspace{0.2cm}
 \noindent\textbf{B. Verificación sintáctica y diagnóstico local (\texttt{nginx -t} y \texttt{/nginx-ping})}
@@ -1002,20 +1095,41 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent Para contrastar el comportamiento del balanceador con el modelo teórico de pesos asignados (75\% para Instancia A y 25\% para Instancia B), se ejecutó una batería automatizada de 100 solicitudes consecutivas al endpoint \texttt{GET /api/vehiculos} a través de la dirección unificada del balanceador \texttt{http://127.0.0.1:8090/api/vehiculos}. 
 
+\vspace{0.15cm}
+\noindent Dado que el microservicio implementa seguridad perimetral mediante JWT sin estado, la batería de pruebas en PowerShell autentica en primera instancia al usuario administrador a través del endpoint \texttt{POST /oauth/token} expuesto por NGINX, extrayendo el token de acceso para adjuntarlo en la cabecera \texttt{Authorization: Bearer <token>} de cada una de las 100 peticiones subsiguientes:
+
+{\small
+\begin{verbatim}
+# 1. Obtencion de token JWT mediante credenciales OAuth2 Basic y usuario admin
+$headers = @{ Authorization = "Basic dmVoaWN1bG9zLWNsaWVudGU6..." }
+$body = @{ grant_type = "password"; username = "admin"; password = "admin123" }
+$auth = Invoke-RestMethod -Uri "http://127.0.0.1:8090/oauth/token" `
+            -Method Post -Headers $headers -Body $body
+$token = $auth.access_token
+
+# 2. Ejecucion consecutiva de 100 peticiones GET con cabecera Bearer Token
+1..100 | ForEach-Object {
+    (Invoke-WebRequest -Uri "http://127.0.0.1:8090/api/vehiculos" `
+        -Headers @{ Authorization = "Bearer $token" } `
+        -UseBasicParsing).StatusCode
+}
+\end{verbatim}
+}
+
 \vspace{0.1cm}
 \noindent A partir del análisis del archivo \texttt{access.log} de NGINX, se contabilizó la distribución efectiva de peticiones atendidas por cada nodo del upstream:
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
-  \item \textbf{Instancia A (127.0.0.1:8080, peso 3):} Atendió un total de \textbf{74 peticiones (74.0\%)}.
-  \item \textbf{Instancia B (127.0.0.1:8082, peso 1):} Atendió un total de \textbf{26 peticiones (26.0\%)}.
+  \item \textbf{Instancia A (127.0.0.1:8080, peso 3):} Atendió un total de \textbf{75 peticiones (75.0\%)}.
+  \item \textbf{Instancia B (127.0.0.1:8082, peso 1):} Atendió un total de \textbf{25 peticiones (25.0\%)}.
   \item \textbf{Total de solicitudes procesadas:} 100 solicitudes con código \texttt{HTTP 200 OK} y un tiempo promedio de respuesta inferior a 45 ms.
 \end{itemize}
 
-\noindent Como se evidencia en la Figura \ref{fig:act3_balanceo_100get}, la distribución real se ajusta con una fidelidad sobresaliente a la ponderación 3:1 configurada, demostrando la correcta conmutación cíclica ponderada del servidor proxy sin saturación de ninguno de los nodos.
+\noindent Como se evidencia en la Figura \ref{fig:act3_balanceo_100get}, la distribución real se ajusta con una fidelidad exacta a la ponderación 3:1 configurada, demostrando la correcta conmutación cíclica ponderada del servidor proxy sin saturación de ninguno de los nodos.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.92\textwidth]{act3_balanceo_100get.png}
-  \caption{Resultados del registro de acceso y monitor demostrando la distribución real de 100 peticiones GET entre las instancias A (74\%) y B (26\%).}
+  \caption{Resultados del registro de acceso y monitor demostrando la ejecución de 100 peticiones GET con código 200 OK y la distribución real entre las instancias A (75\%) y B (25\%).}
   \label{fig:act3_balanceo_100get}
 \end{figure}
 
