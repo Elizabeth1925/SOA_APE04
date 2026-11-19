@@ -584,6 +584,90 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent\textbf{1.7 Resultados obtenidos}
 
+\vspace{0.3cm}
+
+\noindent\textbf{1.7.1 Actividad 1. Diagnóstico inicial y definición de contratos}
+
+\vspace{0.2cm}
+\noindent En esta actividad se realizó una inspección exhaustiva de los siete proyectos base provistos, sus dependencias tecnológicas, sus mecanismos de persistencia en MySQL y sus interfaces REST. Se determinó qué componentes arquitectónicos requerían adaptación, refactorización o ampliación para consolidar la arquitectura multicanal exigida por la guía APE 04.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Identificación de los proyectos base y componentes tecnológicos}
+
+\noindent La solución integra siete subsistemas principales y dos componentes de soporte de infraestructura:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+  \item \textbf{venta-vehiculos-api\_security (Java Spring Boot, Puertos 8080 y 8082):} Servicio encargado de la gestión de vehículos, persistencia JPA/Hibernate en MySQL, emisión y validación de tokens JWT (HMAC-SHA256) mediante el endpoint \texttt{POST /oauth/token}, y métricas de salud con Spring Boot Actuator (\texttt{/actuator/health}). Opera en dos instancias para balanceo ponderado 3:1.
+  \item \textbf{ventas-api (Python FastAPI, Puerto 8002):} Microservicio REST responsable de la persistencia de compradores y transacciones comerciales de venta. Utiliza SQLAlchemy ORM, esquemas Pydantic v2, control de concurrencia e idempotencia mediante cabecera \texttt{Idempotency-Key}, y el publicador asíncrono AMQP hacia RabbitMQ.
+  \item \textbf{notificaciones-service (Java Spring Boot, Puerto 8081):} Consumidor asíncrono de eventos de venta suscrito a la cola durable \texttt{notificaciones.ventas} de RabbitMQ. Incluye lógica de desduplicación por \texttt{eventoId} y expone la API de consulta \texttt{GET /api/notificaciones}.
+  \item \textbf{monitor-balancer-service (Java Spring Boot, Puerto 8083):} Servicio supervisor independiente que sondea periódicamente la salud Actuator de las instancias Java, analiza los registros de acceso de NGINX aplicando una ventana temporal estricta y expone métricas y alertas.
+  \item \textbf{ConsultaVehiculosForms (C\# .NET 8 Desktop):} Cliente de administración para personal operativo. Consume la API REST de vehículos y ventas vía NGINX para dar de alta vehículos, registrar compradores y listar catálogos e históricos de venta.
+  \item \textbf{AplicacionMovilPWA (HTML5 / Vanilla JS / Service Worker, Puerto 5173):} Cliente web progresivo para dispositivos móviles. Representa el \textbf{único canal autorizado} para autenticar al vendedor mediante OAuth 2.0 y ejecutar transacciones de venta (\texttt{POST /api/ventas}).
+  \item \textbf{reactweb (React 19 / Vite, Puerto 5174):} Portal web de consulta y auditoría comercial. Consume el catálogo de vehículos con filtrado por marca en memoria y consulta ventas para presentar indicadores acumulados en tiempo real, sin facultades de mutación.
+  \item \textbf{escritorioFx (Java 25 / OpenJFX 21 Desktop):} Aplicación de escritorio encargada de presentar en una tabla en tiempo real las notificaciones de ventas recibidas a través de RabbitMQ mediante sondeo asíncrono cada 3 segundos.
+  \item \textbf{NGINX Gateway (Puerto 8090) y RabbitMQ (Puertos 5672/15672):} Componentes de infraestructura que unifican el enrutamiento de peticiones, balanceo ponderado 3:1 y transporte durable de eventos desacoplados.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Verificación de la base de datos MySQL (XAMPP)}
+
+\noindent Se constató la conectividad local en \texttt{127.0.0.1:3306} hacia la base de datos \texttt{venta\_vehiculos}. Se identificó el esquema relacional existente con las tablas:
+\begin{itemize}[leftmargin=*,itemsep=1pt,topsep=1pt]
+  \item \texttt{vehiculos}: Almacena los atributos del vehículo (id\_vehiculo, marca, modelo, placa, chasis, anio, color, precio, estado).
+  \item \texttt{compradores}: Contiene la información de los clientes (id, usuario, documento, nombre, correo).
+  \item \texttt{ventas}: Registra las transacciones comerciales (id, operacion\_id, usuario, vehiculo\_id, comprador\_id, precio\_acordado, moneda, estado, idempotency\_key, request\_hash, fecha).
+  \item \texttt{reservas}: Controla las reservas intermedias de vehículos previo a la confirmación de la venta.
+  \item \texttt{usuarios\_api}: Registra las cuentas autorizadas para autenticación OAuth 2.0.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Definición de roles y directivas de seguridad}
+
+\noindent A partir de la auditoría de seguridad del backend en Spring Boot y FastAPI, se mapearon los siguientes roles de usuario:
+\begin{itemize}[leftmargin=*,itemsep=1pt,topsep=1pt]
+  \item \textbf{ADMIN (Usuario 'admin', clave 'admin123'):} Privilegios completos de creación y consulta de vehículos, consulta de compradores y auditoría general.
+  \item \textbf{OPERADOR (Usuario 'operador', clave 'operador123'):} Permisos habilitados para crear compradores, consultar catálogos y \textbf{emitir transacciones de venta} exclusivas desde el canal móvil PWA.
+  \item \textbf{CONSULTA (Usuario 'consulta', clave 'consulta123'):} Perfil de solo lectura restringido al catálogo de vehículos y consultas de ventas. Rechazado con \texttt{HTTP 403 Forbidden} ante cualquier intento de registro o venta.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Matriz integral de contratos de endpoints}
+
+\noindent A continuación se define la matriz formal de contratos de integración que rige la comunicación multicanal:
+
+\vspace{0.1cm}
+\noindent
+{\footnotesize
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.3cm}|>{\centering\arraybackslash}p{2.2cm}|>{\centering\arraybackslash}p{2.0cm}|>{\centering\arraybackslash}p{1.9cm}|X|}
+\hline
+\textbf{Método y Ruta} & \textbf{Microservicio} & \textbf{Rol Mínimo} & \textbf{Códigos HTTP} & \textbf{Función y Restricción} \\
+\hline
+\texttt{POST /oauth/token} & Vehículos (Java) & Cliente Basic & 200, 400, 401 & Autentica credenciales y emite JWT Bearer. \\
+\hline
+\texttt{GET /api/vehiculos} & Vehículos (Java) & CONSULTA & 200, 401, 403 & Catálogo balanceado 3:1 por NGINX. \\
+\hline
+\texttt{POST /api/vehiculos} & Vehículos (Java) & ADMIN & 201, 400, 403 & Alta de vehículos con chasis de 17 caracteres. \\
+\hline
+\texttt{POST /api/compradores} & Ventas (FastAPI) & OPERADOR & 201, 400, 403 & Registro administrativo de compradores. \\
+\hline
+\texttt{GET /api/compradores} & Ventas (FastAPI) & CONSULTA & 200, 401, 403 & \textit{Endpoint incorporado} para listado de clientes. \\
+\hline
+\texttt{POST /api/ventas} & Ventas (FastAPI) & OPERADOR & 201, 200, 409 & Venta con Idempotency-Key. Exclusivo canal PWA. \\
+\hline
+\texttt{GET /api/ventas} & Ventas (FastAPI) & CONSULTA & 200, 401, 403 & \textit{Endpoint incorporado} para auditoría Forms/React. \\
+\hline
+\texttt{GET /api/ventas/\{id\}} & Ventas (FastAPI) & OPERADOR & 200, 404, 403 & Consulta y seguimiento individual de venta. \\
+\hline
+\texttt{GET /api/notificaciones} & Notificaciones & Interno & 200 & \textit{Endpoint incorporado} para sondeo JavaFX. \\
+\hline
+\texttt{GET /nginx-ping} & NGINX & Público & 200 & Verificación local inmediata sin upstream. \\
+\hline
+\texttt{GET /actuator/health} & Vehículos & Público & 200, 503 & Diagnóstico de salud validando status UP. \\
+\hline
+\end{tabularx}
+}
+
+\vspace{0.4cm}
+
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
 \vspace{0.2cm}
