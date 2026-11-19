@@ -1046,7 +1046,17 @@ location /api/notificaciones {
 }
 \end{verbatim}
 }
-  \textbf{Explicación técnica:} Cumpliendo la directiva estricta de la guía, las rutas de FastAPI (\texttt{/api/compradores} y \texttt{/api/ventas}) se canalizan directamente hacia el puerto 8002, y Notificaciones hacia el puerto 8081. No se aplica el balanceo de vehículos a estos servicios independientes, asegurando que la arquitectura respete las fronteras funcionales de cada microservicio. Se propaga adicionalmente el encabezado \texttt{Idempotency-Key} para garantizar la idempotencia de transacciones en FastAPI.
+  \textbf{Explicación técnica:} Cumpliendo la directiva estricta de la guía, las rutas de FastAPI (\texttt{/api/compradores} y \texttt{/api/ventas}) se canalizan directamente hacia el puerto 8002, y Notificaciones hacia el puerto 8081. No se aplica el balanceo de vehículos a estos servicios independientes, asegurando que la arquitectura respete las fronteras funcionales de cada microservicio. Se propaga adicionalmente el encabezado \texttt{Idempotency-Key} para garantizar la idempotencia de transacciones en FastAPI. En la Figura \ref{fig:act3_postman_proxies_8090} se comprueba el funcionamiento real en Postman de ambos enrutamientos a través del puerto unificado 8090.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act3_postman_oauth_8090.png}
+  
+  \vspace{0.25cm}
+  \includegraphics[width=0.88\textwidth]{act3_postman_fastapi_compradores_8090.png}
+  \caption{Comprobación en Postman del enrutamiento Gateway NGINX sobre el puerto 8090: obtención de token JWT desde el clúster de vehículos (arriba) y consumo desacoplado de compradores atendido por FastAPI en el puerto 8002 sin pasar por el balanceo de vehículos (abajo).}
+  \label{fig:act3_postman_proxies_8090}
+\end{figure}
 
   \item \textbf{Registro seguro de acceso y auditoría sin fuga de credenciales:}
 {\small
@@ -1061,9 +1071,9 @@ access_log logs/access.log monitor_format;
 \end{enumerate}
 
 \vspace{0.2cm}
-\noindent\textbf{B. Verificación sintáctica y diagnóstico local (\texttt{nginx -t} y \texttt{/nginx-ping})}
+\noindent\textbf{B. Verificación sintáctica, salud local (\texttt{nginx -t}, \texttt{/nginx-ping}) y supervisión Actuator (\texttt{/actuator/health})}
 
-\noindent Previo a la puesta en marcha del servicio, se ejecutó la validación de integridad sintáctica mediante el comando \texttt{nginx -t}, confirmando que el archivo de configuración es válido y superó las pruebas del motor NGINX. Asimismo, se comprobó el endpoint de diagnóstico local \texttt{GET /nginx-ping}, el cual retorna una respuesta inmediata HTTP 200 OK en formato JSON (\texttt{\{"status":"UP","mensaje":"NGINX funcionando correctamente"\}}) directamente desde el servidor web, sin sobrecargar los upstreams backend. En la Figura \ref{fig:act3_nginx_test_ping} se evidencia dicha verificación.
+\noindent Previo a la puesta en marcha del servicio, se ejecutó la validación de integridad sintáctica mediante el comando \texttt{nginx -t}, confirmando que el archivo de configuración es válido y superó las pruebas del motor NGINX. Asimismo, se comprobó el endpoint de diagnóstico local \texttt{GET /nginx-ping}, el cual retorna una respuesta inmediata HTTP 200 OK en formato JSON (\texttt{\{"status":"UP","mensaje":"NGINX funcionando correctamente"\}}) directamente desde el servidor web, sin sobrecargar los upstreams backend. En la Figura \ref{fig:act3_nginx_test_ping} se evidencia dicha verificación sintáctica y de ping local.
 
 \begin{figure}[H]
   \centering
@@ -1073,6 +1083,15 @@ access_log logs/access.log monitor_format;
   \includegraphics[width=0.88\textwidth]{act3_nginx_ping.png}
   \caption{Comprobación de sintaxis de configuración con \texttt{nginx -t} (arriba) y respuesta HTTP 200 OK del endpoint local de diagnóstico \texttt{GET /nginx-ping} sobre el puerto 8090 (abajo).}
   \label{fig:act3_nginx_test_ping}
+\end{figure}
+
+\noindent Adicionalmente, se verificó el endpoint de supervisión de salud del clúster de vehículos a través del Gateway NGINX mediante \texttt{GET http://127.0.0.1:8090/actuator/health}. Como se ilustra en la Figura \ref{fig:act3_browser_actuator_health_8090}, el balanceador enruta la solicitud hacia el upstream activo y reporta estado global \texttt{"status":"UP"}, detallando la disponibilidad de la base de datos MySQL (\texttt{isValid()}), espacio en disco suficiente y estado óptimo de las sondas de liveness y readiness para monitoreo continuo.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act3_browser_actuator_health_8090.png}
+  \caption{Respuesta del endpoint \texttt{GET /actuator/health} a través del Gateway NGINX (puerto 8090), demostrando el estado de salud \texttt{UP} del clúster y la conexión activa a MySQL.}
+  \label{fig:act3_browser_actuator_health_8090}
 \end{figure}
 
 \vspace{0.2cm}
