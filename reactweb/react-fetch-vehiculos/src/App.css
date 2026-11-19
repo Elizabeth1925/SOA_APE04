@@ -6,7 +6,8 @@ h1 { font-size: clamp(27px, 4vw, 35px); margin: 7px 0; }
 h2 { margin: 0 0 12px; font-size: 21px; }
 p { line-height: 1.5; }
 .cabecera p { margin: 0; color: #5a6d80; }
-/* Los paneles separan conexión, catálogo y detalles. */
+
+/* Paneles de separación */
 .panel { background: white; border: 1px solid #d9e1eb; border-radius: 10px;
   padding: 23px; margin: 18px 0; box-shadow: 0 3px 14px #18364d0a; }
 .ayuda, .nota { color: #586c80; font-size: 14px; }
@@ -17,37 +18,76 @@ input { display: block; width: 100%; min-width: 0; padding: 11px 12px;
 .linea-token { display: flex; gap: 9px; }
 .linea-token input { flex: 1; }
 .acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-button:not(.enlace-id) { border: 1px solid #a80016; border-radius: 6px;
-  padding: 10px 16px; color: white; background: #b50018; font-weight: bold; }
+button:not(.enlace-id):not(.pestana-btn) { border: 1px solid #a80016; border-radius: 6px;
+  padding: 10px 16px; color: white; background: #b50018; font-weight: bold; cursor: pointer; }
+button:not(.enlace-id):not(.pestana-btn):hover { background: #960014; }
 button.secundario { background: #fff; color: #8f0015; border-color: #bfa2a8; }
-/* Mensajes de respuesta HTTP y fallos, visibles y con contraste. */
+button.secundario:hover { background: #fdf5f5; }
+
+/* Barra de Navegación por Pestañas */
+.pestanas-nav { display: flex; gap: 8px; margin: 20px 0 10px; border-bottom: 2px solid #e1e7ee; }
+.pestana-btn { padding: 12px 20px; border: none; background: transparent; font-size: 15px; font-weight: bold; color: #5a6f84; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+.pestana-btn:hover { color: #b50018; }
+.pestana-btn.activa { color: #b50018; border-bottom-color: #b50018; }
+
+/* Aviso de seguridad y perfil */
+.panel-aviso-seguridad { background: #f0f7fb; border: 1px solid #bde0f2; }
+.aviso-cabecera { display: flex; gap: 12px; align-items: flex-start; }
+.aviso-icono { font-size: 24px; line-height: 1; }
+.aviso-texto { margin: 4px 0 0; color: #23526d; font-size: 13px; }
+
+/* Cuadrícula de Métricas */
+.metricas-grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 18px 0; }
+.metrica-card { background: white; border: 1px solid #d9e1eb; border-radius: 10px; padding: 18px; box-shadow: 0 2px 10px #18364d08; }
+.metrica-titulo { font-size: 12px; font-weight: bold; color: #597086; text-transform: uppercase; letter-spacing: .05em; }
+.metrica-valor { font-size: 28px; font-weight: 850; margin: 8px 0 4px; color: #18344f; }
+.metrica-sub { font-size: 11px; color: #7f93a5; }
+.metrica-dinero .metrica-valor { color: #0d6b52; }
+.metrica-exito .metrica-valor { color: #1b7e3e; }
+.metrica-observada .metrica-valor { color: #b36b00; }
+
+/* Mensajes de respuesta HTTP y fallos */
 .estado { margin-top: 16px; padding: 11px 13px; border-radius: 6px;
   display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .estado-ok { background: #ecf4fc; border: 1px solid #bdd5e9; }
 .estado-error { background: #fff0ee; color: #923326; border: 1px solid #f2b5aa; }
 .estado strong { white-space: nowrap; }
-/* Tabla con desplazamiento horizontal para teléfonos. */
+
+/* Tabla */
 .titulo-listado { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.acciones-inline { display: flex; align-items: center; gap: 10px; }
+.boton-recargar { padding: 6px 12px !important; font-size: 12px !important; background: #37536d !important; border-color: #2b4359 !important; }
+.boton-recargar:hover { background: #2b4359 !important; }
 .contador { border: 1px solid #d1dbe6; border-radius: 18px; padding: 6px 10px;
-  color: #51647b; white-space: nowrap; font-size: 13px; }
+  color: #51647b; white-space: nowrap; font-size: 13px; font-weight: bold; }
 .tabla-scroll { overflow-x: auto; margin-top: 16px; }
-table { width: 100%; border-collapse: collapse; min-width: 590px; text-align: left; }
+table { width: 100%; border-collapse: collapse; min-width: 600px; text-align: left; }
 th { background: #f1f4f8; font-size: 14px; }
-th, td { padding: 12px 10px; border-bottom: 1px solid #e5ebf1; }
+th, td { padding: 12px 10px; border-bottom: 1px solid #e5ebf1; font-size: 14px; }
 tr:hover td { background: #fafcff; }
 .enlace-id { border: 0; padding: 0; background: transparent;
-  color: #075a98; font-weight: bold; text-decoration: underline; }
+  color: #075a98; font-weight: bold; text-decoration: underline; cursor: pointer; }
 .sin-datos { text-align: center; padding: 22px; color: #60758a; }
-/* La selección muestra datos del mismo vehículo sin otra solicitud REST. */
+
+/* Badges de estado */
+.badge-estado { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; background: #eef2f6; color: #496378; }
+.badge-estado.disponible { background: #dff4e7; color: #166c39; }
+.badge-estado.vendido { background: #fff1df; color: #96531c; }
+.badge-estado.exitosa, .badge-estado.completada, .badge-estado.procesada, .badge-estado.confirmada { background: #dff4e7; color: #166c39; }
+
+/* Detalle */
 .detalle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px; margin: 16px 0 0; }
 .detalle div { background: #f2f6fb; border-radius: 7px; padding: 14px; }
-.detalle dt { font-size: 13px; color: #5a7289; margin-bottom: 5px; }
-.detalle dd { margin: 0; font-weight: bold; overflow-wrap: anywhere; }
-code { background: #f1f3f6; padding: 2px 4px; border-radius: 3px; }
+.detalle dt { font-size: 12px; color: #5a7289; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+.detalle dd { margin: 0; font-weight: bold; overflow-wrap: anywhere; font-size: 15px; }
+code { background: #f1f3f6; padding: 2px 4px; border-radius: 3px; font-family: Consolas, monospace; }
+
 @media (max-width: 620px) {
   .panel { padding: 16px; }
   .linea-token { flex-wrap: wrap; }
   .linea-token input { flex-basis: 100%; }
   .estado { flex-direction: column; align-items: flex-start; }
+  .titulo-listado { flex-direction: column; }
+  .metricas-grilla { grid-template-columns: 1fr; }
 }
