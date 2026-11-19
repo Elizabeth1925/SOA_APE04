@@ -740,16 +740,81 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \noindent Para garantizar el cumplimiento de los estándares de integración y reproducibilidad exigidos por la guía práctica APE 04, se procedió a la organización modular de los siete proyectos base en el repositorio, la redacción de documentación técnica individualizada mediante archivos \texttt{README.md}, la eliminación de secretos en el control de versiones y la verificación exhaustiva de la compilación de cada subsistema.
 
 \vspace{0.2cm}
-\noindent\textbf{A. Organización modular y documentación técnica por proyecto}
+\noindent\textbf{A. Organización modular y documentación técnica por proyecto (READMEs)}
 
-\noindent Cada uno de los proyectos cliente y servidor se estructuró en su propio directorio independiente dentro del repositorio \texttt{SOA\_APE04}, provisto de su correspondiente archivo \texttt{README.md}. En dichos documentos se especifican los prerrequisitos de entorno (JDK 17+, Python 3.10+, .NET SDK 8, Node.js 18+), las variables de configuración, los comandos de instalación de dependencias, compilación, ejecución y verificación de endpoints. En la Figura \ref{fig:act2_readme_estructura} se presenta la estructura de documentación técnica adoptada.
+\noindent Cada uno de los proyectos cliente y servidor se estructuró en su propio directorio independiente dentro del repositorio \texttt{SOA\_APE04}, provisto de su correspondiente archivo \texttt{README.md}. En dichos documentos se especifican los prerrequisitos de entorno, variables de configuración, puertos de red, comandos de compilación, ejecución y verificación de endpoints para los siete proyectos base:
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.92\textwidth]{act2_readme_estructura.png}
-  \caption{Ejemplo de documentación técnica estructurada mediante \texttt{README.md} describiendo requisitos, configuración y ejecución.}
-  \label{fig:act2_readme_estructura}
-\end{figure}
+\begin{enumerate}[leftmargin=*,itemsep=4pt,topsep=2pt]
+  \item \textbf{AplicacionMovilPWA (PWA Móvil):} En las Figuras \ref{fig:act2_readme_pwa_1} y \ref{fig:act2_readme_pwa_2} se documenta el archivo \texttt{README.md} de la aplicación móvil PWA, detallando requisitos de Node.js v20+, gestor npm, configuración de proxy NGINX, comandos de pruebas unitarias (\texttt{npm test}), empaquetado de producción y modo de ejecución independiente en puerto 5174.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_pwa_1.png}
+    \caption{Documentación técnica de AplicacionMovilPWA: Requisitos previos y configuración.}
+    \label{fig:act2_readme_pwa_1}
+  \end{figure}
+
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_pwa_2.png}
+    \caption{Documentación técnica de AplicacionMovilPWA: Compilación, pruebas unitarias y ejecución.}
+    \label{fig:act2_readme_pwa_2}
+  \end{figure}
+
+  \item \textbf{ConsultaVehiculosForms (Cliente Windows Forms):} En la Figura \ref{fig:act2_readme_forms} se evidencia la documentación técnica del cliente administrativo de escritorio desarrollado en C\# y .NET SDK 8, describiendo su arquitectura x64, dependencias con NGINX (puerto 8090), MySQL en XAMPP y los endpoints consumidos de vehículos y ventas.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_forms.png}
+    \caption{Documentación técnica de ConsultaVehiculosForms: Requisitos de .NET 8 y servicios requeridos.}
+    \label{fig:act2_readme_forms}
+  \end{figure}
+
+  \item \textbf{escritorioFx (Cliente JavaFX):} En la Figura \ref{fig:act2_readme_javafx} se expone el \texttt{README.md} del cliente de escritorio JavaFX para monitoreo reactivo de ventas en tiempo real, especificando compatibilidad con OpenJDK 17+/25, Apache Maven 3.9, OpenJFX 21 y la integración asíncrona hacia el servicio de notificaciones (puerto 8081).
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_javafx.png}
+    \caption{Documentación técnica de escritorioFx: Requisitos de OpenJDK, Maven y OpenJFX.}
+    \label{fig:act2_readme_javafx}
+  \end{figure}
+
+  \item \textbf{notificaciones-service (Consumidor RabbitMQ Spring Boot):} En la Figura \ref{fig:act2_readme_notificaciones} se presenta la documentación técnica del microservicio de notificaciones, detallando el puerto de escucha 8081, la conexión AMQP con RabbitMQ en el puerto 5672, la suscripción a la cola durable \texttt{notificaciones.ventas} y la lógica de desduplicación.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_notificaciones.png}
+    \caption{Documentación técnica de notificaciones-service: Requisitos Java, puertos y broker RabbitMQ.}
+    \label{fig:act2_readme_notificaciones}
+  \end{figure}
+
+  \item \textbf{reactweb (Plataforma Web React):} En la Figura \ref{fig:act2_readme_react} se documenta la plataforma web de consulta y auditoría comercial desarrollada en React 19 y Vite, indicando requisitos de Node.js v20+, resolución de dependencias npm, enrutamiento por proxy hacia NGINX (8090) y visualización de catálogos y métricas.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_react.png}
+    \caption{Documentación técnica de reactweb: Requisitos previos, Node.js y conexión con NGINX.}
+    \label{fig:act2_readme_react}
+  \end{figure}
+
+  \item \textbf{venta-vehiculos-api\_security (Microservicio Vehículos Java):} En la Figura \ref{fig:act2_readme_vehiculos_java} se expone el \texttt{README.md} del microservicio central de catálogo y seguridad OAuth 2.0 en Spring Boot, describiendo la configuración JPA con MySQL en XAMPP (puerto 3306), el endpoint Actuator \texttt{/actuator/health} y la topología de balanceo ponderado 3:1.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_vehiculos_java.png}
+    \caption{Documentación técnica de venta-vehiculos-api\_security: Requisitos Java, base de datos y Actuator.}
+    \label{fig:act2_readme_vehiculos_java}
+  \end{figure}
+
+  \item \textbf{ventas-api (Microservicio Ventas FastAPI):} En la Figura \ref{fig:act2_readme_ventas_fastapi} se evidencia la documentación del microservicio Python FastAPI de gestión comercial, detallando la versión de Python 3.12+, entorno virtual \texttt{.venv}, persistencia relacional con SQLAlchemy en MySQL, garantía de idempotencia y publicador asíncrono RabbitMQ.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_readme_ventas_fastapi.png}
+    \caption{Documentación técnica de ventas-api: Requisitos de Python, MySQL, broker AMQP y Gateway.}
+    \label{fig:act2_readme_ventas_fastapi}
+  \end{figure}
+\end{enumerate}
 
 \vspace{0.2cm}
 \noindent\textbf{B. Registro de modificaciones y justificación funcional}
