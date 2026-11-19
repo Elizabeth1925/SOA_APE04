@@ -734,6 +734,106 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \end{enumerate}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.2 Actividad 2. Preparación de proyectos, configuración y control de versiones}
+
+\vspace{0.2cm}
+\noindent Para garantizar el cumplimiento de los estándares de integración y reproducibilidad exigidos por la guía práctica APE 04, se procedió a la organización modular de los siete proyectos base en el repositorio, la redacción de documentación técnica individualizada mediante archivos \texttt{README.md}, la eliminación de secretos en el control de versiones y la verificación exhaustiva de la compilación de cada subsistema.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Organización modular y documentación técnica por proyecto}
+
+\noindent Cada uno de los proyectos cliente y servidor se estructuró en su propio directorio independiente dentro del repositorio \texttt{SOA\_APE04}, provisto de su correspondiente archivo \texttt{README.md}. En dichos documentos se especifican los prerrequisitos de entorno (JDK 17+, Python 3.10+, .NET SDK 8, Node.js 18+), las variables de configuración, los comandos de instalación de dependencias, compilación, ejecución y verificación de endpoints. En la Figura \ref{fig:act2_readme_estructura} se presenta la estructura de documentación técnica adoptada.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act2_readme_estructura.png}
+  \caption{Ejemplo de documentación técnica estructurada mediante \texttt{README.md} describiendo requisitos, configuración y ejecución.}
+  \label{fig:act2_readme_estructura}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Registro de modificaciones y justificación funcional}
+
+\noindent En la Tabla \ref{tab:modificaciones_proyectos} se detalla la matriz de cambios técnicos implementados en cada uno de los proyectos base y su relación directa con los requisitos funcionales de la arquitectura multicanal.
+
+\vspace{0.1cm}
+\noindent
+{\footnotesize
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sloppy}p{2.8cm}|>{\raggedright\arraybackslash\sloppy}p{3.4cm}|X|>{\raggedright\arraybackslash\sloppy}p{2.8cm}|}
+\hline
+\textbf{Proyecto} & \textbf{Archivos Clave} & \textbf{Modificación Implementada} & \textbf{Justificación Funcional} \\
+\hline
+venta-vehiculos-api\_security & VehiculoRepository, SecurityConfig, application.properties & Incorporación de Actuator (/actuator/health), dialecto MariaDBDialect y bloqueo pesimista nativo (SELECT ... FOR UPDATE). & Monitoreo de salud para NGINX y eliminación del error de bloqueo en MariaDB XAMPP. \\
+\hline
+ventas-api & venta\_service.py, ventas.py, schemas.py, rabbitmq\_publisher.py & Desacoplamiento transaccional antes de HTTP/AMQP; creación de GET /api/compradores y GET /api/ventas; esquemas flexibles Pydantic. & Consulta requerida para Forms/React; garantía de no emitir eventos ante ventas fallidas. \\
+\hline
+notificaciones-service & VentasRabbitListener, NotificacionController, NotificacionKeyFilter & Listener AMQP sobre cola durable notificaciones.ventas con desduplicación por eventoId y endpoint GET /api/notificaciones. & Procesamiento asíncrono y persistente de avisos de venta sin duplicados para JavaFX. \\
+\hline
+monitor-balancer-service & HealthCheckClient, NginxLogParserService & Validación estricta del JSON Actuator (status UP) y filtrado temporal en ventana de minutos sobre access.log. & Supervisión desacoplada y métricas de balanceo 3:1 basadas en registros reales. \\
+\hline
+ConsultaVehiculosForms & VehiculosApiClient, VentasApiClient, MainForm & Implementación de formularios para creación de vehículos/compradores y visualización de catálogos e históricos vía NGINX. & Cumplimiento del cliente administrativo exclusivo para personal autorizado. \\
+\hline
+AplicacionMovilPWA & server.mjs, api.js, main.js, index.html & Autenticación OAuth 2.0 en pantalla login, proxy inverso NGINX, formulario exclusivo de venta y generación UUID para Idempotency-Key. & Canal móvil exclusivo para registro de ventas comerciales con control de concurrencia. \\
+\hline
+reactweb & vite.config.js, ventasApi.js, App.jsx & Pestañas de catálogo y ventas, filtrado por marca en memoria, métricas acumuladas y vista de auditoría de solo lectura. & Plataforma web de supervisión y consulta sin capacidad de alteración de datos. \\
+\hline
+escritorioFx & VehiculosApiClient, VehiculosApp, NotificacionVentaDto & Sondeo asíncrono cada 3 segundos a /api/notificaciones y renderizado reactivo de la tabla de ventas. & Visualización inmediata de ventas en tiempo real sin recarga manual. \\
+\hline
+\end{tabularx}
+\label{tab:modificaciones_proyectos}
+}
+
+\vspace{0.3cm}
+\noindent\textbf{C. Separación de configuraciones locales y protección de secretos}
+
+\noindent Con el propósito de no exponer credenciales reales ni claves privadas en el repositorio Git, se aisló la configuración mediante plantillas de entorno \texttt{.env.example} y archivos de propiedades parametrizados. Ningún token JWT en texto claro, contraseña de base de datos MySQL o credencial de RabbitMQ se encuentra versionada, cumpliendo estrictamente con el principio de seguridad en el ciclo de vida del software.
+
+\vspace{0.2cm}
+\noindent\textbf{D. Verificación de compilación de los proyectos}
+
+\noindent Se verificó la capacidad de compilación limpia e independiente de cada uno de los subsistemas tecnológicos:
+\begin{itemize}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Servicios Java (Spring Boot y JavaFX):} Como se aprecia en la Figura \ref{fig:act2_compilacion_java}, la ejecución del comando \texttt{mvn clean compile} (o \texttt{mvn package}) culminó con estado \texttt{BUILD SUCCESS} sin errores sintácticos ni dependencias faltantes.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_java.png}
+    \caption{Compilación limpia y exitosa de los microservicios Java mediante Maven (\texttt{BUILD SUCCESS}).}
+    \label{fig:act2_compilacion_java}
+  \end{figure}
+
+  \item \textbf{Aplicación de escritorio .NET (C\# Windows Forms):} En la Figura \ref{fig:act2_compilacion_dotnet} se evidencia la compilación del proyecto administrativo mediante el comando \texttt{dotnet build}, logrando 0 Errores y 0 Advertencias sobre el SDK .NET 8.
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet.png}
+    \caption{Compilación exitosa del cliente Windows Forms con el SDK de .NET 8 (\texttt{0 Errores}).}
+    \label{fig:act2_compilacion_dotnet}
+  \end{figure}
+
+  \item \textbf{Clientes Web (React 19 y PWA Móvil):} En la Figura \ref{fig:act2_compilacion_node} se comprueba el empaquetado de producción de React mediante \texttt{npm run build} con Vite y la ejecución satisfactoria de las pruebas unitarias automatizadas de la PWA (\texttt{npm test}, 7/7 superadas).
+  
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{act2_compilacion_node.png}
+    \caption{Empaquetado de producción en React (\texttt{npm run build}) y paso exitoso de pruebas unitarias en la PWA (\texttt{npm test}).}
+    \label{fig:act2_compilacion_node}
+  \end{figure}
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Control de versiones y exclusión de artefactos generados}
+
+\noindent Se auditó el archivo \texttt{.gitignore} en la raíz del repositorio, comprobando la exclusión obligatoria de directorios pesados y temporales: \texttt{node\_modules}, \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{.venv}, archivos de depuración y cachés del sistema operativo. En la Figura \ref{fig:act2_git_status_limpio} se documenta la ejecución de \texttt{git status}, confirmando que el árbol de trabajo se conserva limpio y sin exposición de artefactos compilados o credenciales sensibles.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act2_git_status_limpio.png}
+  \caption{Estado del control de versiones mediante \texttt{git status} evidenciando un árbol limpio sin artefactos pesados ni secretos.}
+  \label{fig:act2_git_status_limpio}
+\end{figure}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
