@@ -10,28 +10,33 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 
 @Component 
-public class NotificacionKeyFilter extends OncePerRequestFilter{
+public class NotificacionKeyFilter extends OncePerRequestFilter {
     private final String key;
-    public NotificacionKeyFilter(@Value ("${app.notificacion-key}") String key) {
+
+    public NotificacionKeyFilter(@Value("${app.notificacion-key}") String key) {
         if (key.length() < 32) throw new IllegalArgumentException("La clave no cumple los 32 caracteres");
         this.key = key;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
-        String h=req.getHeader("X-Notificacion-Key");
+        // Permitir solicitudes GET (consulta de historial para JavaFX y comprobaciones) sin exigir la clave interna
+        if ("GET".equalsIgnoreCase(req.getMethod()) || "OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            chain.doFilter(req, res);
+            return;
+        }
 
-        // Si no coincide, rechaza con HTTP 401 Unauthorized y formato Problem Details JSON
-        if (h==null || !MessageDigest.isEqual(key.getBytes(StandardCharsets.UTF_8), h.getBytes(StandardCharsets.UTF_8))) {
+        String h = req.getHeader("X-Notificacion-Key");
+
+        // Si no coincide para metodos de escritura (POST, etc.), rechaza con HTTP 401 Unauthorized
+        if (h == null || !MessageDigest.isEqual(key.getBytes(StandardCharsets.UTF_8), h.getBytes(StandardCharsets.UTF_8))) {
             res.setStatus(401);
             res.setContentType("application/problem+json");
             res.getWriter().write("{\"title\":\"Clave no válida\",\"status\":401}");
             return;
         }
-        // Continúa con la cadena de filtros de seguridad
+
+        // Continua con la cadena de filtros
         chain.doFilter(req, res);
     }
 }
-
-
-
