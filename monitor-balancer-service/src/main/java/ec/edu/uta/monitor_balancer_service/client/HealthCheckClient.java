@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 /**
  * Componente tecnico para las peticiones HTTP de sondeo de salud.
  * Configura timeouts finitos de conexion y lectura para evitar bloqueos indefinidos.
+ * CORREGIDO (APE 04): Valida el contenido de la respuesta de Actuator exigiendo
+ * explicitamente status "UP" en el cuerpo JSON, evitando interpretar cualquier 2xx como saludable.
  */
 @Component
 public class HealthCheckClient {
@@ -29,7 +31,7 @@ public class HealthCheckClient {
     }
 
     /**
-     * Realiza una consulta GET sincrona con timeout estricto.
+     * Realiza una consulta GET sincrona con timeout estricto y validacion de Actuator.
      */
     public HealthResult check(String url) {
         long start = System.currentTimeMillis();
@@ -43,9 +45,23 @@ public class HealthCheckClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             long latency = Math.max(1, System.currentTimeMillis() - start);
             int statusCode = response.statusCode();
+            String body = response.body();
+
+            // Validacion de Actuator: El cuerpo JSON debe contener explicitamente "status":"UP"
+            boolean actuatorUp = body != null && (
+                    body.contains("\"status\":\"UP\"") ||
+                    body.contains("\"status\": \"UP\"") ||
+                    body.toUpperCase().contains("\"STATUS\":\"UP\"") ||
+                    body.toUpperCase().contains("\"STATUS\": \"UP\"")
+            );
 
             if (statusCode >= 200 && statusCode < 300) {
-                return new HealthResult("UP", latency, statusCode, null);
+                if (actuatorUp) {
+                    return new HealthResult("UP", latency, statusCode, null);
+                } else {
+                    return new HealthResult("DOWN", latency, statusCode,
+                            "Respuesta HTTP " + statusCode + " pero Actuator no reporta status UP");
+                }
             } else if (statusCode == 401 || statusCode == 403) {
                 return new HealthResult("ERROR_ACCESO", latency, statusCode, "Error de autorizacion HTTP " + statusCode);
             } else {

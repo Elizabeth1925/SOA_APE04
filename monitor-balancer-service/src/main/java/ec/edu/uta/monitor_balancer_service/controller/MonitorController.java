@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import ec.edu.uta.monitor_balancer_service.dto.AlertaDto;
@@ -44,23 +45,27 @@ public class MonitorController {
     }
 
     /**
-     * Endpoint 3: Metricas de balanceo de carga real calculadas desde access.log.
+     * Endpoint 3: Metricas de balanceo de carga real calculadas desde access.log con ventana temporal.
      */
     @GetMapping("/balanceo")
-    public ResponseEntity<BalanceoResponse> obtenerBalanceo() {
-        return ResponseEntity.ok(logParserService.calcularBalanceo());
+    public ResponseEntity<BalanceoResponse> obtenerBalanceo(
+            @RequestParam(required = false) Integer ventanaMinutos,
+            @RequestParam(required = false) String desde) {
+        return ResponseEntity.ok(logParserService.calcularBalanceo(ventanaMinutos, desde));
     }
 
     /**
-     * Endpoint 4: Estadisticas cuantitativas de codigos HTTP y tiempos de respuesta.
+     * Endpoint 4: Estadisticas cuantitativas de codigos HTTP y tiempos de respuesta con ventana temporal.
      */
     @GetMapping("/estadisticas")
-    public ResponseEntity<EstadisticasResponse> obtenerEstadisticas() {
-        return ResponseEntity.ok(logParserService.calcularEstadisticas());
+    public ResponseEntity<EstadisticasResponse> obtenerEstadisticas(
+            @RequestParam(required = false) Integer ventanaMinutos,
+            @RequestParam(required = false) String desde) {
+        return ResponseEntity.ok(logParserService.calcularEstadisticas(ventanaMinutos, desde));
     }
 
     /**
-     * Endpoint 5: Historial de los ultimos 20 eventos de alerta y transicion.
+     * Endpoint 5: Consulta de incidentes y alertas activas.
      */
     @GetMapping("/alertas")
     public ResponseEntity<List<AlertaDto>> obtenerAlertas() {
