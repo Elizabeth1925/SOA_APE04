@@ -34,7 +34,28 @@ def crear_comprador(d: CrearComprador, u=Depends(identidad)):
         # Hace flush para generar y obtener el ID autoincremental sin cerrar la transaccion
         db.flush()
         # Retorna los datos basicos del comprador creado
-        return {"id": c.id, "nombre": c.nombre, "correo": c.correo}
+        return {"id": c.id, "documento": c.documento, "nombre": c.nombre, "correo": c.correo}
+
+# Endpoint para listar compradores autorizados (Requerido por APE 04 para Windows Forms y PWA)
+@router.get("/compradores")
+def listar_compradores(u=Depends(identidad)):
+    with SessionLocal() as db:
+        # Los roles ADMIN, OPERADOR y CONSULTA pueden acceder al catalogo de compradores
+        if u.get("rol") in ("ADMIN", "OPERADOR", "CONSULTA"):
+            compradores = db.query(Comprador).all()
+        else:
+            compradores = db.query(Comprador).filter(Comprador.usuario == u["usuario"]).all()
+
+        return [
+            {
+                "id": c.id,
+                "usuario": c.usuario,
+                "documento": c.documento,
+                "nombre": c.nombre,
+                "correo": c.correo,
+            }
+            for c in compradores
+        ]
 
 # Endpoint para registrar una venta con garantia de idempotencia
 @router.post("/ventas")
@@ -46,7 +67,7 @@ def crear(d: CrearVenta, response: Response,
     # Valida permisos de vendedor
     vendedor(u)
 
-    # Ejecuta el flujo transaccional de venta en el servicio de negocio
+    # Ejecuta el flujo transaccional de venta en el servicio de negocio con aislamiento
     resultado, codigo = service.crear(d, idempotency_key, u)
 
     # Asigna el codigo HTTP dinamico (201 si fue creada, 200 si fue idempotente, 202 si esta pendiente)
@@ -57,6 +78,17 @@ def crear(d: CrearVenta, response: Response,
 
     # Retorna la representacion de la venta
     return resultado
+
+# Endpoint para listar el historico de ventas (Requerido por APE 04 para Windows Forms y React)
+@router.get("/ventas")
+def listar_ventas(u=Depends(identidad)):
+    with SessionLocal() as db:
+        if u.get("rol") in ("ADMIN", "OPERADOR", "CONSULTA"):
+            ventas = db.query(Venta).order_by(Venta.id.desc()).all()
+        else:
+            ventas = db.query(Venta).filter(Venta.usuario == u["usuario"]).order_by(Venta.id.desc()).all()
+
+        return [service.salida(v) for v in ventas]
 
 # Endpoint para consultar los detalles de una venta segun su identificador
 @router.get("/ventas/{id}")
@@ -70,8 +102,9 @@ def obtener(id: int, u=Depends(identidad)):
         if v is None:
             raise ApiError(404, "VENTA_NO_EXISTE", "Venta inexistente")
 
-        # Valida que solo el propietario de la venta o un ADMIN puedan consultarla
-        propietario(u, v.usuario)
+        # Valida que solo el propietario de la venta o un ADMIN/OPERADOR puedan consultarla
+        if u.get("rol") not in ("ADMIN", "OPERADOR"):
+            propietario(u, v.usuario)
 
         # Formatea y retorna la venta
         return service.salida(v)

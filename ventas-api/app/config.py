@@ -40,3 +40,10 @@ if min(len(SERVICE_KEY), len(NOTIF_KEY)) < 32:
 # Valida que el desarrollador no haya dejado los valores por defecto del archivo de ejemplo (.env.example)
 if SERVICE_KEY.startswith("COLOCA_") or NOTIF_KEY.startswith("COLOCA_"):
     raise RuntimeError("Reemplaza las claves de ejemplo en el archivo .env")
+
+# Configuracion de RabbitMQ para publicacion de eventos de venta (APE 04)
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_QUEUE = os.environ.get("RABBITMQ_QUEUE", "notificaciones.ventas")
