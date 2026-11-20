@@ -1272,6 +1272,13 @@ def identidad(authorization: str | None = Header(default=None)):
   \end{itemize}
 \end{enumerate}
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act4_postman_creacion_201.png}
+  \caption{Verificación de creación transaccional de venta e integridad de precios en Postman: petición \texttt{POST /api/ventas} enviando \texttt{"precio": 5.0}, la cual es procesada por FastAPI validando el vehículo 15 en Java y asignando el valor legítimo de catálogo (\$18,900.00 USD) con estado final \texttt{COMPLETADA} y código \texttt{201 Created}.}
+  \label{fig:act4_creacion_venta_201}
+\end{figure}
+
 \vspace{0.2cm}
 \noindent\textbf{D. Garantía de Idempotencia Transaccional mediante \texttt{Idempotency-Key}}
 
@@ -1288,9 +1295,9 @@ def identidad(authorization: str | None = Header(default=None)):
   \item \textbf{Restricción única compuesta en MySQL:} La tabla \texttt{ventas} implementa la restricción única \texttt{uq\_venta\_usuario\_clave(usuario, idempotency\_key)}, impidiendo a nivel de motor relacional cualquier inserción duplicada concurrente.
   \item \textbf{Gestión de escenarios operacionales demostrada experimentalmente:}
   \begin{itemize}[leftmargin=*,itemsep=2pt]
-    \item \textbf{Escenario 1 (Creación exitosa):} Solicitud inicial con clave \texttt{act4-demo-idemp-001} y cuerpo \texttt{\{"vehiculoId":9, "compradorId":7\}}. Se orquesta exitosamente la reserva y confirmación con Java. El registro se persiste con código \texttt{HTTP 201 Created}, retornando la cabecera \texttt{Location: /api/ventas/26} y cuerpo con \texttt{"estado":"COMPLETADA"} y \texttt{"precioAcordado":"34000.00"}.
-    \item \textbf{Escenario 2 (Reintento idempotente idéntico):} Se remite una segunda petición con la misma clave y el mismo cuerpo JSON. El sistema detecta que el hash coincide (\texttt{v.request\_hash == huella}) y retorna de forma inmediata el registro existente con código \texttt{HTTP 200 OK}, sin generar duplicados en MySQL ni reinvocar a Java ni reemitir eventos.
-    \item \textbf{Escenario 3 (Conflicto por alteración de carga útil):} Se remite una tercera petición con la misma clave \texttt{act4-demo-idemp-001} pero modificando el cuerpo a \texttt{\{"vehiculoId":10, "compradorId":7\}}. FastAPI detecta la discordancia (\texttt{v.request\_hash != huella}) y rechaza de inmediato la petición con código \texttt{HTTP 409 Conflict} bajo el formato RFC 7807:
+    \item \textbf{Escenario 1 (Creación exitosa):} Solicitud inicial con cabecera \texttt{Idempotency-Key} y cuerpo \texttt{\{"vehiculoId":15, "compradorId":1, "precio":5.0\}}. Se orquesta exitosamente la reserva y confirmación con Java. El registro se persiste con código \texttt{HTTP 201 Created}, retornando la Venta ID \texttt{32} con \texttt{"estado":"COMPLETADA"}, \texttt{"precioAcordado":"18900.00"} y \texttt{"notificacion":"ENVIADA"} (Figura \ref{fig:act4_creacion_venta_201}).
+    \item \textbf{Escenario 2 (Reintento idempotente idéntico):} Se remite una segunda petición con la misma clave y el mismo cuerpo JSON. El sistema detecta que el hash coincide (\texttt{v.request\_hash == huella}) y retorna de forma inmediata el registro existente con código \texttt{HTTP 200 OK} y los mismos datos de la Venta ID \texttt{32}, sin generar duplicados en MySQL ni reinvocar a Java ni reemitir eventos a RabbitMQ (Figura \ref{fig:act4_idempotencia_conflicto}, arriba).
+    \item \textbf{Escenario 3 (Conflicto por alteración de carga útil):} Se remite una petición reutilizando la misma clave pero modificando el cuerpo JSON (por ejemplo, variando el \texttt{vehiculoId} a 14). FastAPI detecta la discordancia (\texttt{v.request\_hash != huella}) y rechaza de inmediato la petición con código \texttt{HTTP 409 Conflict} bajo el formato RFC 7807 (Figura \ref{fig:act4_idempotencia_conflicto}, abajo):
     {\small
     \begin{verbatim}
     {
@@ -1299,13 +1306,22 @@ def identidad(authorization: str | None = Header(default=None)):
       "status": 409,
       "detail": "La misma clave requiere el mismo cuerpo",
       "instance": "/api/ventas",
-      "codigo": "CLAVE_REUTILIZADA",
-      "traceId": "2f3b501f-86ba-4ef0-88f1-b44548947cb0"
+      "codigo": "CLAVE_REUTILIZADA"
     }
     \end{verbatim}
     }
   \end{itemize}
 \end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act4_postman_idempotencia_200.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act4_postman_conflicto_409.png}
+  \caption{Comprobación de garantías de idempotencia en Postman: reintento idéntico con la misma clave retornando código \texttt{HTTP 200 OK} con los datos de la venta persistida sin duplicar registros (arriba) y detección de conflicto con código \texttt{HTTP 409 Conflict} (\texttt{CLAVE\_REUTILIZADA}) al reutilizar la misma clave con un cuerpo de solicitud alterado (abajo).}
+  \label{fig:act4_idempotencia_conflicto}
+\end{figure}
 
 \vspace{0.2cm}
 \noindent\textbf{E. Persistencia en MySQL y Publicación Asíncrona Confiable en RabbitMQ}

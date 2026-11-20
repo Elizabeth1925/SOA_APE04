@@ -2,7 +2,7 @@
 from typing import Annotated
 
 # Componentes del enrutador, dependencias de seguridad y respuesta HTTP de FastAPI
-from fastapi import APIRouter, Depends, Header, Response
+from fastapi import APIRouter, Depends, Header, Response, Request
 
 # Fabrica de sesiones para interactuar con la base de datos
 from app.db import SessionLocal
@@ -64,16 +64,22 @@ def listar_compradores(u=Depends(identidad)):
 
 # Endpoint para registrar una venta con garantia de idempotencia
 @router.post("/ventas")
-def crear(d: CrearVenta, response: Response,
+def crear(d: CrearVenta, response: Response, request: Request,
           # Requiere el encabezado Idempotency-Key con formato alfanumerico y longitud de 8 a 100 caracteres
-          idempotency_key: Annotated[str, Header(
-              min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")],
+          idempotency_key: Annotated[str | None, Header(
+              alias="Idempotency-Key", min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")] = None,
           u=Depends(identidad)):
     # Valida permisos de vendedor
     vendedor(u)
 
+    # Respaldo flexible por si el cliente o proxy envio variaciones de mayusculas/minusculas
+    key = idempotency_key or request.headers.get("idempotency-key") or request.headers.get("Idempotency-Key") or request.headers.get("idempotency_key")
+    if not key or len(key.strip()) < 8:
+        raise ApiError(422, "VALIDACION", "header.idempotency-key: Field required")
+    key = key.strip()
+
     # Ejecuta el flujo transaccional de venta en el servicio de negocio con aislamiento
-    resultado, codigo = service.crear(d, idempotency_key, u)
+    resultado, codigo = service.crear(d, key, u)
 
     # Asigna el codigo HTTP dinamico (201 si fue creada, 200 si fue idempotente, 202 si esta pendiente)
     response.status_code = codigo
