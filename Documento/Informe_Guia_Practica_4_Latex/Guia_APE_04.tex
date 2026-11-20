@@ -1381,6 +1381,121 @@ N/A & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-01} (Reuso) & 14 (A
 \end{table}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.5 Actividad 5. Cliente Windows Forms de administración (.NET 8 C\#)}
+
+\vspace{0.2cm}
+\noindent En esta actividad se desarrolló, estructuró y validó la aplicación de escritorio administrativa para entornos de ventanilla y gestión interna, implementada bajo el framework moderno \textbf{.NET 8} y el lenguaje \textbf{C\#} en el proyecto \texttt{ConsultaVehiculosForms}. La aplicación centraliza el consumo multicanal de los dos microservicios transaccionales de la arquitectura a través del Gateway unificado NGINX (puerto 8090): la API de Vehículos en Spring Boot y la API de Ventas y Compradores en FastAPI. Se diseñó bajo un patrón estricto de desacoplamiento por capas, separando la lógica de presentación visual de los servicios de comunicación HTTP, incorporando validaciones de entrada en cliente, formateo enriquecido de tipos de datos, control de concurrencia en la interfaz mediante llamadas asíncronas (\texttt{async/await}), y tratamiento gráfico diferenciado de estados operativos y errores de red y autorización (\texttt{HTTP 401, 403, 404, 409, 5xx}).
+
+\vspace{0.2cm}
+\noindent\textbf{A. Arquitectura desacoplada y capa de servicios HTTP (\texttt{ApiClient})}
+
+\noindent Para cumplir con las directrices de diseño en arquitecturas orientadas a servicios y evitar el antipatrón de acoplar llamadas de red a los manejadores de eventos del formulario (\textit{Smart UI}), la solución se estructuró en tres capas claramente delimitadas:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Capa de Modelos y Contratos (\texttt{Models/}):} Clases DTO fuertemente tipadas (\texttt{VehiculoDto}, \texttt{CompradorDto}, \texttt{VentaDto}) y esquemas de solicitud (\texttt{CrearVehiculoRequest}, \texttt{CrearCompradorRequest}) decorados para serialización y deserialización JSON sin distinción de mayúsculas/minúsculas (\texttt{PropertyNameCaseInsensitive = true}).
+  \item \textbf{Capa de Servicios de Red (\texttt{Services/}):} Compuesta por \texttt{VehiculoApiClient} y \texttt{VentaApiClient}, las cuales encapsulan instancias estáticas optimizadas de \texttt{HttpClient} configuradas con la dirección base del Gateway unificado (\texttt{http://127.0.0.1:8090/}) y un tiempo de espera controlado (\texttt{Timeout = 10s}).
+  \item \textbf{Patrón de Envoltura de Respuestas (\texttt{ApiResponse<T>}):} Todas las funciones de red retornan un contenedor genérico que encapsula el éxito de la operación (\texttt{IsSuccess}), el código de estado HTTP (\texttt{StatusCode}), los datos deserializados (\texttt{Data}) y un mensaje amigable o de diagnóstico (\texttt{ErrorMessage}):
+  {\small
+  \begin{verbatim}
+  public class ApiResponse<T> {
+      public bool IsSuccess { get; set; }
+      public HttpStatusCode StatusCode { get; set; }
+      public T? Data { get; set; }
+      public string? ErrorMessage { get; set; }
+  }
+  \end{verbatim}
+  }
+\end{enumerate}
+
+\vspace{0.15cm}
+\noindent Todas las peticiones inyectan de forma centralizada la cabecera estándar \texttt{Authorization: Bearer <token\_jwt>} obtenida a partir del control de entrada del formulario, normalizando el prefijo \texttt{Bearer} automáticamente.
+
+\vspace{0.2cm}
+\noindent\textbf{B. Módulos funcionales de la interfaz gráfica (\texttt{Form1.cs})}
+
+\noindent La interfaz de usuario está organizada mediante un control de pestañas jerárquico (\texttt{TabControl}) que distribuye las operaciones administrativas en tres módulos operativos:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Pestaña 1: Gestión de Catálogo de Vehículos (Spring Boot vía NGINX):}
+  \begin{itemize}[leftmargin=*,itemsep=1pt]
+    \item \textit{Alta de Vehículos (\texttt{POST /api/vehiculos}):} Formulario de captura que valida previo al envío que la marca, modelo y placa no estén vacíos, que el chasis VIN contenga exactamente 17 caracteres alfanuméricos, que el año corresponda a un rango válido (1900 a 2030) y que el precio sea estrictamente positivo. Al obtener código \texttt{201 Created}, notifica al usuario y actualiza automáticamente la grilla.
+    \item \textit{Consulta y Filtrado (\texttt{GET /api/vehiculos}):} Permite listar el catálogo completo o aplicar filtros en tiempo real por el parámetro de consulta \texttt{?marca=\{valor\}}, visualizando los resultados en un \texttt{DataGridView} con columnas formateadas.
+    \item \textit{Búsqueda Individual (\texttt{GET /api/vehiculos/\{id\}}):} Búsqueda directa por clave primaria para auditoría técnica de unidades.
+  \end{itemize}
+  \item \textbf{Pestaña 2: Gestión de Compradores (Python FastAPI vía NGINX):}
+  \begin{itemize}[leftmargin=*,itemsep=1pt]
+    \item \textit{Alta de Compradores (\texttt{POST /api/compradores}):} Registro de clientes verificando documento de identidad, nombre completo y formato de correo electrónico.
+    \item \textit{Listado Autorizado (\texttt{GET /api/compradores}):} Carga dinámica del directorio de compradores autorizados para el usuario autenticado según sus privilegios RBAC.
+  \end{itemize}
+  \item \textbf{Pestaña 3: Consulta Exclusiva y Auditoría de Ventas (Python FastAPI vía NGINX):}
+  \begin{itemize}[leftmargin=*,itemsep=1pt]
+    \item \textit{Histórico de Transacciones (\texttt{GET /api/ventas}):} Listado de ventas ordenadas cronológicamente con indicadores de identificación, divisa, fecha UTC y monto.
+    \item \textit{Panel de Detalle y Semáforo Visual (\texttt{GET /api/ventas/\{id\}}):} Al seleccionar una fila o consultar por ID, se despliega un panel lateral con semaforización cromática: estado \texttt{COMPLETADA} en color verde oscuro, \texttt{EN\_REVISION} en naranja y \texttt{FALLIDA} en rojo; y estado de notificación en RabbitMQ (\texttt{ENVIADA} en verde, \texttt{PENDIENTE} en naranja).
+  \end{itemize}
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Tratamiento visual de estados de carga, resiliencia y errores HTTP}
+
+\noindent Para proporcionar una experiencia de usuario robusta y prevenir inconsistencias por reenvíos accidentales, el formulario implementa:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Bloqueo interactivo durante llamadas asíncronas:} Los botones de acción se deshabilitan (\texttt{Enabled = false}) inmediatamente al iniciar la petición y se reactivan en el bloque \texttt{finally}, impidiendo solicitudes duplicadas durante latencias de red.
+  \item \textbf{Etiqueta de estado en tiempo real (\texttt{lblEstado}):} Informa el progreso de la operación mediante códigos de color (azul durante la ejecución, verde al recibir respuestas exitosas \texttt{200/201}, y carmesí ante fallos).
+  \item \textbf{Mapeo exhaustivo de códigos HTTP:} Las clases cliente traducen los estados devueltos por el Gateway NGINX a mensajes orientados al operador:
+  {\small
+  \begin{verbatim}
+  response.ErrorMessage = httpResponse.StatusCode switch {
+      HttpStatusCode.Unauthorized => "Error 401: Token invalido/expirado.",
+      HttpStatusCode.Forbidden    => "Error 403: Permisos insuficientes.",
+      HttpStatusCode.NotFound     => "Error 404: Recurso no encontrado.",
+      HttpStatusCode.BadRequest   => $"Error 400: Datos invalidos. {bodyError}",
+      HttpStatusCode.Conflict     => $"Error 409: Conflicto. {bodyError}",
+      HttpStatusCode.InternalServerError => "Error 500: Fallo interno.",
+      _ => $"Error HTTP {(int)httpResponse.StatusCode}"
+  };
+  \end{verbatim}
+  }
+  \item \textbf{Control de excepciones de red:} Captura controlada de \texttt{HttpRequestException} y \texttt{TaskCanceledException}, advirtiendo al operador sobre caídas de NGINX o desconexión del enlace sin provocar el cierre intempestivo (\textit{crash}) de la aplicación.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Implementación del Cliente de Vehículos (\texttt{VehiculoApiClient.cs})}
+
+\noindent A continuación se presenta el fragmento representativo del despacho de peticiones HTTP en la clase de servicio \texttt{VehiculoApiClient.cs}, evidenciando la inyección del token Bearer, el timeout de seguridad y el procesamiento seguro de la carga JSON:
+
+{\small
+\begin{verbatim}
+private async Task<ApiResponse<T>> EnviarPeticionAsync<T>(
+    HttpMethod method, string url, string token, HttpContent? content = null)
+{
+    var response = new ApiResponse<T>();
+    try {
+        using var request = new HttpRequestMessage(method, url);
+        if (content != null) request.Content = content;
+        if (!string.IsNullOrWhiteSpace(token)) {
+            var cleanToken = token.Trim();
+            if (cleanToken.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                cleanToken = cleanToken.Substring(7).Trim();
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cleanToken);
+        }
+        using var httpResponse = await _httpClient.SendAsync(request);
+        response.StatusCode = httpResponse.StatusCode;
+        if (httpResponse.IsSuccessStatusCode) {
+            var json = await httpResponse.Content.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(json))
+                response.Data = JsonSerializer.Deserialize<T>(json, _jsonOptions);
+            response.IsSuccess = true;
+        } else {
+            response.IsSuccess = false;
+        }
+    } catch (Exception ex) {
+        response.IsSuccess = false;
+        response.ErrorMessage = $"Error de comunicacion: {ex.Message}";
+    }
+    return response;
+}
+\end{verbatim}
+}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
