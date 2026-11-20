@@ -8,7 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Localiza la ruta raiz del proyecto (dos niveles arriba de este archivo) y carga el archivo .env
-load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
 # Funcion auxiliar para obtener una variable de entorno obligatoria; lanza error si no existe o esta vacia
 def requerido(nombre):

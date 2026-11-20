@@ -1181,6 +1181,156 @@ $token = $auth.access_token
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.4 Actividad 4. Servicio de compradores y ventas en Python FastAPI}
+
+\vspace{0.2cm}
+\noindent En esta actividad se analizó, verificó y documentó la implementación del microservicio de gestión comercial y ventas desarrollado con el framework asíncrono \textbf{Python FastAPI} (operando en el puerto 8002 y enrutado transparentemente a través del API Gateway NGINX en el puerto 8090 bajo el prefijo \texttt{/api/}). Este servicio orquesta la creación y consulta de compradores y ventas de vehículos, garantizando autenticación delegada mediante JSON Web Tokens (JWT), autorización por roles (RBAC), integridad comercial estricta (donde ni el precio ni el estado definitivo pueden ser forzados por el cliente), garantía de idempotencia transaccional mediante el encabezado \texttt{Idempotency-Key} con huella criptográfica SHA-256, y persistencia atómica en MySQL con publicación asíncrona de eventos hacia RabbitMQ bajo un patrón de aislamiento transaccional que previene notificaciones espurias de ventas rechazadas.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Catálogo de endpoints y contratos REST de Compradores y Ventas}
+
+\noindent El módulo de enrutamiento principal (\texttt{ventas-api/app/routers/ventas.py}) expone los cinco endpoints requeridos por el contrato arquitectónico de la práctica, asegurando compatibilidad integral tanto con los clientes de escritorio (.NET 8 Windows Forms y JavaFX) como con los clientes web (React y Progressive Web Apps):
+
+\begin{table}[H]
+\centering
+\caption{Matriz de contratos REST del microservicio de Ventas y Compradores (FastAPI).}
+\label{tab:act4_endpoints_fastapi}
+\small
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{3.2cm}|>{\centering\arraybackslash}p{2.2cm}|>{\centering\arraybackslash}p{2.2cm}|X|}
+\hline
+\textbf{Método y Ruta} & \textbf{Propósito Funcional} & \textbf{Autenticación} & \textbf{Códigos HTTP} & \textbf{Detalle de Cabeceras y Carga Útil} \\
+\hline
+\texttt{POST /api/compradores} & Registro de nuevo comprador & Bearer JWT (Vendedor) & 201, 400, 401, 403 & Requiere \texttt{documento}, \texttt{nombre}, \texttt{correo}. \\
+\hline
+\texttt{GET /api/compradores} & Consulta de compradores autorizados & Bearer JWT (RBAC) & 200, 401, 403 & ADMIN/OPERADOR ven catálogo global; otros solo propios. \\
+\hline
+\texttt{POST /api/ventas} & Orquestación transaccional de venta & Bearer JWT (Vendedor) & 201, 200, 202, 404, 409 & Obligatorio \texttt{Idempotency-Key}. Retorna \texttt{Location: /api/ventas/\{id\}}. \\
+\hline
+\texttt{GET /api/ventas} & Histórico y listado de transacciones & Bearer JWT (RBAC) & 200, 401, 403 & Lista transacciones ordenadas descendentemente por ID. \\
+\hline
+\texttt{GET /api/ventas/\{id\}} & Consulta detallada de una venta & Bearer JWT (Propietario) & 200, 401, 403, 404 & Valida pertenencia de usuario o privilegio administrativo. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.15cm}
+\noindent\textbf{B. Autenticación delegada, validación perimetral JWT y control de acceso (RBAC)}
+
+\noindent La seguridad en FastAPI está centralizada en el módulo \texttt{app/security.py}. En lugar de duplicar la lógica de gestión de identidades y usuarios, FastAPI implementa el patrón de autenticación delegada (\textit{Delegated Token Verification}) mediante la función de inyección de dependencias \texttt{identidad(authorization: str = Header(...))}. Esta función intercepta la cabecera HTTP \texttt{Authorization: Bearer <token>} y consulta en tiempo real al endpoint de introspección perimetral del microservicio en Spring Boot (\texttt{GET /api/identidad}) utilizando un cliente HTTP sincrónico (\texttt{httpx}):
+
+{\small
+\begin{verbatim}
+def identidad(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise ApiError(401, "NO_AUTENTICADO", "Enviar access token")
+    try:
+        r = httpx.get(JAVA_URL + "/api/identidad",
+                      headers={"Authorization": authorization}, timeout=5)
+    except httpx.RequestError:
+        raise ApiError(503, "IDENTIDAD_NO_DISPONIBLE", "Java no responde")
+    if r.status_code in (401, 403):
+        raise ApiError(r.status_code, "ACCESO_RECHAZADO", "Token no autorizado")
+    ...
+    return r.json()
+\end{verbatim}
+}
+
+\noindent A partir del objeto de identidad obtenido (el cual encapsula el nombre de usuario y su conjunto de autoridades concedidas), FastAPI ejecuta controles de autorización mediante guardias de rol:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Guardia de rol vendedor (\texttt{vendedor(usuario)}):} Exige que el usuario posea la autoridad \texttt{ROLE\_OPERADOR} o \texttt{ROLE\_ADMIN}. De no cumplirse, eleva de inmediato un error estandarizado \texttt{HTTP 403 Forbidden} (\texttt{SIN\_PERMISO}).
+  \item \textbf{Guardia de propiedad de recurso (\texttt{propietario(usuario, dueno)}):} Asegura que un vendedor común únicamente pueda consultar o asociar registros creados por su propio usuario, a menos que el solicitante disponga de privilegios de \texttt{ROLE\_ADMIN}.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act4_postman_oauth_token.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act4_java_instancia_b_auth.png}
+  \caption{Mecanismo de autenticación perimetral y emisión de credenciales para la gestión comercial: obtención de token portador JWT en Postman vía Gateway NGINX en el puerto 8090 (arriba) y ejecución del microservicio Java en la Instancia B puerto 8082 en Visual Studio Code validando credenciales de usuario con Hibernate en MySQL (abajo).}
+  \label{fig:act4_auth_oauth_java}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Integridad de precios, orquestación de dos fases y aislamiento transaccional}
+
+\noindent Uno de los principios cardinales de seguridad e integridad en arquitecturas orientadas a servicios financieros y comerciales radica en impedir que clientes maliciosos o desincronizados manipulen los montos de cobro o fuercen el estado de una operación. En \texttt{ventas-api}, este requerimiento se satisface en múltiples niveles:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Invalidez de precios suministrados por el cliente:} El esquema de validación Pydantic \texttt{CrearVenta} (en \texttt{app/schemas.py}) admite opcionalmente un campo numérico \texttt{precio}, pero en la lógica de orquestación (\texttt{app/services/venta\_service.py}) dicho valor es deliberadamente ignorado. El importe definitivo (\texttt{precio\_acordado}) y la divisa oficial (\texttt{moneda}) se obtienen exclusivamente consultando la entidad autoritativa en el microservicio de Vehículos (\texttt{Spring Boot}) a través del cliente \texttt{VehiculosClient}:
+  {\small
+  \begin{verbatim}
+  # El precio acordado se fija unicamente desde el catalogo oficial de Java
+  precio_acordado = Decimal(str(r["precio"]))
+  moneda = r["moneda"]
+  \end{verbatim}
+  }
+  \item \textbf{Aislamiento transaccional estricto (Anti-pattern Connection Hogging):} El servicio de ventas descompone la operación en tres fases para evitar mantener transacciones abiertas o bloqueos de filas en MySQL durante llamadas de red hacia Spring Boot:
+  \begin{itemize}[leftmargin=*,itemsep=1pt]
+    \item \textit{Fase 1 (Lectura y preparación):} Registro inicial de la venta con estado \texttt{PENDIENTE} y clave idempotente.
+    \item \textit{Fase 2 (Invocación remota fuera de DB):} Llamada sincrónica HTTP a Java (\texttt{POST /api/vehiculos/\{id\}/reservas} y confirmación posterior \texttt{PUT /api/reservas/\{id\}/confirmacion}). Si Java rechaza con 404 o 409 (vehículo inexistente o no disponible), el estado se cataloga como \texttt{FALLIDA}.
+    \item \textit{Fase 3 (Transacción corta de actualización):} Se bloquea puntualmente la fila (\texttt{SELECT ... FOR UPDATE}), se actualiza el estado a \texttt{COMPLETADA} (o \texttt{FALLIDA}) junto con el precio y reserva oficial, cerrando la transacción de inmediato.
+  \end{itemize}
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Garantía de Idempotencia Transaccional mediante \texttt{Idempotency-Key}}
+
+\noindent La comunicación a través de redes no fiables expone a los sistemas al riesgo de solicitudes duplicadas (por ejemplo, reintentos automáticos tras una pérdida momentánea de conexión WiFi o un clic doble del usuario). Para salvaguardar la consistencia contable:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Validación de formato de clave:} El parámetro de cabecera \texttt{Idempotency-Key} es validado por FastAPI requiriendo una cadena alfanumérica entre 8 y 100 caracteres (\texttt{pattern=r"^[A-Za-z0-9\_-]+$"}).
+  \item \textbf{Cálculo de huella digital SHA-256 (\texttt{request\_hash}):} Se genera una representación JSON canónica con ordenación alfabética de atributos y delimitadores compactos (\texttt{sort\_keys=True, separators=(",", ":")}), extrayendo su digest criptográfico SHA-256 de 64 caracteres hexadecimales:
+  {\small
+  \begin{verbatim}
+  cuerpo = json.dumps(datos.model_dump(), sort_keys=True, separators=(",", ":"))
+  huella = hashlib.sha256(cuerpo.encode()).hexdigest()
+  \end{verbatim}
+  }
+  \item \textbf{Restricción única compuesta en MySQL:} La tabla \texttt{ventas} implementa la restricción única \texttt{uq\_venta\_usuario\_clave(usuario, idempotency\_key)}, impidiendo a nivel de motor relacional cualquier inserción duplicada concurrente.
+  \item \textbf{Gestión de escenarios operacionales demostrada experimentalmente:}
+  \begin{itemize}[leftmargin=*,itemsep=2pt]
+    \item \textbf{Escenario 1 (Creación exitosa):} Solicitud inicial con clave \texttt{act4-demo-idemp-001} y cuerpo \texttt{\{"vehiculoId":9, "compradorId":7\}}. Se orquesta exitosamente la reserva y confirmación con Java. El registro se persiste con código \texttt{HTTP 201 Created}, retornando la cabecera \texttt{Location: /api/ventas/26} y cuerpo con \texttt{"estado":"COMPLETADA"} y \texttt{"precioAcordado":"34000.00"}.
+    \item \textbf{Escenario 2 (Reintento idempotente idéntico):} Se remite una segunda petición con la misma clave y el mismo cuerpo JSON. El sistema detecta que el hash coincide (\texttt{v.request\_hash == huella}) y retorna de forma inmediata el registro existente con código \texttt{HTTP 200 OK}, sin generar duplicados en MySQL ni reinvocar a Java ni reemitir eventos.
+    \item \textbf{Escenario 3 (Conflicto por alteración de carga útil):} Se remite una tercera petición con la misma clave \texttt{act4-demo-idemp-001} pero modificando el cuerpo a \texttt{\{"vehiculoId":10, "compradorId":7\}}. FastAPI detecta la discordancia (\texttt{v.request\_hash != huella}) y rechaza de inmediato la petición con código \texttt{HTTP 409 Conflict} bajo el formato RFC 7807:
+    {\small
+    \begin{verbatim}
+    {
+      "type": "urn:ventas:clave_reutilizada",
+      "title": "CLAVE_REUTILIZADA",
+      "status": 409,
+      "detail": "La misma clave requiere el mismo cuerpo",
+      "instance": "/api/ventas",
+      "codigo": "CLAVE_REUTILIZADA",
+      "traceId": "2f3b501f-86ba-4ef0-88f1-b44548947cb0"
+    }
+    \end{verbatim}
+    }
+  \end{itemize}
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Persistencia en MySQL y Publicación Asíncrona Confiable en RabbitMQ}
+
+\noindent Para preservar la coherencia entre el estado transaccional y los eventos distribuidos, el servicio ejecuta la función \texttt{notificar(id)} en estricta sincronía con el resultado de la venta:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Prevención de notificaciones espurias:} Si la venta no culminó en estado \texttt{COMPLETADA} (por ejemplo, terminó en \texttt{FALLIDA} debido a que el vehículo no existía como se probó con \texttt{vehiculoId: 999999}), la función \texttt{notificar(id)} aborta su ejecución. De esta forma, jamás se emiten mensajes espurios de ventas rechazadas hacia el broker.
+  \item \textbf{Publicación durable y persistente en RabbitMQ:} Para ventas completadas (como la Venta ID 26), se despacha un mensaje persistente hacia la cola durable \texttt{notificaciones.ventas} en el broker RabbitMQ (puerto 5672):
+  {\small
+  \begin{verbatim}
+  {
+    "eventoId": "c0920883-0998-4938-a44e-21b7e8b47153",
+    "tipo": "VENTA",
+    "ventaId": 26,
+    "vehiculoId": 9,
+    "compradorId": 7,
+    "operacionId": "dbff8c4c-eb0b-468d-88e6-d22510f42e56",
+    "fechaUTC": "2026-11-19T19:39:16.367594+00:00"
+  }
+  \end{verbatim}
+  }
+  \item \textbf{Confirmación en base de datos:} Tras la confirmación del broker, el registro de la venta en MySQL actualiza su atributo \texttt{notificacion} de \texttt{PENDIENTE} a \texttt{ENVIADA}, garantizando trazabilidad contable completa.
+\end{itemize}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
