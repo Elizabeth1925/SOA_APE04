@@ -1427,7 +1427,8 @@ N/A & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-01} (Reuso) & 14 (A
   \end{itemize}
   \item \textbf{Pestaña 3: Consulta Exclusiva y Auditoría de Ventas (Python FastAPI vía NGINX):}
   \begin{itemize}[leftmargin=*,itemsep=1pt]
-    \item \textit{Histórico de Transacciones (\texttt{GET /api/ventas}):} Listado de ventas ordenadas cronológicamente con indicadores de identificación, divisa, fecha UTC y monto.
+    \item \textit{Restricción Arquitectónica (Omisión deliberada de registro de ventas):} En estricto cumplimiento con la guía de la práctica (\textit{«Evitar agregar botones o métodos de registro de ventas a Windows Forms»}), la interfaz administrativa excluye cualquier botón o formulario para registrar ventas (\texttt{POST /api/ventas}). El rol de la aplicación Windows Forms en el dominio de ventas es \textbf{estrictamente de solo lectura y auditoría}, delegando la orquestación transaccional de ventas a los clientes autorizados de venta.
+    \item \textit{Histórico de Transacciones (\texttt{GET /api/ventas}):} Listado de ventas ordenadas cronológicamente con indicadores de identificación, divisa, fecha UTC y monto en el control \texttt{dgcVentas}.
     \item \textit{Panel de Detalle y Semáforo Visual (\texttt{GET /api/ventas/\{id\}}):} Al seleccionar una fila o consultar por ID, se despliega un panel lateral con semaforización cromática: estado \texttt{COMPLETADA} en color verde oscuro, \texttt{EN\_REVISION} en naranja y \texttt{FALLIDA} en rojo; y estado de notificación en RabbitMQ (\texttt{ENVIADA} en verde, \texttt{PENDIENTE} en naranja).
   \end{itemize}
 \end{enumerate}
