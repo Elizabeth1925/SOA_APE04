@@ -1329,22 +1329,56 @@ def identidad(authorization: str | None = Header(default=None)):
 \noindent Para preservar la coherencia entre el estado transaccional y los eventos distribuidos, el servicio ejecuta la función \texttt{notificar(id)} en estricta sincronía con el resultado de la venta:
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
   \item \textbf{Prevención de notificaciones espurias:} Si la venta no culminó en estado \texttt{COMPLETADA} (por ejemplo, terminó en \texttt{FALLIDA} debido a que el vehículo no existía como se probó con \texttt{vehiculoId: 999999}), la función \texttt{notificar(id)} aborta su ejecución. De esta forma, jamás se emiten mensajes espurios de ventas rechazadas hacia el broker.
-  \item \textbf{Publicación durable y persistente en RabbitMQ:} Para ventas completadas (como la Venta ID 26), se despacha un mensaje persistente hacia la cola durable \texttt{notificaciones.ventas} en el broker RabbitMQ (puerto 5672):
+  \item \textbf{Publicación durable y persistente en RabbitMQ:} Para ventas completadas (como la Venta ID 32), se despacha un mensaje persistente hacia la cola durable \texttt{notificaciones.ventas} en el broker RabbitMQ (puerto 5672):
   {\small
   \begin{verbatim}
   {
-    "eventoId": "c0920883-0998-4938-a44e-21b7e8b47153",
+    "eventoId": "e4f8101a-8b1e-4509-9065-27a92211d044",
     "tipo": "VENTA",
-    "ventaId": 26,
-    "vehiculoId": 9,
-    "compradorId": 7,
-    "operacionId": "dbff8c4c-eb0b-468d-88e6-d22510f42e56",
-    "fechaUTC": "2026-11-19T19:39:16.367594+00:00"
+    "ventaId": 32,
+    "vehiculoId": 15,
+    "compradorId": 1,
+    "operacionId": "1a0577b6-c067-4f08-acea-ccac2e0fd8f5",
+    "fechaUTC": "2026-11-20T04:16:11Z"
   }
   \end{verbatim}
   }
-  \item \textbf{Confirmación en base de datos:} Tras la confirmación del broker, el registro de la venta en MySQL actualiza su atributo \texttt{notificacion} de \texttt{PENDIENTE} a \texttt{ENVIADA}, garantizando trazabilidad contable completa.
+  \item \textbf{Confirmación en base de datos:} Tras la confirmación del broker, el registro de la venta en MySQL actualiza su atributo \texttt{notificacion} de \texttt{PENDIENTE} a \texttt{ENVIADA}, garantizando trazabilidad contable completa. En la Figura \ref{fig:act4_mysql_ventas} se documenta la consulta directa en phpMyAdmin evidenciando las transacciones confirmadas y el descarte de operaciones rechazadas.
 \end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{act4_mysql_tabla_ventas.png}
+  \caption{Auditoría y persistencia de operaciones en la base de datos MySQL (\texttt{phpMyAdmin}): verificación de los registros de la tabla \texttt{ventas}, constatando la inserción de la Venta ID 32 con estado \texttt{COMPLETADA}, asignación de \texttt{reserva\_id} y clave de idempotencia, y el registro de la Venta ID 31 en estado \texttt{FALLIDA} con reserva nula (\texttt{NULL}), confirmando que no se emiten notificaciones hacia RabbitMQ para operaciones rechazadas.}
+  \label{fig:act4_mysql_ventas}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Matriz de trazabilidad y auditoría transaccional de la Actividad 4}
+
+\noindent En la Tabla \ref{tab:act4_auditoria} se resume la consolidación de las pruebas experimentales ejecutadas sobre el microservicio de FastAPI a través del API Gateway NGINX, correlacionando el identificador asignado, la clave de idempotencia, los códigos de estado HTTP y la consistencia en el almacenamiento relacional y la mensajería asíncrona:
+
+\begin{table}[H]
+\centering
+\caption{Matriz de auditoría transaccional y validación experimental de la Actividad 4.}
+\label{tab:act4_auditoria}
+\small
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{3.2cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.4cm}|>{\centering\arraybackslash}p{2.2cm}|X|}
+\hline
+\textbf{ID} & \textbf{Endpoint / Método} & \textbf{Idempotency-Key} & \textbf{Vehículo} & \textbf{HTTP} & \textbf{Estado MySQL} & \textbf{Notificación} \\
+\hline
+32 & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-10} & 15 (\$18,900) & 201 & \texttt{COMPLETADA} & \texttt{ENVIADA} (AMQP) \\
+\hline
+32 & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-10} (Misma) & 15 (\$18,900) & 200 & \texttt{COMPLETADA} & Sin reemisión \\
+\hline
+N/A & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-01} (Reuso) & 14 (Alterado) & 409 & Rechazo previo & Bloqueada \\
+\hline
+31 & \texttt{POST /api/ventas} & \texttt{venta-postman-ape4-05} & 14 (No disp.) & 409 & \texttt{FALLIDA} & \texttt{PENDIENTE} (Omitida) \\
+\hline
+30 & \texttt{POST /api/ventas} & \texttt{test-key-check-01} & 14 (\$42,000) & 201 & \texttt{COMPLETADA} & \texttt{ENVIADA} (AMQP) \\
+\hline
+\end{tabularx}
+\end{table}
 
 \vspace{0.4cm}
 
