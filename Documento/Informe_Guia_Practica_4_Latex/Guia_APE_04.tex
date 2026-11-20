@@ -1284,7 +1284,7 @@ def identidad(authorization: str | None = Header(default=None)):
 
 \noindent La comunicación a través de redes no fiables expone a los sistemas al riesgo de solicitudes duplicadas (por ejemplo, reintentos automáticos tras una pérdida momentánea de conexión WiFi o un clic doble del usuario). Para salvaguardar la consistencia contable:
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
-  \item \textbf{Validación de formato de clave:} El parámetro de cabecera \texttt{Idempotency-Key} es validado por FastAPI requiriendo una cadena alfanumérica entre 8 y 100 caracteres (\texttt{pattern=r"^[A-Za-z0-9\_-]+$"}).
+  \item \textbf{Validación de formato de clave:} El parámetro de cabecera \texttt{Idempotency-Key} es validado por FastAPI requiriendo una cadena alfanumérica entre 8 y 100 caracteres (\texttt{pattern=r"\textasciicircum[A-Za-z0-9\_-]+\$"}).
   \item \textbf{Cálculo de huella digital SHA-256 (\texttt{request\_hash}):} Se genera una representación JSON canónica con ordenación alfabética de atributos y delimitadores compactos (\texttt{sort\_keys=True, separators=(",", ":")}), extrayendo su digest criptográfico SHA-256 de 64 caracteres hexadecimales:
   {\small
   \begin{verbatim}
@@ -1495,6 +1495,212 @@ private async Task<ApiResponse<T>> EnviarPeticionAsync<T>(
 }
 \end{verbatim}
 }
+
+\vspace{0.2cm}
+\noindent\textbf{E. Implementación del Cliente de Compradores y Ventas (\texttt{VentaApiClient.cs})}
+
+\noindent El consumo de los endpoints del microservicio en Python FastAPI se encapsula en la clase \texttt{VentaApiClient.cs}, manteniendo la misma política de comunicación desacoplada y tipado fuerte:
+
+{\small
+\begin{verbatim}
+public class VentaApiClient
+{
+    private static readonly HttpClient _httpClient = new HttpClient {
+        BaseAddress = new Uri("http://127.0.0.1:8090/"),
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+    private static readonly JsonSerializerOptions _jsonOptions = new() {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public async Task<ApiResponse<CompradorDto>> CrearCompradorAsync(
+        string token, CrearCompradorRequest request) {
+        var json = JsonSerializer.Serialize(request, _jsonOptions);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        return await EnviarPeticionAsync<CompradorDto>(
+            HttpMethod.Post, "api/compradores", token, content);
+    }
+
+    public async Task<ApiResponse<List<CompradorDto>>> ListarCompradoresAsync(
+        string token) {
+        return await EnviarPeticionAsync<List<CompradorDto>>(
+            HttpMethod.Get, "api/compradores", token);
+    }
+
+    public async Task<ApiResponse<List<VentaDto>>> ListarVentasAsync(
+        string token) {
+        return await EnviarPeticionAsync<List<VentaDto>>(
+            HttpMethod.Get, "api/ventas", token);
+    }
+
+    public async Task<ApiResponse<VentaDto>> ObtenerVentaPorIdAsync(
+        string token, int idVenta) {
+        return await EnviarPeticionAsync<VentaDto>(
+            HttpMethod.Get, $"api/ventas/{idVenta}", token);
+    }
+}
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Validaciones en cliente y control de interfaz en \texttt{Form1.cs}}
+
+\noindent En la capa de presentación se incorporaron validaciones formales antes del despacho de peticiones HTTP para minimizar el tráfico innecesario hacia la red y proporcionar una experiencia fluida al operador:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Validación de chasis VIN:} Se verifica que el chasis ingresado contenga rigurosamente 17 caracteres alfanuméricos (\texttt{chasis.Length == 17}), advirtiendo al operador mediante un cuadro de diálogo si la cadena es incompleta.
+  \item \textbf{Rango de año de fabricación y precio positivo:} Se comprueba que el año esté en el intervalo 1900 a 2030 y que el precio unitario sea un valor decimal estrictamente mayor a cero.
+  \item \textbf{Deshabilitación reactiva durante el tránsito de red:} Todo botón ejecutor deshabilita la interacción (\texttt{btn.Enabled = false}) y activa un mensaje en color azul en la barra inferior \texttt{lblEstado}. Al completarse la respuesta (en bloques \texttt{finally}), se restablece la interactividad y se colorea la etiqueta en verde (éxito) o carmesí (error).
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{G. Evidencia experimental de las cinco operaciones obligatorias}
+
+\noindent A continuación se documenta la ejecución práctica y la verificación cruzada de las cinco operaciones solicitadas, contrastando las capturas de la aplicación Windows Forms con las respuestas de los microservicios y el estado físico de la base de datos relacional MySQL:
+
+\vspace{0.15cm}
+\noindent\textbf{1. Operación 1: Consulta y filtrado de catálogo de vehículos (Spring Boot vía NGINX)}
+
+\noindent Previo a cualquier consulta, se adquirió en Postman un token portador JWT para el usuario administrador (\texttt{admin} / \texttt{admin123}, con \texttt{idapli: 92}) contra el endpoint perimetral \texttt{POST http://localhost:8090/oauth/token}, obteniendo una respuesta exitosa \texttt{HTTP 200 OK} con un tiempo de expiración de 1800 segundos (Figura \ref{fig:act5_auth_catalogo}, arriba). 
+
+Dicho token fue ingresado en el encabezado de la aplicación Windows Forms. Al pulsar «Listar / Filtrar» sin filtros adicionales, se despachó la solicitud \texttt{GET /api/vehiculos} hacia NGINX, el cual balanceó la carga hacia Spring Boot, poblando el control \texttt{dgcVehiculos} con la totalidad de los 30 vehículos existentes en la base de datos (Figura \ref{fig:act5_auth_catalogo}, abajo). Posteriormente, al ingresar el criterio \texttt{toyota} en el campo de marca, se ejecutó la petición con parámetro de consulta \texttt{GET /api/vehiculos?marca=toyota}, filtrando con éxito las 4 unidades correspondientes a dicha marca (Hilux y Corollas) con respuesta \texttt{HTTP 200 OK} (Figura \ref{fig:act5_filtro_toyota}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_postman_token_admin.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculos_catalogo.png}
+  \caption{Operación 1 (Parte A): Emisión y utilización del token JWT en Windows Forms. Arriba: Solicitud \texttt{POST /oauth/token} en Postman para el usuario \texttt{admin} con respuesta \texttt{HTTP 200 OK}. Abajo: Catálogo general de vehículos cargado exitosamente en Windows Forms mediante \texttt{GET /api/vehiculos} a través del Gateway NGINX (:8090), recuperando 30 registros con estado \texttt{HTTP 200 OK}.}
+  \label{fig:act5_auth_catalogo}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculos_filtro_toyota.png}
+  \caption{Operación 1 (Parte B): Filtrado dinámico de vehículos por parámetro de consulta en Windows Forms. Consulta \texttt{GET /api/vehiculos?marca=toyota} procesada mediante NGINX hacia Spring Boot, recuperando de forma precisa las 4 unidades de la marca Toyota con código \texttt{HTTP 200 OK}.}
+  \label{fig:act5_filtro_toyota}
+\end{figure}
+
+\vspace{0.15cm}
+\noindent\textbf{2. Operación 2: Alta de nuevo vehículo y confirmación de persistencia relacional}
+
+\noindent En la pestaña «1. Vehículos», se completó el panel «Dar de Alta Vehículo» con los siguientes atributos: Marca: \texttt{Toyota}, Modelo: \texttt{Corolla Cross}, Placa: \texttt{PBA-8855}, Chasis: \texttt{17CARACTERESVIN12} (17 caracteres), Año: \texttt{2024}, Color: \texttt{Rojo}, Precio: \texttt{28500.00}. Al presionar el botón «+ Crear Vehículo», el cliente HTTP despachó la solicitud \texttt{POST /api/vehiculos} inyectando la cabecera \texttt{Authorization: Bearer <token\_jwt>}. 
+
+El microservicio en Spring Boot validó la unicidad de placa y chasis, persistió la entidad en MySQL y retornó el código \texttt{HTTP 201 Created}. La aplicación presentó un cuadro de diálogo informativo confirmando la creación con el identificador generado \texttt{ID: 43} (Figura \ref{fig:act5_alta_vehiculo_mysql}, arriba). Para verificar la coherencia con el motor relacional, se consultó directamente la tabla \texttt{vehiculo} en \texttt{phpMyAdmin}, corroborando la existencia física de la fila con clave primaria \texttt{id\_vehiculo: 43}, placa \texttt{PBA-8855}, precio \texttt{28500.00} y estado inicial \texttt{DISPONIBLE} (Figura \ref{fig:act5_alta_vehiculo_mysql}, abajo).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculo_alta_201.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.95\textwidth]{act5_mysql_vehiculo_43.png}
+  \caption{Operación 2: Alta de vehículo en Windows Forms y verificación relacional en MySQL. Arriba: Formulario de captura y diálogo modal de confirmación con código \texttt{HTTP 201 Created} e identificador autogenerado \texttt{ID: 43}. Abajo: Consulta directa en phpMyAdmin de la base de datos \texttt{venta\_vehiculos}, tabla \texttt{vehiculo}, validando la persistencia exacta de los campos ingresados.}
+  \label{fig:act5_alta_vehiculo_mysql}
+\end{figure}
+
+\vspace{0.15cm}
+\noindent\textbf{3. Operaciones 3 y 4: Listado autorizado y alta de compradores (FastAPI vía NGINX)}
+
+\noindent La gestión de compradores se canalizó a través de la pestaña «2. Compradores (POST / GET)», consumiendo los endpoints del microservicio Python FastAPI:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Listado autorizado (Operación 3):} Al ejecutar «Listar Compradores», se despachó la solicitud \texttt{GET /api/compradores} con el token de \texttt{admin}. FastAPI extrajo la identidad del solicitante y retornó el conjunto de compradores autorizados para dicho contexto administrativo (Ana Sofía, Juan Pérez, Carlos Mendoza y Carolina De la Cruz) con código \texttt{HTTP 200 OK} (Figura \ref{fig:act5_compradores_listar_mysql}, arriba). En la auditoría de MySQL (Figura \ref{fig:act5_compradores_listar_mysql}, abajo), se constata que en la base coexisten registros del usuario \texttt{operador} y del usuario \texttt{admin}, ratificando el filtrado por pertenencia de recursos.
+  \item \textbf{Alta de comprador (Operación 4):} En el panel de registro se ingresaron los datos del cliente: Documento: \texttt{1809988776}, Nombre: \texttt{Cliente WinForms Elizabeth}, Correo: \texttt{elizabeth.forms@uta.edu.ec}. La invocación \texttt{POST /api/compradores} fue procesada por FastAPI, asignando la propiedad de la cuenta al usuario \texttt{admin} y retornando código \texttt{HTTP 201 Created} con el identificador generado \texttt{ID: 8} (Figura \ref{fig:act5_alta_comprador_mysql}, arriba). La verificación física en la tabla \texttt{compradores} de MySQL certifica la inserción inmediata del cliente con \texttt{id: 8} y \texttt{usuario: admin} (Figura \ref{fig:act5_alta_comprador_mysql}, abajo).
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_compradores_listar.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act5_mysql_compradores_admin.png}
+  \caption{Operación 3: Listado de compradores en Windows Forms y segregación por usuario en MySQL. Arriba: Grilla \texttt{dgcCompradores} cargando los clientes asociados al usuario \texttt{admin} mediante \texttt{GET /api/compradores} (HTTP 200 OK). Abajo: Tabla \texttt{compradores} en phpMyAdmin mostrando la existencia de registros correspondientes a distintos usuarios del sistema.}
+  \label{fig:act5_compradores_listar_mysql}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_comprador_alta_201.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act5_mysql_comprador_nuevo_8.png}
+  \caption{Operación 4: Alta de nuevo comprador en Windows Forms y confirmación en MySQL. Arriba: Notificación de creación exitosa con código \texttt{HTTP 201 Created} e identificador \texttt{ID: 8} para el comprador «Cliente WinForms Elizabeth». Abajo: Verificación en phpMyAdmin de la fila insertada en la tabla \texttt{compradores} con la clave foránea del usuario administrador autenticado.}
+  \label{fig:act5_alta_comprador_mysql}
+\end{figure}
+
+\vspace{0.15cm}
+\noindent\textbf{4. Operación 5: Consulta exclusiva y auditoría de ventas (FastAPI vía NGINX)}
+
+\noindent La pestaña «3. Ventas (GET - Consulta Exclusiva)» cumple con la directriz de seguridad de la práctica que prohíbe explícitamente agregar botones o métodos de registro de ventas a la aplicación de escritorio. De este modo, la interfaz se comporta como un panel de auditoría y control de operaciones:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Histórico general de ventas:} Al presionar «Listar Ventas», se ejecutó \texttt{GET /api/ventas}, cargando en la grilla las 25 transacciones registradas cronológicamente con respuesta \texttt{HTTP 200 OK}. En la grilla se aprecia la selección de la Venta \texttt{ID: 32} (la transacción ejecutada experimentalmente en la Actividad 4 por \$18,900.00 USD), desplegada con estado \texttt{COMPLETADA} y notificación \texttt{ENVIADA} resaltadas en color verde (Figura \ref{fig:act5_ventas_historico_detalle}, arriba).
+  \item \textbf{Búsqueda individual y panel de detalle:} Al ingresar el identificador \texttt{30} en el control de búsqueda y ejecutar \texttt{GET /api/ventas/30}, el panel lateral presentó de forma detallada la tupla transaccional: Identificador: \texttt{30}, UUID de Operación: \texttt{630e5e57-7764-4537-b0fa-b97ab7b3a625}, Vehículo: \texttt{14} (Toyota Hilux), Comprador: \texttt{1}, Monto: \texttt{\$42,000.00 USD}, Fecha UTC: \texttt{2026-11-20T04:09:23Z}, con semáforos en verde para los estados \texttt{COMPLETADA} y \texttt{ENVIADA} (Figura \ref{fig:act5_ventas_historico_detalle}, abajo).
+  \item \textbf{Confrontación con el motor relacional:} Al inspeccionar la tabla \texttt{ventas} en \texttt{phpMyAdmin} (Figura \ref{fig:act5_mysql_venta_30}), se confirma que la fila con clave primaria \texttt{id: 30} coincide con total precisión con los datos presentados en Windows Forms: \texttt{operacion\_id: 630e5e57...}, \texttt{usuario: admin}, \texttt{comprador\_id: 1}, \texttt{vehiculo\_id: 14}, clave de idempotencia \texttt{test-key-check-01}, y \texttt{reserva\_id: 952551a1-...}.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_ventas_historico_32.png}
+  
+  \vspace{0.3cm}
+  \includegraphics[width=0.92\textwidth]{act5_winforms_ventas_detalle_30.png}
+  \caption{Operación 5: Consulta exclusiva y auditoría de ventas en Windows Forms. Arriba: Pestaña de ventas en modo consulta exclusiva sin controles de creación, listando 25 ventas con selección de la Venta 32 en color verde (\texttt{COMPLETADA} / \texttt{ENVIADA}). Abajo: Consulta puntual de la Venta 30 mediante \texttt{GET /api/ventas/30}, desplegando el panel de detalle lateral con UUID de operación y semaforización cromática.}
+  \label{fig:act5_ventas_historico_detalle}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{act5_mysql_ventas_30.png}
+  \caption{Verificación de coherencia transaccional en MySQL: tupla con clave primaria \texttt{id: 30} en la tabla \texttt{ventas} de phpMyAdmin, constatando la correspondencia exacta de identificadores, vehículos, usuarios y reservas con los valores reportados por la interfaz gráfica Windows Forms.}
+  \label{fig:act5_mysql_venta_30}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{H. Tratamiento visual de seguridad y control de errores HTTP (401/403/404)}
+
+\noindent Para satisfacer el requerimiento de resiliencia y tratamiento diferenciado de códigos de error HTTP en la interfaz gráfica, se realizó la prueba de consumo sin suministrar el token JWT en el encabezado (o proporcionando un token expirado o corrupto). 
+
+Al intentar ejecutar una consulta de catálogo o registrar un vehículo, el cliente \texttt{VehiculoApiClient} transmitió la petición sin cabecera de autorización hacia NGINX, la cual fue rechazada por el backend con el código estándar \texttt{HTTP 401 Unauthorized}. El cliente interceptó el código y la interfaz de usuario reaccionó de manera controlada y amigable: desplegó un cuadro de diálogo descriptivo \textit{«Error 401: No autorizado. El token no fue proporcionado, es inválido o ha expirado.»} y actualizó la etiqueta de estado inferior en color carmesí (\texttt{Color.Crimson}) (Figura \ref{fig:act5_error_401}), impidiendo cualquier bloqueo o caída inesperada de la aplicación y orientando claramente al operador.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{act5_winforms_error_401.png}
+  \caption{Tratamiento visual de errores y seguridad de acceso en Windows Forms: cuadro de diálogo modal informando el rechazo con código \texttt{HTTP 401 Unauthorized} ante la ausencia o expiración del token JWT, acompañado por el cambio de color de la barra de estado a tono carmesí.}
+  \label{fig:act5_error_401}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{I. Matriz de trazabilidad y auditoría de operaciones en Windows Forms}
+
+\noindent En la Tabla \ref{tab:act5_matriz_operaciones} se resume la totalidad de las operaciones evaluadas en el cliente de escritorio .NET 8, detallando el método HTTP, el endpoint enrutado a través de NGINX en el puerto 8090, el microservicio destino, los códigos de estado obtenidos experimentalmente, la evidencia visual generada y la verificación en la base de datos MySQL:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Matriz de operaciones, endpoints y verificación relacional en Windows Forms (.NET 8 C\#).}
+\label{tab:act5_matriz_operaciones}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\centering\arraybackslash}p{1.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.3cm}|X|}
+\hline
+\textbf{Operación} & \textbf{Método} & \textbf{Endpoint NGINX (:8090)} & \textbf{Servicio Destino} & \textbf{Código HTTP} & \textbf{Evidencia y Persistencia en MySQL} \\
+\hline
+Op 1A: Catálogo General & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 200 OK & Grilla con 30 vehículos; tabla \texttt{vehiculo} completa. \\
+\hline
+Op 1B: Filtrado por Marca & GET & \texttt{/api/vehiculos?marca=toyota} & Spring Boot (:8082) & 200 OK & Grilla con 4 vehículos coincidentes de marca Toyota. \\
+\hline
+Op 2: Alta de Vehículo & POST & \texttt{/api/vehiculos} & Spring Boot (:8082) & 201 Created & Modal ID 43; inserción en MySQL \texttt{id\_vehiculo: 43}. \\
+\hline
+Op 3: Listar Compradores & GET & \texttt{/api/compradores} & FastAPI (:8002) & 200 OK & Grilla con compradores de \texttt{admin}; tabla \texttt{compradores}. \\
+\hline
+Op 4: Alta de Comprador & POST & \texttt{/api/compradores} & FastAPI (:8002) & 201 Created & Modal ID 8; inserción en MySQL con \texttt{usuario = 'admin'}. \\
+\hline
+Op 5A: Histórico Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 OK & Grilla con 25 ventas; selección Venta 32 en verde. \\
+\hline
+Op 5B: Detalle de Venta & GET & \texttt{/api/ventas/30} & FastAPI (:8002) & 200 OK & Panel lateral Venta 30; tupla \texttt{id: 30} en MySQL. \\
+\hline
+Control de Seguridad & GET/POST & Todos los endpoints & Gateway / APIs & 401 Unauth. & Modal Error 401; acceso denegado sin credencial. \\
+\hline
+\end{tabularx}
+\end{table}
 
 \vspace{0.4cm}
 
