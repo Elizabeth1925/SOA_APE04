@@ -2137,33 +2137,101 @@ export async function listarVentas(token) {
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.2}
-\caption{Matriz de operaciones de consulta, rutas proxy y manejo de errores en el cliente React.}
+\caption{Matriz de operaciones de consulta, rutas proxy y resultados medidos en el cliente React.}
 \label{tab:act7_matriz_operaciones}
 \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\centering\arraybackslash}p{1.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.3cm}|X|}
 \hline
-\textbf{Operación} & \textbf{Método} & \textbf{Ruta Proxy Vite $\rightarrow$ NGINX} & \textbf{Servicio Destino} & \textbf{Códigos HTTP} & \textbf{Comportamiento en Interfaz React} \\
+\textbf{Operación} & \textbf{Método} & \textbf{Ruta Proxy Vite $\rightarrow$ NGINX} & \textbf{Servicio Destino} & \textbf{Código Medido} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Catálogo Vehículos & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 200 / 204 & Pobla tabla, contador de visibles y estado de carga. \\
+Control Sin Token & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 401 Unauth. & Alerta roja: «HTTP 401: Falta el JWT o el token ya no es válido.» \\
 \hline
-Filtro por Marca & GET & \texttt{/api/vehiculos?marca=X} & Spring Boot (:8082) & 200 OK & Filtro local en tiempo real y consulta remota en API. \\
+Catálogo Vehículos & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 200 OK & 31 vehículos recibidos (5.6 kB, 29 ms en DevTools Network). \\
 \hline
-Detalle Vehículo & Local & Selección por ID & Memoria React & N/A & Ficha completa con placa, chasis VIN, precio y estado. \\
+Filtro por Marca & GET & \texttt{/api/vehiculos?marca=Toyota} & Spring Boot (:8082) & 200 OK & 5 visibles (IDs 14, 30, 31, 32 y 43 Corolla Cross). \\
 \hline
-Auditoría Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 / 204 & 4 tarjetas de métricas reales, tabla y panel de detalle. \\
+Detalle Vehículo & Local & Selección ID 14 & Memoria React & N/A & Toyota Hilux, placa \texttt{EFG1122}, VIN \texttt{MR0EX8CD5N0123456}, \$42,000. \\
 \hline
-Listado Vacío & GET & Filtro sin coincidencia & Memoria / API & 200 / 204 & Mensaje explícito diferenciando sin carga vs sin resultados. \\
+Listado Vacío & Local & Filtro \texttt{ferrari} & Memoria React & 0 visibles & Mensaje explícito: «No se encontraron vehículos que coincidan...» \\
 \hline
-Control de Errores & GET & Sin JWT / API caída & Gateway / APIs & 401 / 403 / 5xx & Alerta visual roja con código HTTP y sin cierre inesperado. \\
+Auditoría Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 OK & 25 ventas, \$304,400.00 facturados, 10 exitosas, 15 en rev./fallidas (\texttt{nginx/1.30.5}). \\
 \hline
-Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Prohibición estricta: sin \texttt{POST /api/ventas} ni formularios. \\
+Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Sin \texttt{POST /api/ventas} ni formularios; aviso explícito de solo consulta. \\
 \hline
 \end{tabularx}
 \end{table}
 
 \vspace{0.2cm}
-\noindent\textbf{I. Plan de evidencias y validación experimental en navegador}
+\noindent\textbf{I. Evidencia experimental y verificación en navegador (incluyendo Network/Red)}
 
-\noindent Las pruebas funcionales sobre \texttt{http://localhost:5174} abarcan la comprobación de: (1) rechazo \texttt{HTTP 401} sin JWT, (2) carga del catálogo completo de vehículos con \texttt{HTTP 200}, (3) filtrado por marca (ej. \texttt{Toyota}) y selección de ficha detallada con chasis VIN, (4) manejo de estado de listado vacío ante marca inexistente, (5) pestaña de métricas reales y auditoría de ventas desde \texttt{GET /api/ventas} (confrontando la Venta \texttt{\#33} generada en la PWA y confirmando la inexistencia de formularios de emisión), y (6) trazas reales en la pestaña \textbf{Network/Red} de DevTools mostrando las peticiones Fetch enrutadas por Vite hacia NGINX.
+\noindent Se ejecutó la plataforma web con \texttt{npm run dev} en el puerto \texttt{5174} (\texttt{http://localhost:5174}), interactuando con NGINX (\texttt{:8090}), Spring Boot (\texttt{:8082}) y FastAPI (\texttt{:8002}). Todas las capturas mantienen el JWT protegido mediante caracteres ocultos:
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Despliegue Vite y control de error \texttt{HTTP 401}:} Al pulsar «Consultar Vehículos» sin ingresar credencial, el backend rechazó la petición y React desplegó el recuadro de error rojo \texttt{HTTP 401: Falta el JWT o el token ya no es válido.} con insignia \texttt{HTTP 401}, sin colapsar la interfaz (Figura \ref{fig:act7_vite_error401}).
+  \item \textbf{Listado general y filtrado por marca (\texttt{Toyota}):} Tras introducir un JWT válido en memoria, \texttt{GET /api/vehiculos} devolvió \texttt{HTTP 200} con los \textbf{31 vehículos} del catálogo. Al aplicar el filtro \texttt{Toyota}, la vista redujo el listado a \textbf{5 visibles} (IDs 14, 30, 31, 32 y el ID 43 \textit{Corolla Cross} creado previamente en Windows Forms), demostrando consistencia multicanal (Figura \ref{fig:act7_consulta_filtro}).
+  \item \textbf{Detalle técnico del vehículo y estado de listado vacío:} Al seleccionar el identificador \texttt{14}, el panel inferior presentó sus 9 atributos completos, incluyendo placa \texttt{EFG1122}, chasis VIN \texttt{MR0EX8CD5N0123456}, precio \texttt{\$42.000,00} y estado \texttt{VENDIDO}. Posteriormente, al filtrar por la marca inexistente \texttt{ferrari}, la tabla reflejó \texttt{0 visibles} con el mensaje informativo de ausencia de coincidencias (Figura \ref{fig:act7_detalle_vacio}).
+  \item \textbf{Consulta de ventas (\texttt{GET /api/ventas}), métricas reales y detalle de auditoría:} Al cambiar a la pestaña «Métricas y Auditoría de Ventas», la interfaz presentó el aviso de canal exclusivo de solo consulta (confirmando la ausencia total de formularios de emisión) y el estado vacío inicial en ceros. Tras presionar «Actualizar Ventas», FastAPI devolvió las \textbf{25 ventas} auditadas para la cuenta, actualizando automáticamente las métricas reales: \textbf{Total de Ventas: 25}, \textbf{Monto Facturado: \$304.400,00}, \textbf{Ventas Exitosas: 10} y \textbf{Ventas en Revisión/Fallidas: 15} (diferenciando visualmente \texttt{COMPLETADA} en verde, \texttt{FALLIDA} en rojo y \texttt{EN\_REVISION} en ámbar) (Figura \ref{fig:act7_ventas_metricas}). Al seleccionar la venta \texttt{\#3}, el panel «Detalle de la Venta Auditada» desplegó su UUID de operación (\texttt{a7b95dcb-7da1-430c-a37f-019b1e854b3a}), vehículo \texttt{12}, comprador \texttt{2}, monto \texttt{\$26.500,00 USD}, estado \texttt{COMPLETADA} y notificación RabbitMQ \texttt{ENVIADA} (Figura \ref{fig:act7_ventas_detalle}).
+  \item \textbf{Auditoría de red en DevTools (\textit{Network/Red}):} La inspección de red en el navegador confirmó el tráfico Fetch legítimo hacia el proxy local de Vite (\texttt{http://localhost:5174/api/ventas} y \texttt{http://localhost:5174/api/vehiculos}): ambas solicitudes devolvieron \texttt{200 OK} (\texttt{ventasApi.js:19} con \texttt{6.7 kB} y \texttt{vehiculosApi.js:30} con \texttt{5.6 kB} en \texttt{29 ms}), evidenciando en las cabeceras de respuesta el encabezado \texttt{Server: nginx/1.30.5}, \texttt{Content-Type: application/json} y \texttt{Cache-Control: no-cache, no-store}, comprobando el paso transparente por NGINX sin exponer claves internas en el cliente (Figura \ref{fig:act7_devtools_network}).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act7_vite_5174.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.86\textwidth]{act7_error_401.png}
+  \caption{Arranque de React en Vite y control de error \texttt{HTTP 401}: consola ejecutando \texttt{npm run dev} sobre el puerto dedicado 5174 sin conflicto con la PWA (arriba) y manejo controlado del rechazo \texttt{HTTP 401} al intentar consultar sin credencial JWT (abajo).}
+  \label{fig:act7_vite_error401}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act7_consulta_200_31.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.86\textwidth]{act7_filtro_toyota.png}
+  \caption{Consulta autenticada y filtrado por marca en React: carga exitosa de los 31 vehículos con código \texttt{HTTP 200} y token oculto en memoria (arriba) y filtrado por marca \texttt{Toyota} desplegando 5 unidades coincidentes, incluido el vehículo ID 43 registrado en Windows Forms (abajo).}
+  \label{fig:act7_consulta_filtro}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act7_detalle_vehiculo_14.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.86\textwidth]{act7_filtro_vacio.png}
+  \caption{Detalle del vehículo seleccionado y estado de listado vacío: ficha técnica del vehículo ID 14 (Toyota Hilux, placa \texttt{EFG1122}, chasis VIN \texttt{MR0EX8CD5N0123456}) (arriba) y manejo de filtro sin coincidencias al buscar \texttt{ferrari} mostrando 0 visibles (abajo).}
+  \label{fig:act7_detalle_vacio}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act7_ventas_estado_inicial.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.86\textwidth]{act7_ventas_metricas_reales.png}
+  \caption{Supervisión de ventas de solo consulta (\texttt{GET /api/ventas}): estado inicial con aviso de aislamiento sin formularios de emisión (arriba) y tablero cargado con métricas reales de las 25 transacciones (\$304,400.00 facturados, 10 completadas y 15 observadas/fallidas) (abajo).}
+  \label{fig:act7_ventas_metricas}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{act7_ventas_detalle_3.png}
+  \caption{Auditoría individual en React: panel «Detalle de la Venta Auditada» para la venta \texttt{\#3} mostrando UUID de operación, identificador de vehículo y comprador, precio acordado (\$26,500.00 USD), estado \texttt{COMPLETADA} y confirmación de notificación RabbitMQ (\texttt{ENVIADA}).}
+  \label{fig:act7_ventas_detalle}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act7_network_resumen.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act7_network_headers_ventas.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act7_network_headers_vehiculos.png}
+  \caption{Evidencia de la pestaña \textit{Network/Red} del navegador: tráfico Fetch con \texttt{ventas} (200, \texttt{ventasApi.js:19}) y \texttt{vehiculos} (200, \texttt{vehiculosApi.js:30}) (arriba), cabeceras de \texttt{GET /api/ventas} mostrando \texttt{Server: nginx/1.30.5} (medio) y cabeceras de \texttt{GET /api/vehiculos} con \texttt{200 OK} y \texttt{Cache-Control: no-store} (abajo).}
+  \label{fig:act7_devtools_network}
+\end{figure}
 
 \vspace{0.4cm}
 
