@@ -1703,6 +1703,219 @@ Control de Seguridad & GET/POST & Todos los endpoints & Gateway / APIs & 401 Una
 \end{table}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.6 Actividad 6. PWA móvil con login y registro exclusivo de ventas}
+
+\vspace{0.2cm}
+\noindent En esta actividad se desarrolló, desplegó y auditó el cliente móvil progresivo (\textbf{Progressive Web App - PWA}) implementado en el proyecto \texttt{AplicacionMovilPWA}. En la arquitectura orientada a servicios (SOA) de la práctica APE 04, esta aplicación asume el rol exclusivo de \textbf{canal oficial autorizado para la emisión transaccional de ventas}, permitiendo a los operadores en piso comercial autenticarse contra el clúster de seguridad, consultar el inventario vehicular y el padrón de clientes, y emitir compras transaccionales con garantías formales de idempotencia mediante el Gateway unificado NGINX (puerto 8090).
+
+\vspace{0.2cm}
+\noindent\textbf{A. Arquitectura técnica del cliente PWA y servidor de desarrollo}
+
+\noindent La PWA se estructuró siguiendo estándares web modernos (ES Modules nativos, HTML5 semántico y CSS3 adaptativo con CSS Grid y Flexbox) sin depender de frameworks pesados que incrementen la latencia de red. La solución se compone de:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Capa de Presentación e Interfaz (\texttt{index.html}, \texttt{styles.css}):} Interfaz adaptativa optimizada para dispositivos móviles mediante la directiva \texttt{viewport-fit=cover}, ofreciendo ergonomía táctil con botones grandes, tarjetas de producto con badges de disponibilidad y paneles modulares para el flujo comercial.
+  \item \textbf{Capa de Comunicación y Protocolo REST (\texttt{api.js}):} Funciones asíncronas puras que encapsulan las llamadas hacia los endpoints perimetrales del Gateway NGINX (\texttt{/oauth/token}, \texttt{/api/vehiculos}, \texttt{/api/compradores}, \texttt{/api/ventas}). Normaliza encabezados HTTP, gestiona credenciales de cliente OAuth 2.0 y procesa respuestas RFC 7807 (\textit{Problem Details}).
+  \item \textbf{Controlador de Lógica y Estado (\texttt{main.js}):} Controla la reactividad del DOM, la carga dinámica de listas desplegables, la sincronización entre el vehículo seleccionado y su valor acordado, la generación de UUIDs para control de idempotencia y la semaforización de respuestas.
+  \item \textbf{Servidor Proxy de Desarrollo (\texttt{server.mjs}):} Servidor HTTP ligero basado en \texttt{node:http} que expone la aplicación en el puerto \texttt{5173} y actúa como un proxy inverso de mismo origen (\textit{Same-Origin}), reexpidiendo de manera transparente cualquier petición hacia \texttt{/oauth/} o \texttt{/api/} directamente al Gateway NGINX (\texttt{http://127.0.0.1:8090/}). Este esquema elimina en su totalidad problemas de CORS (\textit{Cross-Origin Resource Sharing}) en el navegador y simplifica la instalación PWA.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Autenticación perimetral OAuth 2.0 y gestión segura del token en memoria volátil}
+
+\noindent Para cumplir rigurosamente con los lineamientos de ciberseguridad exigidos por la guía (\textit{«Conservar el token solo durante la sesión de prueba, sin incrustarlo en código, guardarlo en el repositorio ni incluirlo en capturas»}):
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Flujo Password Grant con Credenciales de Cliente:} En el formulario de inicio de sesión (\texttt{\#formularioLogin}), el operador selecciona su cuenta (\texttt{operador}, \texttt{admin} o \texttt{consulta}) e ingresa su contraseña. Al presionar «Iniciar Sesión», la función \texttt{loginOAuth()} remite una petición HTTP con el método \texttt{POST /oauth/token} a través del Gateway NGINX. Se adjuntan las credenciales cliente de la aplicación codificadas en Base64 (\texttt{Authorization: Basic dmVoaWN1bG9z...}), junto con el cuerpo \texttt{x-www-form-urlencoded}:
+  {\small
+  \begin{verbatim}
+  grant_type=password&username=operador&password=operador123&idapli=92
+  \end{verbatim}
+  }
+  \item \textbf{Ciclo de Vida del JWT en Memoria Volátil:} Al recibir la respuesta exitosa \texttt{HTTP 200 OK} con el token portador firmado (\texttt{access\_token}), este se almacena \textbf{exclusivamente en una variable volátil en tiempo de ejecución} (\texttt{let tokenActual = ''}). El sistema prohíbe de forma explícita el uso de \texttt{localStorage}, \texttt{sessionStorage}, \texttt{IndexedDB} o cookies persistentes.
+  \item \textbf{Ocultamiento Visual y Limpieza Inmediata:} El control de visualización del token en el formulario utiliza el atributo \texttt{type="password"}, ocultando la cadena criptográfica para que no pueda ser leída ni expuesta en capturas de pantalla. Además, se proporciona el botón «Borrar sesión», el cual purga instantáneamente el token de la memoria volátil y restablece la interfaz.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Integración dinámica del catálogo vehicular y directorio de compradores}
+
+\noindent Una vez establecida la sesión segura, el controlador despacha automáticamente dos consultas asíncronas concurrentes para preparar el entorno de venta:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Consulta de Vehículos (\texttt{GET /api/vehiculos}):} Se contacta con Spring Boot a través de NGINX con la cabecera \texttt{Authorization: Bearer <JWT>}. El resultado se procesa para poblar el elemento \texttt{<select id="selectVehiculo">}. Para salvaguardar la consistencia comercial, la interfaz comprueba el atributo \texttt{estado} de cada entidad; si un vehículo ya se encuentra en estado \texttt{VENDIDO}, la opción se deshabilita automáticamente (\texttt{opt.disabled = true}), impidiendo que el operador intente vender una unidad ya adjudicada. Adicionalmente, el catálogo visual inferior renderiza tarjetas con badges cromáticos (\texttt{disponible} en verde y \texttt{vendido} en gris oscuro).
+  \item \textbf{Consulta de Compradores (\texttt{GET /api/compradores}):} Se contacta con FastAPI a través de NGINX, recuperando la nómina de clientes autorizados según las políticas RBAC del usuario autenticado, poblando el control \texttt{<select id="selectComprador">}.
+  \item \textbf{Sincronización Automática de Precios:} Al seleccionar una unidad vehicular en el desplegable, un escuchador de eventos (\texttt{change}) extrae el precio de lista oficial y lo fija en el campo \texttt{precioVenta}, informando al operador el importe establecido por catálogo.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Emisión transaccional de ventas y preservación de Idempotencia (\texttt{Idempotency-Key})}
+
+\noindent La transacción comercial se formaliza a través del formulario principal (\texttt{\#formularioVenta}), aplicando el contrato estricto de la arquitectura:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Generación de Claves Criptográficas Únicas:} Mediante la API estándar \texttt{crypto.randomUUID()}, la PWA asigna automáticamente un identificador UUID v4 en el campo \texttt{idempotencyKey}. El operador cuenta con los controles «Nuevo UUID» (para nuevas operaciones independientes) y «Fijar Clave» (para verificar intencionalmente el comportamiento de reintentos idénticos o conflictos).
+  \item \textbf{Despacho HTTP y Encabezados Protegidos:} Al pulsar «Registrar Venta», se remite la solicitud \texttt{POST /api/ventas} hacia FastAPI vía NGINX inyectando:
+  {\small
+  \begin{verbatim}
+  Authorization: Bearer <token_jwt>
+  Idempotency-Key: <uuid_v4>
+  Content-Type: application/json
+  \end{verbatim}
+  }
+  con la carga útil estructurada: \texttt{\{"vehiculo\_id": X, "comprador\_id": Y, "precio": Z\}}.
+  \item \textbf{Integridad de Precios del Lado Servidor:} Aunque el cliente envía el precio sugerido, FastAPI valida que el importe final registrado en base de datos corresponda estrictamente al catálogo oficial obtenido de la reserva con Spring Boot, desestimando cualquier alteración no autorizada desde el cliente.
+  \item \textbf{Publicación en RabbitMQ y Actualización de Inventario:} Cuando la transacción concluye exitosamente (\texttt{201 Created}), FastAPI encola el evento de venta en RabbitMQ (\texttt{notificaciones.ventas}), la venta se marca como \texttt{COMPLETADA} con notificación \texttt{ENVIADA}, y el vehículo pasa a estado \texttt{VENDIDO} en MySQL.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Presentación reactiva de resultados y auditoría puntual (\texttt{GET /api/ventas/\{id\}})}
+
+\noindent Para proporcionar transparencia operativa y permitir al operador verificar transacciones ante condiciones de red inestables o latencias elevadas:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Panel de Diagnóstico HTTP en Tiempo Real:} El contenedor \texttt{\#contenedorResultadoVenta} despliega un indicador cromático que resalta el código HTTP de respuesta: verde para códigos exitosos (\texttt{HTTP 201 Created} y \texttt{HTTP 200 OK}), naranja para detección de conflicto de idempotencia (\texttt{HTTP 409 Conflict}), y carmesí para fallas de validación o acceso (\texttt{HTTP 400, 401, 403, 404, 5xx}). A su vez, se presenta el cuerpo JSON completo devuelto por el Gateway.
+  \item \textbf{Mecanismo de Consulta Posterior de Seguridad (\texttt{GET /api/ventas/\{id\}}):} Conforme lo estipula la directriz de la práctica (\textit{«Permitir consulta posterior GET /api/ventas/\{id\}, en especial ante una respuesta incierta»}), la PWA integra el módulo «Consultar Venta Emitida por ID». Si una transacción sufriera una interrupción de enlace durante la recepción de la respuesta, el operador puede consultar el identificador de venta generado para inspeccionar el estado definitivo persistido en la base de datos sin incurrir en duplicaciones.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Manifiesto PWA, Service Worker y preparación para instalación móvil}
+
+\noindent La aplicación incorpora todas las especificaciones formales para operar como una Progressive Web App instalable:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Manifiesto Web (\texttt{manifest.webmanifest}):} Declara el nombre completo (\textit{Canal Móvil de Ventas · PWA}), nombre corto (\textit{Ventas PWA}), modo de visualización autónomo (\texttt{display: "standalone"}), color temático institucional (\texttt{\#103b56}) e iconografía en resoluciones de 192x192 y 512x512 píxeles con soporte para máscaras adaptativas (\texttt{maskable}).
+  \item \textbf{Service Worker (\texttt{sw.js}):} Registrado condicionalmente sobre orígenes seguros (\texttt{window.isSecureContext} o \texttt{localhost}). Gestiona la caché de recursos estáticos del shell de la aplicación (HTML, CSS, JS e iconos), permitiendo la carga instantánea de la interfaz y la notificación visual del estado de conectividad en el pie de página mediante los eventos \texttt{online} y \texttt{offline} del navegador.
+  \item \textbf{Restricción Arquitectónica de Exclusividad:} La PWA confirma en su diseño la exclusión absoluta de formularios o botones para crear vehículos o compradores, garantizando que el canal móvil se mantenga estrictamente focalizado en la emisión transaccional y consulta de inventario.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{G. Fragmentos representativos de la implementación}
+
+\noindent A continuación se presentan los extractos clave de código fuente que gobiernan la autenticación perimetral y el registro idempotente de ventas en la PWA:
+
+\vspace{0.1cm}
+\noindent\textbf{1. Cliente HTTP para autenticación y ventas (\texttt{public/api.js}):}
+{\small
+\begin{verbatim}
+export async function loginOAuth(usuario, contrasena, ejecutarFetch = fetch) {
+  const parametros = new URLSearchParams();
+  parametros.set('grant_type', 'password');
+  parametros.set('username', String(usuario || '').trim());
+  parametros.set('password', String(contrasena || ''));
+  parametros.set('idapli', '92');
+
+  const credenciales = btoa('vehiculos-cliente:cliente-local-aula-2026-key-');
+  const encabezados = new Headers({
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Authorization': `Basic ${credenciales}`,
+  });
+
+  const res = await ejecutarFetch('/oauth/token', {
+    method: 'POST',
+    headers: encabezados,
+    body: parametros.toString(),
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: Credenciales invalidas`);
+  const datos = await res.json();
+  return {
+    codigoHttp: res.status,
+    token: datos.access_token,
+    expiraEn: datos.expires_in
+  };
+}
+
+export async function registrarVenta(
+  datos, idempKey, token, ejecutarFetch = fetch) {
+  const jwt = normalizarToken(token);
+  const encabezados = new Headers({
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  });
+  if (jwt) encabezados.set('Authorization', `Bearer ${jwt}`);
+  if (idempKey)
+    encabezados.set('Idempotency-Key', String(idempKey).trim());
+
+  const res = await ejecutarFetch('/api/ventas', {
+    method: 'POST',
+    headers: encabezados,
+    body: JSON.stringify(datos),
+    cache: 'no-store',
+  });
+  const cuerpo = await res.json();
+  if (!res.ok) {
+    const error = new Error(
+      cuerpo.detail || `HTTP ${res.status}: Venta rechazada`);
+    error.codigoHttp = res.status;
+    error.detalles = cuerpo;
+    throw error;
+  }
+  return { codigoHttp: res.status, venta: cuerpo };
+}
+\end{verbatim}
+}
+
+\vspace{0.1cm}
+\noindent\textbf{2. Manifiesto formal de la aplicación PWA (\texttt{manifest.webmanifest}):}
+{\small
+\begin{verbatim}
+{
+  "name": "Canal Movil de Ventas · PWA (UTA SOA)",
+  "short_name": "Ventas PWA",
+  "description": "PWA para registro exclusivo de ventas",
+  "display": "standalone",
+  "theme_color": "#103b56",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512" }
+  ]
+}
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{H. Matriz de operaciones y trazabilidad de la PWA Móvil}
+
+\noindent En la Tabla \ref{tab:act6_matriz_operaciones} se sistematizan las operaciones canalizadas a través de la PWA, los endpoints asociados en NGINX, los códigos de estado esperados y los impactos en las bases de datos y la mensajería asíncrona:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Matriz de operaciones, contratos HTTP y trazabilidad del Canal Móvil PWA.}
+\label{tab:act6_matriz_operaciones}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\centering\arraybackslash}p{1.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.3cm}|X|}
+\hline
+\textbf{Operación} & \textbf{Método} & \textbf{Endpoint NGINX (:8090)} & \textbf{Servicio Destino} & \textbf{Código HTTP} & \textbf{Descripción Técnica y Resultados} \\
+\hline
+Autenticación OAuth & POST & \texttt{/oauth/token} & Spring Boot (:8082) & 200 OK & Emisión de JWT; credenciales en memoria volátil. \\
+\hline
+Catálogo Vehículos & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 200 OK & Carga de unidades y bloqueo de vendidos. \\
+\hline
+Lista Compradores & GET & \texttt{/api/compradores} & FastAPI (:8002) & 200 OK & Listado de clientes según contexto de rol. \\
+\hline
+Emisión de Venta & POST & \texttt{/api/ventas} & FastAPI (:8002) & 201 Created & Orquestación 2 fases, AMQP e Idempotency-Key. \\
+\hline
+Reintento Idempotente & POST & \texttt{/api/ventas} & FastAPI (:8002) & 200 OK & Misma clave y cuerpo; sin registros duplicados. \\
+\hline
+Conflicto Idempotente & POST & \texttt{/api/ventas} & FastAPI (:8002) & 409 Conflict & Clave reutilizada con carga útil alterada. \\
+\hline
+Auditoría por ID & GET & \texttt{/api/ventas/\{id\}} & FastAPI (:8002) & 200 OK & Verificación de estado ante respuesta incierta. \\
+\hline
+Control de Token & GET/POST & Todos los endpoints & Gateway / APIs & 401 Unauth. & Rechazo inmediato sin sesión o token vencido. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{I. Evidencia experimental y validación de operaciones en la PWA Móvil}
+
+\noindent A continuación se describen las pruebas de funcionamiento y verificación cruzada realizadas sobre el entorno de prueba:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Prueba 1: Autenticación perimetral y generación de JWT:} El operador seleccionó las credenciales del rol \texttt{operador} y ejecutó el inicio de sesión. La petición \texttt{POST /oauth/token} fue atendida a través de NGINX con código \texttt{HTTP 200 OK}, presentando la confirmación de sesión activa y manteniendo el token oculto bajo formato protegido de caracteres.
+  \item \textbf{Prueba 2: Carga de catálogo y listas dependientes:} Al autenticarse, la PWA ejecutó de manera transparente \texttt{GET /api/vehiculos} y \texttt{GET /api/compradores}, poblando los selectores correspondientes y bloqueando las opciones de vehículos que ya contaban con estado \texttt{VENDIDO}.
+  \item \textbf{Prueba 3: Emisión de venta comercial exitosa (\texttt{201 Created}):} Se seleccionó un vehículo disponible, un comprador del padrón y se generó una clave \texttt{Idempotency-Key} única. Al despachar \texttt{POST /api/ventas}, FastAPI completó la orquestación transaccional de dos fases con Spring Boot, retornando código \texttt{HTTP 201 Created} con estado \texttt{COMPLETADA} y evento encolado en RabbitMQ (\texttt{notificacion: ENVIADA}).
+  \item \textbf{Prueba 4: Auditoría posterior y consulta por identificador (\texttt{GET /api/ventas/\{id\}}):} Con el fin de ratificar la consistencia ante respuestas inciertas, se ingresó el identificador de la venta recién creada en el módulo de consulta por ID. El endpoint devolvió la tupla completa en formato JSON con código \texttt{HTTP 200 OK}, certificando los atributos transaccionales.
+  \item \textbf{Prueba 5: Verificación de persistencia relacional en MySQL:} Mediante \texttt{phpMyAdmin}, se inspeccionó la tabla \texttt{ventas}, comprobando la inserción exacta de la fila con su clave de idempotencia y código de reserva, mientras que en la tabla \texttt{vehiculo} se confirmó la transición de estado del vehículo a \texttt{VENDIDO}.
+  \item \textbf{Prueba 6: Evaluación de resiliencia y tratamiento de errores:} Al forzar una consulta sin sesión activa o con token expirado, la aplicación capturó el error \texttt{HTTP 401 Unauthorized}, notificando claramente al usuario sin provocar bloqueos en la interfaz. Asimismo, al reutilizar una clave idempotente con variación de datos, la API devolvió el código estándar \texttt{HTTP 409 Conflict}.
+\end{enumerate}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 

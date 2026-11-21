@@ -1,7 +1,7 @@
 {
-  "name": "Consulta de Vehículos - Móvil",
-  "short_name": "Vehículos",
-  "description": "PWA móvil para consultar vehículos de una API REST protegida con JWT.",
+  "name": "Canal Móvil de Ventas · PWA (UTA SOA)",
+  "short_name": "Ventas PWA",
+  "description": "Aplicación web progresiva móvil para registro exclusivo de ventas y consulta de vehículos con OAuth 2.0 y NGINX.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
