@@ -1987,6 +1987,185 @@ Instalación PWA & GET & \texttt{/manifest.webmanifest} & Node PWA (:5173) & 200
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.7 Actividad 7. Cliente web React como plataforma de consulta}
+
+\vspace{0.2cm}
+\noindent En esta actividad se amplió, refactorizó y validó el portal web de consulta y supervisión desarrollado con \textbf{React 19} y \textbf{Vite 8} en el proyecto \texttt{reactweb/react-fetch-vehiculos}. Dentro de la arquitectura SOA multicanal de la práctica APE 04, este cliente web desempeña el rol exclusivo de \textbf{plataforma de solo lectura, consulta analítica y auditoría comercial}, consumiendo mediante la API estándar \texttt{Fetch} tanto el catálogo de vehículos (Spring Boot) como el historial de transacciones comerciales (FastAPI) a través del Gateway unificado NGINX (puerto \texttt{8090}).
+
+\vspace{0.2cm}
+\noindent\textbf{A. Configuración del proxy inverso en Vite sin claves internas en el navegador}
+
+\noindent Para garantizar la comunicación de mismo origen (\textit{Same-Origin}) desde el navegador hacia la infraestructura backend sin exponer secretos de integración ni provocar bloqueos CORS, el servidor de desarrollo Vite se configuró en el archivo \texttt{vite.config.js} sobre el puerto dedicado \texttt{5174} (\texttt{strictPort: true}), evitando cualquier colisión con la PWA móvil (\texttt{5173}) durante ejecuciones simultáneas:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Enrutamiento transparente por proxy:} Toda petición hacia los prefijos \texttt{/api} y \texttt{/oauth} es interceptada por Vite y reexpedida hacia el Gateway NGINX (\texttt{http://127.0.0.1:8090}) con \texttt{changeOrigin: true}.
+  \item \textbf{Ausencia total de claves internas en el cliente web:} El paquete distribuido al navegador no contiene claves de integración interna (\texttt{X-API-KEY}), secretos de cliente OAuth, contraseñas ni tokens JWT precargados. La autorización depende exclusivamente del token portador JWT provisto en memoria volátil por el usuario durante su sesión de consulta (\texttt{useState('')}), oculto visualmente mediante \texttt{type="password"} y descartado al limpiar o cerrar la pestaña.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Consumo de vehículos vía Fetch (\texttt{GET /api/vehiculos}) y política de autorización}
+
+\noindent Se conservó y reforzó el módulo desacoplado \texttt{src/api/vehiculosApi.js}, manteniendo estrictamente la separación de responsabilidades (sin lógica visual, SQL ni reglas de negocio en la capa HTTP):
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Cabeceras estándar y sin caché:} Todas las llamadas utilizan \texttt{fetch(..., \{ method: 'GET', headers, cache: 'no-store' \})} con \texttt{Accept: application/json} para asegurar que el catálogo refleje siempre el estado actualizado en MySQL.
+  \item \textbf{Normalización de credencial Bearer:} La función \texttt{normalizarToken()} depura espacios y elimina prefijos duplicados \texttt{Bearer } antes de inyectar \texttt{Authorization: Bearer <JWT>}. Si el usuario deja el campo vacío, no se envía la cabecera para permitir verificar la respuesta real \texttt{HTTP 401} emitida por el backend.
+  \item \textbf{Validación de contrato JSON:} Se contempla la respuesta \texttt{HTTP 204 No Content} (retornando lista vacía), se interceptan errores de parseo JSON y se comprueba estrictamente que la carga útil corresponda a un arreglo (\texttt{Array.isArray(datos)}).
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Filtrado por marca y panel de detalle del vehículo}
+
+\noindent En la pestaña «Catálogo de Vehículos» de \texttt{src/App.jsx} se integraron dos mecanismos complementarios de filtrado y una vista detallada de auditoría técnica:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Filtrado por marca en tiempo real y consulta remota:} Al escribir en el campo \texttt{\#filtroMarca}, un selector memorizado (\texttt{useMemo}) filtra instantáneamente la tabla por coincidencia parcial sin distinción de mayúsculas. Adicionalmente, el botón «Filtrar en API» invoca la consulta remota \texttt{GET /api/vehiculos?marca=\{valor\}} a través de Vite y NGINX hacia Spring Boot, evidenciando el filtrado directamente desde la capa de servicio.
+  \item \textbf{Detalle técnico del vehículo seleccionado:} Al hacer clic en el botón del identificador (\texttt{ID}) de cualquier fila de la tabla, el panel «3. Detalle del Vehículo Seleccionado» despliega la ficha completa del automotor: \textit{ID Vehículo, Marca, Modelo, Placa, Chasis (VIN), Año, Color, Precio} formateado en dólares estadounidenses (\texttt{Intl.NumberFormat('es-EC')}) y \textit{Estado} (\texttt{DISPONIBLE} o \texttt{VENDIDO}).
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Consulta de ventas (\texttt{GET /api/ventas}), resumen de métricas reales y auditoría}
+
+\noindent Para dotar al portal de visibilidad comercial sin vulnerar la separación de canales, se creó el módulo \texttt{src/api/ventasApi.js} y la pestaña «Métricas y Auditoría de Ventas»:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Consumo exclusivo \texttt{GET /api/ventas}:} Envía el JWT vigente hacia NGINX (\texttt{:8090}), el cual enruta la consulta al microservicio FastAPI (\texttt{:8002}) respetando los permisos RBAC (\texttt{CONSULTA}, \texttt{OPERADOR} o \texttt{ADMIN}).
+  \item \textbf{Resumen analítico derivado de datos reales:} Mediante \texttt{useMemo} (\texttt{metricasVentas}), React calcula cuatro indicadores directamente sobre el arreglo real devuelto por la API, sin valores ficticios ni redondeos que oculten discrepancias:
+  \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
+    \item \textit{Total de Ventas:} Número total de transacciones registradas en el historial.
+    \item \textit{Monto Facturado:} Suma exacta en USD calculada únicamente sobre ventas confirmadas/completadas (excluyendo filas \texttt{FALLIDA} para preservar integridad contable).
+    \item \textit{Ventas Exitosas:} Conteo de operaciones en estado \texttt{COMPLETADA} / \texttt{CONFIRMADA}.
+    \item \textit{Ventas en Revisión / Fallidas:} Conteo de operaciones observadas o rechazadas.
+  \end{enumerate}
+  \item \textbf{Detalle de la venta auditada:} Al pulsar el identificador (\texttt{\#ID}) de cualquier transacción en la tabla, el panel inferior presenta su trazabilidad integral: \textit{ID Venta, ID Operación (UUID), ID Vehículo, ID Comprador, Precio Acordado y Moneda, Estado, Notificación RabbitMQ} y \textit{Fecha UTC}.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Estados de carga, listado vacío, errores HTTP y conectividad}
+
+\noindent La interfaz implementa una máquina de estados clara para retroalimentar al usuario en todo momento:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Estado de carga (\texttt{cargando}):} Deshabilita los controles de acción, muestra etiquetas dinámicas («Consultando...») y evita peticiones concurrentes duplicadas mediante limpieza garantizada en \texttt{finally}.
+  \item \textbf{Estado de listado vacío:} Diferencia visualmente entre un catálogo aún no consultado, una respuesta sin registros (\texttt{HTTP 204} o arreglo vacío) y un filtro de marca sin coincidencias (\textit{«No se encontraron vehículos que coincidan con la marca ingresada.»}).
+  \item \textbf{Tratamiento exhaustivo de errores HTTP y red:} Tanto \texttt{vehiculosApi.js} como \texttt{ventasApi.js} verifican \texttt{respuesta.ok} y traducen los códigos \texttt{401}, \texttt{403}, \texttt{404}, \texttt{500}, \texttt{502}, \texttt{503} y \texttt{504} a mensajes comprensibles acompañados de la insignia numérica \texttt{HTTP <código>} en la barra de estado (\texttt{estado-error}). Asimismo, el bloque \texttt{try/catch} sobre \texttt{fetch()} captura interrupciones de red o caídas de NGINX informando el fallo de conectividad sin colapsar la aplicación.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Restricción arquitectónica: prohibición de \texttt{POST /api/ventas} en React}
+
+\noindent En estricto cumplimiento del diseño multicanal de la guía (\textit{«No implementar POST /api/ventas ni formularios de venta en React»}), se auditó todo el proyecto \texttt{react-fetch-vehiculos} verificando la ausencia absoluta de peticiones \texttt{POST}, \texttt{PUT}, \texttt{PATCH} o \texttt{DELETE}, así como la inexistencia de botones o formularios para emitir ventas. Adicionalmente, la pestaña de ventas incorpora un aviso informativo explícito (\textit{«Aislamiento de Perfil y Canal de Auditoría»}) que documenta al usuario que el registro transaccional es atribución exclusiva de la PWA móvil.
+
+\vspace{0.2cm}
+\noindent\textbf{G. Fragmentos representativos de código fuente}
+
+\noindent A continuación se presentan los extractos clave de la configuración del proxy Vite y los clientes Fetch de vehículos y ventas:
+
+\vspace{0.1cm}
+\noindent\textbf{1. Configuración de puerto 5174 y proxy inverso hacia NGINX (\texttt{vite.config.js}):}
+{\small
+\begin{verbatim}
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5174,
+    strictPort: true,
+    proxy: {
+      '/api': { target: 'http://127.0.0.1:8090', changeOrigin: true },
+      '/oauth': { target: 'http://127.0.0.1:8090', changeOrigin: true },
+    },
+  },
+});
+\end{verbatim}
+}
+
+\vspace{0.1cm}
+\noindent\textbf{2. Cliente Fetch de vehículos con soporte de filtro (\texttt{src/api/vehiculosApi.js}):}
+{\small
+\begin{verbatim}
+export async function listarVehiculos(token, marca = '') {
+  const headers = new Headers({ Accept: 'application/json' });
+  const jwt = normalizarToken(token);
+  if (jwt) headers.set('Authorization', `Bearer ${jwt}`);
+
+  const filtro = String(marca || '').trim();
+  const ruta = filtro
+    ? `/api/vehiculos?marca=${encodeURIComponent(filtro)}`
+    : '/api/vehiculos';
+
+  const respuesta = await fetch(ruta, {
+    method: 'GET', headers, cache: 'no-store',
+  });
+  if (!respuesta.ok) {
+    const error = new Error(mensajes[respuesta.status]
+      ?? `La API devolvio HTTP ${respuesta.status}.`);
+    error.status = respuesta.status;
+    throw error;
+  }
+  if (respuesta.status === 204) return { vehiculos: [], codigoHttp: 204 };
+  const datos = await respuesta.json();
+  return { vehiculos: datos, codigoHttp: respuesta.status };
+}
+\end{verbatim}
+}
+
+\vspace{0.1cm}
+\noindent\textbf{3. Cliente Fetch de solo lectura para ventas (\texttt{src/api/ventasApi.js}):}
+{\small
+\begin{verbatim}
+export async function listarVentas(token) {
+  const headers = new Headers({ Accept: 'application/json' });
+  const jwt = normalizarToken(token);
+  if (jwt) headers.set('Authorization', `Bearer ${jwt}`);
+
+  const respuesta = await fetch('/api/ventas', {
+    method: 'GET', headers, cache: 'no-store',
+  });
+  if (!respuesta.ok) {
+    const error = new Error(mensajes[respuesta.status]
+      ?? `HTTP ${respuesta.status}: Error al consultar ventas.`);
+    error.status = respuesta.status;
+    throw error;
+  }
+  const datos = await respuesta.json();
+  return { ventas: datos, codigoHttp: respuesta.status };
+}
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{H. Matriz de operaciones y control de calidad del cliente React}
+
+\noindent Antes de las pruebas en navegador, se ejecutó la verificación estática \texttt{npm run lint} (\texttt{oxlint}, 0 advertencias y 0 errores sobre 104 reglas) y la compilación productiva \texttt{npm run build} (\texttt{vite build}, completada en 328 ms). En la Tabla \ref{tab:act7_matriz_operaciones} se sintetizan los contratos de consulta implementados en el cliente React:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Matriz de operaciones de consulta, rutas proxy y manejo de errores en el cliente React.}
+\label{tab:act7_matriz_operaciones}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\centering\arraybackslash}p{1.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{1.8cm}|>{\centering\arraybackslash}p{1.3cm}|X|}
+\hline
+\textbf{Operación} & \textbf{Método} & \textbf{Ruta Proxy Vite $\rightarrow$ NGINX} & \textbf{Servicio Destino} & \textbf{Códigos HTTP} & \textbf{Comportamiento en Interfaz React} \\
+\hline
+Catálogo Vehículos & GET & \texttt{/api/vehiculos} & Spring Boot (:8082) & 200 / 204 & Pobla tabla, contador de visibles y estado de carga. \\
+\hline
+Filtro por Marca & GET & \texttt{/api/vehiculos?marca=X} & Spring Boot (:8082) & 200 OK & Filtro local en tiempo real y consulta remota en API. \\
+\hline
+Detalle Vehículo & Local & Selección por ID & Memoria React & N/A & Ficha completa con placa, chasis VIN, precio y estado. \\
+\hline
+Auditoría Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 / 204 & 4 tarjetas de métricas reales, tabla y panel de detalle. \\
+\hline
+Listado Vacío & GET & Filtro sin coincidencia & Memoria / API & 200 / 204 & Mensaje explícito diferenciando sin carga vs sin resultados. \\
+\hline
+Control de Errores & GET & Sin JWT / API caída & Gateway / APIs & 401 / 403 / 5xx & Alerta visual roja con código HTTP y sin cierre inesperado. \\
+\hline
+Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Prohibición estricta: sin \texttt{POST /api/ventas} ni formularios. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{I. Plan de evidencias y validación experimental en navegador}
+
+\noindent Las pruebas funcionales sobre \texttt{http://localhost:5174} abarcan la comprobación de: (1) rechazo \texttt{HTTP 401} sin JWT, (2) carga del catálogo completo de vehículos con \texttt{HTTP 200}, (3) filtrado por marca (ej. \texttt{Toyota}) y selección de ficha detallada con chasis VIN, (4) manejo de estado de listado vacío ante marca inexistente, (5) pestaña de métricas reales y auditoría de ventas desde \texttt{GET /api/ventas} (confrontando la Venta \texttt{\#33} generada en la PWA y confirmando la inexistencia de formularios de emisión), y (6) trazas reales en la pestaña \textbf{Network/Red} de DevTools mostrando las peticiones Fetch enrutadas por Vite hacia NGINX.
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
