@@ -1,5 +1,6 @@
 package ec.edu.com;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -13,7 +14,8 @@ public record NotificacionVentaDto(
     Long ventaId,
     Long vehiculoId,
     Long compradorId,
+    String operacionId,
     String mensaje,
     String estado,
-    String fecha
+    @JsonAlias({"fechaRegistro", "fechaUTC"}) String fecha
 ) {}

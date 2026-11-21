@@ -75,36 +75,51 @@ public final class VehiculosApiClient {
     }
 
     /**
-     * Consulta las notificaciones de ventas recibidas vía RabbitMQ en Notificaciones-Service.
-     * 
-     * @return CompletableFuture con la lista de notificaciones deserializadas
+     * Consulta las notificaciones de ventas recibidas vía RabbitMQ en Notificaciones-Service,
+     * preservando el código HTTP real para distinguir pantalla vacía (200 con lista vacía)
+     * de un fallo de servicio (502/503/504 o error de red).
+     *
+     * @return CompletableFuture con código HTTP, lista de notificaciones y detalle de error si aplica
      */
-    public CompletableFuture<List<NotificacionVentaDto>> consultarNotificaciones() {
+    public CompletableFuture<ResultadoNotificaciones> consultarNotificaciones() {
         HttpRequest solicitud = HttpRequest.newBuilder(URI.create(URL_NOTIFICACIONES))
-                                .timeout(Duration.ofSeconds(8))
+                                .timeout(Duration.ofSeconds(5))
                                 .header("Accept", "application/json")
                                 .GET()
                                 .build();
 
         return clienteHttp.sendAsync(solicitud, HttpResponse.BodyHandlers.ofString())
                 .thenApply(respuesta -> {
-                    if (respuesta.statusCode() != 200) {
-                        return List.<NotificacionVentaDto>of();
+                    int codigo = respuesta.statusCode();
+                    if (codigo != 200) {
+                        String detalle = switch (codigo) {
+                            case 502 -> "HTTP 502 Bad Gateway: notificaciones-service (:8081) está detenido o no responde.";
+                            case 503 -> "HTTP 503 Service Unavailable: servicio de notificaciones no disponible.";
+                            case 504 -> "HTTP 504 Gateway Timeout: tiempo de espera agotado hacia notificaciones-service.";
+                            case 404 -> "HTTP 404 Not Found: ruta /api/notificaciones no encontrada en NGINX.";
+                            default -> "HTTP " + codigo + ": error devuelto por el servicio de notificaciones.";
+                        };
+                        return new ResultadoNotificaciones(codigo, List.of(), detalle);
                     }
                     try {
-                        return mapper.readValue(
+                        List<NotificacionVentaDto> lista = mapper.readValue(
                             respuesta.body(),
                             new TypeReference<List<NotificacionVentaDto>>() {}
                         );
+                        return new ResultadoNotificaciones(200, lista, null);
                     } catch (JsonProcessingException ex) {
-                        return List.<NotificacionVentaDto>of();
+                        return new ResultadoNotificaciones(200, List.of(), "Respuesta JSON inválida del servicio de notificaciones.");
                     }
                 });
     }
 
     /**
-     * Record inmutable que encapsula la respuesta del servicio web:
-     * el código de estado HTTP recibido y la lista de vehículos deserializada.
+     * Record inmutable que encapsula la respuesta del servicio de vehículos.
      */
     public record ResultadoConsulta(int codigoHttp, List<Vehiculo> vehiculos) {}
+
+    /**
+     * Record inmutable que encapsula el resultado del sondeo de notificaciones.
+     */
+    public record ResultadoNotificaciones(int codigoHttp, List<NotificacionVentaDto> notificaciones, String errorDetalle) {}
 }

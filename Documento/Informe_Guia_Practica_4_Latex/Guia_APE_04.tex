@@ -2451,6 +2451,120 @@ RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \t
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.9 Actividad 9. Servicio de notificaciones y visualización JavaFX}
+
+\vspace{0.2cm}
+\noindent En esta actividad se consolidó el cierre asíncrono de la cadena orientada a eventos integrando dos componentes Java: el microservicio consumidor \texttt{notificaciones-service} (Spring Boot 3.5.6 + Spring AMQP en el puerto \texttt{8081}) y el cliente de escritorio \texttt{escritorioFx/consultarvehiculojavafx} (JavaFX 21 sobre JDK 25). El primero consume la cola durable \texttt{notificaciones.ventas} de RabbitMQ garantizando deduplicación por \texttt{eventoId} y exponiendo un historial recuperable vía \texttt{GET /api/notificaciones} (enrutado por NGINX en \texttt{:8090}); el segundo presenta las notificaciones en tiempo real mediante sondeo automático limitado cada 3 segundos y diferencia explícitamente una pantalla vacía saludable de un fallo de servicio.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Listener RabbitMQ, deduplicación por \texttt{eventoId} e historial recuperable (\texttt{notificaciones-service})}
+
+\noindent El microservicio de notificaciones fue extendido con las siguientes capas desacopladas:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Consumidor AMQP real (\texttt{VentasRabbitListener.java}):} Anotado con \texttt{@RabbitListener(queues = "\$\{app.rabbitmq.queue:notificaciones.ventas\}")}, recibe los mensajes JSON en el hilo del contenedor Spring AMQP, deserializa hacia \texttt{NotificacionVentaEvento} con Jackson (\texttt{ObjectMapper}) y confirma el procesamiento tras la persistencia en el servicio, registrando trazas auditables con \texttt{ventaId} y \texttt{eventoId}.
+  \item \textbf{Control estricto de duplicados e historial concurrente (\texttt{NotificacionService.java}):} Mantiene un conjunto seguro ante concurrencia \texttt{Set<String> eventosProcesados = ConcurrentHashMap.newKeySet()}. Antes de registrar un aviso, evalúa \texttt{eventosProcesados.add(evento.getEventoId())}; si el identificador ya existía, descarta el mensaje sin generar filas duplicadas. Los eventos únicos se almacenan en orden cronológico inverso (más reciente primero) en \texttt{CopyOnWriteArrayList<NotificacionHistorialDto>}.
+  \item \textbf{Exposición de consulta y seguridad (\texttt{NotificacionController.java} y \texttt{NotificacionKeyFilter.java}):} Expone \texttt{GET /api/notificaciones} devolviendo la lista inmutable del historial para el cliente JavaFX, permitiendo peticiones \texttt{GET} y \texttt{OPTIONS} sin exponer la clave interna en el escritorio, mientras mantiene la protección por cabecera \texttt{X-Notificacion-Key} (comparación en tiempo constante con \texttt{MessageDigest.isEqual}) para escrituras \texttt{POST}. NGINX expone esta ruta unificada en \texttt{http://127.0.0.1:8090/api/notificaciones}.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Ampliación del cliente JavaFX: tabla en vivo, sondeo limitado y diferenciación de fallos}
+
+\noindent La aplicación de escritorio \texttt{VehiculosApp.java} y su cliente asíncrono \texttt{VehiculosApiClient.java} fueron ampliados con una arquitectura no bloqueante (\texttt{CompletableFuture} + \texttt{Platform.runLater}):
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Pestaña «Notificaciones en Vivo (RabbitMQ)»:} Incorpora una tabla \texttt{TableView<NotificacionVentaDto>} con 10 columnas (\textit{ID, Evento ID, Tipo, ID Venta, ID Veh., ID Comp., Operación ID, Mensaje, Estado} y \textit{Fecha}, mapeando \texttt{@JsonAlias(\{"fechaRegistro", "fechaUTC"\})}), contador total, marca de hora de última sincronización y botón de consulta manual.
+  \item \textbf{Sondeo automático limitado (cada 3 segundos):} Implementado mediante \texttt{Timeline} con \texttt{KeyFrame(Duration.seconds(3))}, controlable por el usuario mediante la casilla \texttt{chkAutoRefresh} y detenido limpiamente al cerrar la ventana (\texttt{ventana.setOnCloseRequest}). Gracias a ello, toda venta nueva confirmada en la PWA o Postman aparece automáticamente en JavaFX en menos de 3 segundos sin requerir refresco manual continuo.
+  \item \textbf{Diferenciación visual entre pantalla vacía y fallo de servicio:} El cliente retorna el registro inmutable \texttt{ResultadoNotificaciones(codigoHttp, notificaciones, errorDetalle)} preservando el estado real del Gateway NGINX:
+  \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=1pt]
+    \item \textit{Conectado con avisos (Verde):} \texttt{HTTP 200} con lista poblada; muestra barra verde con el conteo activo y actualiza la tabla automáticamente.
+    \item \textit{Pantalla vacía saludable (Azul):} \texttt{HTTP 200} con arreglo vacío \texttt{[]}; muestra barra azul y \textit{placeholder} confirmando que el servicio está operativo sin ventas registradas aún.
+    \item \textit{Fallo de servicio o conectividad (Rojo carmesí):} \texttt{HTTP 502 Bad Gateway} (cuando \texttt{notificaciones-service} está detenido), \texttt{503/504} o excepción de red hacia NGINX; muestra barra de alerta roja y \textit{placeholder} de error explícito, impidiendo confundir una caída con una lista vacía.
+  \end{enumerate}
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Fragmentos representativos de código fuente}
+
+\vspace{0.1cm}
+\noindent\textbf{1. Listener RabbitMQ y deduplicación (\texttt{VentasRabbitListener.java} y \texttt{NotificacionService.java}):}
+{\small
+\begin{verbatim}
+@RabbitListener(queues = "${app.rabbitmq.queue:notificaciones.ventas}")
+public void recibirMensajeVenta(String mensajeJson) {
+    NotificacionVentaEvento evento =
+        objectMapper.readValue(mensajeJson, NotificacionVentaEvento.class);
+    boolean procesado = notificacionService.registrarEventoVenta(evento);
+    if (procesado) {
+        log.info("Evento confirmado: ventaId={}", evento.getVentaId());
+    }
+}
+
+// Deduplicacion segura en NotificacionService.java
+public boolean registrarEventoVenta(NotificacionVentaEvento evento) {
+    if (evento == null || evento.getEventoId() == null) return false;
+    if (!eventosProcesados.add(evento.getEventoId())) {
+        log.warn("EVENTO DUPLICADO DESCARTADO: {}", evento.getEventoId());
+        return false;
+    }
+    historial.add(0, notif);
+    return true;
+}
+\end{verbatim}
+}
+
+\vspace{0.1cm}
+\noindent\textbf{2. Endpoint de historial y sondeo JavaFX (\texttt{NotificacionController.java} y \texttt{VehiculosApp.java}):}
+{\small
+\begin{verbatim}
+@RestController
+@RequestMapping("/api/notificaciones")
+public class NotificacionController {
+    @GetMapping
+    public List<NotificacionHistorialDto> listar() {
+        return notificacionService.obtenerHistorial();
+    }
+}
+
+// Sondeo automatico cada 3 segundos en VehiculosApp.java
+private void iniciarAutoSync() {
+    consultarNotificaciones();
+    temporizadorSync = new Timeline(
+        new KeyFrame(Duration.seconds(3), e -> consultarNotificaciones()));
+    temporizadorSync.setCycleCount(Timeline.INDEFINITE);
+    temporizadorSync.play();
+}
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Matriz de verificación de la Actividad 9}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Matriz de componentes, estados de conexión y pruebas de la Actividad 9 (Notificaciones y JavaFX).}
+\label{tab:act9_matriz_javafx}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{3.2cm}|X|}
+\hline
+\textbf{Componente / Prueba} & \textbf{Mecanismo Técnico} & \textbf{Resultado Esperado / Verificado} \\
+\hline
+Listener AMQP (:8081) & \texttt{@RabbitListener} en \texttt{notificaciones.ventas} & Consume eventos, deduplica por \texttt{eventoId} y registra historial. \\
+\hline
+Endpoint Historial & \texttt{GET http://127.0.0.1:8090/api/notificaciones} & Retorna JSON \texttt{HTTP 200 OK} (verificado con Venta \texttt{ID: 35}). \\
+\hline
+Sondeo Automático & \texttt{Timeline} cada 3s + \texttt{Platform.runLater} & Nueva venta aparece automáticamente en JavaFX sin refresco manual. \\
+\hline
+Pantalla Vacía vs Fallo & \texttt{ResultadoNotificaciones} (200 \texttt{[]} vs 502/red) & Azul para lista vacía saludable; rojo carmesí para \texttt{HTTP 502} o fallo de enlace. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Validación experimental de notificaciones en vivo en JavaFX}
+
+\noindent Se comprobó inicialmente la disponibilidad del endpoint \texttt{GET http://127.0.0.1:8090/api/notificaciones} vía NGINX retornando \texttt{HTTP 200} con el registro de la Venta \texttt{ID: 35} (\texttt{eventoId: 48c4ebd2-...}, \texttt{estado: PROCESADA}, \texttt{fechaRegistro: 2026-11-21 15:45:16}), quedando preparado el entorno para verificar en JavaFX el estado antes y después de una nueva venta en tiempo real y el escenario de fallo controlado al detener \texttt{notificaciones-service}.
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 

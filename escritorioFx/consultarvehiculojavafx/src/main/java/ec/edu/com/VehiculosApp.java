@@ -58,7 +58,8 @@ public final class VehiculosApp extends Application {
     // Controles pestaña de Notificaciones RabbitMQ
     private final TableView<NotificacionVentaDto> tablaNotificaciones = new TableView<>();
     private final Button btnActualizarNotificaciones = new Button("Actualizar Notificaciones");
-    private final CheckBox chkAutoRefresh = new CheckBox("Sincronización en tiempo real (cada 3s)");
+    private final CheckBox chkAutoRefresh = new CheckBox("Sondeo automático (cada 3s)");
+    private final Label lblEstadoConexionNotif = new Label("Estado de conexión: Iniciando enlace con NGINX (:8090)...");
     private final Label lblTotalNotificaciones = new Label("Notificaciones recibidas: 0");
     private final Label lblUltimaSync = new Label("Última sincronización: —");
 
@@ -149,26 +150,32 @@ public final class VehiculosApp extends Application {
         HBox barraAcciones = new HBox(15, btnActualizarNotificaciones, chkAutoRefresh, lblUltimaSync);
         barraAcciones.setAlignment(Pos.CENTER_LEFT);
 
-        agregarColumnaNotificacion("ID", NotificacionVentaDto::id, 50);
-        agregarColumnaNotificacion("Evento ID", NotificacionVentaDto::eventoId, 180);
-        agregarColumnaNotificacion("Tipo", NotificacionVentaDto::tipo, 120);
-        agregarColumnaNotificacion("ID Venta", NotificacionVentaDto::ventaId, 70);
-        agregarColumnaNotificacion("ID Vehículo", NotificacionVentaDto::vehiculoId, 80);
-        agregarColumnaNotificacion("ID Comprador", NotificacionVentaDto::compradorId, 90);
-        agregarColumnaNotificacion("Mensaje", NotificacionVentaDto::mensaje, 230);
-        agregarColumnaNotificacion("Estado", NotificacionVentaDto::estado, 90);
-        agregarColumnaNotificacion("Fecha", NotificacionVentaDto::fecha, 150);
+        lblEstadoConexionNotif.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 6 10 6 10; -fx-background-color: #edf2f7; -fx-background-radius: 6;");
+        lblEstadoConexionNotif.setMaxWidth(Double.MAX_VALUE);
+        lblEstadoConexionNotif.setWrapText(true);
 
-        tablaNotificaciones.setPlaceholder(new Label("No se han recibido notificaciones de ventas en la cola RabbitMQ."));
+        agregarColumnaNotificacion("ID", NotificacionVentaDto::id, 45);
+        agregarColumnaNotificacion("Evento ID", NotificacionVentaDto::eventoId, 170);
+        agregarColumnaNotificacion("Tipo", NotificacionVentaDto::tipo, 70);
+        agregarColumnaNotificacion("ID Venta", NotificacionVentaDto::ventaId, 65);
+        agregarColumnaNotificacion("ID Veh.", NotificacionVentaDto::vehiculoId, 60);
+        agregarColumnaNotificacion("ID Comp.", NotificacionVentaDto::compradorId, 65);
+        agregarColumnaNotificacion("Operación ID", NotificacionVentaDto::operacionId, 160);
+        agregarColumnaNotificacion("Mensaje", NotificacionVentaDto::mensaje, 220);
+        agregarColumnaNotificacion("Estado", NotificacionVentaDto::estado, 85);
+        agregarColumnaNotificacion("Fecha", NotificacionVentaDto::fecha, 135);
+
+        tablaNotificaciones.setPlaceholder(new Label("Consultando historial de notificaciones vía NGINX (:8090)..."));
         VBox.setVgrow(tablaNotificaciones, Priority.ALWAYS);
 
-        VBox contenedor = new VBox(12, titulo, explicacion, barraAcciones, lblTotalNotificaciones, tablaNotificaciones);
+        VBox contenedor = new VBox(10, titulo, explicacion, barraAcciones, lblEstadoConexionNotif, lblTotalNotificaciones, tablaNotificaciones);
         contenedor.setPadding(new Insets(18));
         contenedor.setStyle("-fx-background-color: #f7fafc;");
         return contenedor;
     }
 
     private void iniciarAutoSync() {
+        consultarNotificaciones();
         temporizadorSync = new Timeline(new KeyFrame(Duration.seconds(3), e -> consultarNotificaciones()));
         temporizadorSync.setCycleCount(Timeline.INDEFINITE);
         temporizadorSync.play();
@@ -207,12 +214,47 @@ public final class VehiculosApp extends Application {
     }
 
     private void consultarNotificaciones() {
-        api.consultarNotificaciones().whenComplete((lista, error) -> {
+        api.consultarNotificaciones().whenComplete((resultado, error) -> {
             Platform.runLater(() -> {
-                if (error == null && lista != null) {
-                    tablaNotificaciones.getItems().setAll(lista);
-                    lblTotalNotificaciones.setText("Notificaciones recibidas: " + lista.size());
-                    lblUltimaSync.setText("Última sincronización: " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                String hora = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+                if (error != null || resultado == null) {
+                    lblEstadoConexionNotif.setText("FALLO DE CONEXION: No se pudo contactar al Gateway NGINX (http://127.0.0.1:8090/api/notificaciones).");
+                    lblEstadoConexionNotif.setTextFill(Color.CRIMSON);
+                    lblEstadoConexionNotif.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 6 10 6 10; -fx-background-color: #fff5f5; -fx-border-color: #feb2b2; -fx-background-radius: 6; -fx-border-radius: 6;");
+                    lblUltimaSync.setText("Último intento fallido: " + hora);
+                    Label placeholderError = new Label("ERROR DE SERVICIO: Conexión rechazada con NGINX o notificaciones-service.");
+                    placeholderError.setTextFill(Color.CRIMSON);
+                    tablaNotificaciones.setPlaceholder(placeholderError);
+                    return;
+                }
+
+                if (resultado.codigoHttp() != 200 || resultado.errorDetalle() != null) {
+                    lblEstadoConexionNotif.setText("FALLO DE SERVICIO — " + resultado.errorDetalle());
+                    lblEstadoConexionNotif.setTextFill(Color.CRIMSON);
+                    lblEstadoConexionNotif.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 6 10 6 10; -fx-background-color: #fff5f5; -fx-border-color: #feb2b2; -fx-background-radius: 6; -fx-border-radius: 6;");
+                    lblUltimaSync.setText("Último intento fallido: " + hora);
+                    Label placeholderHttp = new Label("FALLO DE SERVICIO (" + resultado.codigoHttp() + "): " + resultado.errorDetalle());
+                    placeholderHttp.setTextFill(Color.CRIMSON);
+                    tablaNotificaciones.setPlaceholder(placeholderHttp);
+                    return;
+                }
+
+                var lista = resultado.notificaciones();
+                tablaNotificaciones.getItems().setAll(lista);
+                lblTotalNotificaciones.setText("Notificaciones recibidas: " + lista.size());
+                lblUltimaSync.setText("Última sincronización: " + hora);
+
+                if (lista.isEmpty()) {
+                    lblEstadoConexionNotif.setText("CONECTADO (HTTP 200) — Servicio operativo, sin notificaciones de ventas registradas todavía.");
+                    lblEstadoConexionNotif.setTextFill(Color.DARKBLUE);
+                    lblEstadoConexionNotif.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 6 10 6 10; -fx-background-color: #ebf8ff; -fx-border-color: #90cdf4; -fx-background-radius: 6; -fx-border-radius: 6;");
+                    Label placeholderVacio = new Label("Servicio conectado (HTTP 200). Pantalla vacía: aún no existen notificaciones de ventas.");
+                    placeholderVacio.setTextFill(Color.DARKBLUE);
+                    tablaNotificaciones.setPlaceholder(placeholderVacio);
+                } else {
+                    lblEstadoConexionNotif.setText("CONECTADO (HTTP 200) — Sondeo activo vía NGINX (:8090). " + lista.size() + " notificación(es) en historial.");
+                    lblEstadoConexionNotif.setTextFill(Color.DARKGREEN);
+                    lblEstadoConexionNotif.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 6 10 6 10; -fx-background-color: #f0fff4; -fx-border-color: #9ae6b4; -fx-background-radius: 6; -fx-border-radius: 6;");
                 }
             });
         });
