@@ -2234,6 +2234,155 @@ Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Sin \t
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.8 Actividad 8. RabbitMQ y publicación de eventos después de la venta}
+
+\vspace{0.2cm}
+\noindent En esta actividad se configuró, integró y validó la capa de mensajería asíncrona orientada a eventos basada en \textbf{RabbitMQ} (protocolo AMQP 0-9-1 en el puerto \texttt{5672} y consola web de administración en \texttt{15672}). Esta capa desacopla la confirmación transaccional de ventas ejecutada en Python FastAPI (\texttt{ventas-api}) de la recepción y visualización de alertas comerciales en el microservicio Java de notificaciones (\texttt{notificaciones-service}), garantizando durabilidad en disco, ausencia de eventos espurios o duplicados y recuperación confiable ante fallos.
+
+\vspace{0.2cm}
+\noindent\textbf{A. Configuración de RabbitMQ: cola durable y mensajes persistentes}
+
+\noindent Para impedir la pérdida de avisos comerciales ante reinicios del broker o paradas temporales del servicio consumidor, la mensajería se configuró con doble garantía de persistencia:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Cola durable dedicada (\texttt{notificaciones.ventas}):} Declarada explícitamente en el publicador mediante \texttt{channel.queue\_declare(queue="notificaciones.ventas", durable=True)} sobre el intercambio por defecto (\textit{default exchange} \texttt{""}) y el host virtual \texttt{/}. La bandera \texttt{durable=True} asegura que la definición de la cola sobreviva a reinicios del servidor RabbitMQ.
+  \item \textbf{Mensajes persistentes (\texttt{delivery\_mode=2}):} Cada evento publicado incorpora propiedades AMQP explícitas: \texttt{delivery\_mode=pika.DeliveryMode.Persistent} y \texttt{content\_type="application/json"}, instruyendo al broker a escribir el mensaje en almacenamiento persistente antes de confirmar el encolamiento.
+  \item \textbf{Variables externalizadas:} Los parámetros de enlace (\texttt{RABBITMQ\_HOST}, \texttt{RABBITMQ\_PORT}, \texttt{RABBITMQ\_USER}, \texttt{RABBITMQ\_PASSWORD} y \texttt{RABBITMQ\_QUEUE}) se cargan dinámicamente en \texttt{ventas-api/app/config.py} y \texttt{notificaciones-service/src/main/resources/application.properties}.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Publicador independiente en FastAPI, confirmación previa y control de idempotencia}
+
+\noindent Con el objetivo de preservar la cohesión modular y evitar el acoplamiento entre controladores REST y transporte AMQP:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Desacoplamiento en módulo dedicado:} La conexión \texttt{pika} y el despacho hacia RabbitMQ residen íntegramente en \texttt{ventas-api/app/clients/rabbitmq\_publisher.py} (\texttt{publicar\_evento\_venta()}), completamente separados de los endpoints en \texttt{app/routers/ventas.py}.
+  \item \textbf{Publicación exclusiva tras confirmación comercial:} En \texttt{app/services/venta\_service.py}, la función \texttt{notificar(id)} se ejecuta únicamente después de que \texttt{procesar(id)} ha confirmado la reserva en Spring Boot y persistido el estado \texttt{COMPLETADA} en MySQL. La guardia inicial \texttt{if v is None or v.estado != "COMPLETADA" or v.notificacion == "ENVIADA": return} impide categóricamente emitir eventos para ventas rechazadas (\texttt{FALLIDA}) o inconclusas (\texttt{EN\_REVISION}).
+  \item \textbf{Sin duplicación ante reintento idempotente:} Cuando un cliente reenvía una solicitud válida reutilizando la misma cabecera \texttt{Idempotency-Key} y el mismo cuerpo, FastAPI detecta que el registro ya existe con \texttt{v.notificacion == "ENVIADA"} y retorna \texttt{HTTP 200 OK} omitiendo una nueva publicación en RabbitMQ.
+  \item \textbf{Aislamiento transaccional:} El envío hacia RabbitMQ ocurre fuera de las transacciones activas de MySQL (Fase 2), actualizando posteriormente el atributo \texttt{notificacion} a \texttt{"ENVIADA"} mediante un bloqueo breve de fila (\texttt{SELECT ... FOR UPDATE}) en Fase 3.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Contrato del evento y privacidad de datos}
+
+\noindent Cada mensaje JSON publicado hacia la cola \texttt{notificaciones.ventas} contiene exclusivamente los identificadores técnicos necesarios para la trazabilidad y deduplicación en el consumidor, omitiendo estrictamente contraseñas, tokens JWT, cédulas, correos electrónicos o datos personales innecesarios:
+{\small
+\begin{verbatim}
+{
+  "eventoId": "uuid-v4-unico-para-deduplicacion",
+  "tipo": "VENTA",
+  "ventaId": 33,
+  "vehiculoId": 17,
+  "compradorId": 4,
+  "operacionId": "ace9cb2f-2599-4774-9e32-2aa01aca9eb5",
+  "fechaUTC": "2026-11-21T05:25:33.120415+00:00"
+}
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Consumidor detenido, procesamiento al reinicio y estrategia ante caída de RabbitMQ}
+
+\noindent La arquitectura distribuye la tolerancia a fallos en dos escenarios críticos:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Escenario 1 — Consumidor detenido (\texttt{notificaciones-service} apagado):} Al generarse ventas confirmadas en FastAPI mientras el microservicio consumidor está detenido, el broker mantiene los mensajes persistidos en la cola \texttt{notificaciones.ventas} con indicador \texttt{Consumers = 0} y \texttt{Ready > 0} (sin pérdida de datos). Al iniciar nuevamente \texttt{notificaciones-service}, el listener \texttt{@RabbitListener} (\texttt{VentasRabbitListener.java}) se suscribe (\texttt{Consumers = 1}), consume automáticamente todos los eventos pendientes reduciendo \texttt{Ready} a \texttt{0}, registra los avisos con deduplicación por \texttt{eventoId} (\texttt{ConcurrentHashMap.newKeySet()}) y \textbf{no repite ni modifica ninguna venta en MySQL}.
+  \item \textbf{Escenario 2 — Estrategia de reintento ante indisponibilidad de RabbitMQ:} El cliente \texttt{pika} configura \texttt{connection\_attempts=3}, \texttt{retry\_delay=1} y \texttt{socket\_timeout=3}. Si RabbitMQ permanece caído tras los reintentos inmediatos, \texttt{publicar\_evento\_venta()} retorna \texttt{False} sin revertir la venta confirmada, dejando el registro en MySQL con \texttt{estado = "COMPLETADA"} y \texttt{notificacion = "PENDIENTE"} (patrón \textit{Transactional Outbox} simplificado). Posteriormente, el proceso independiente de conciliación \texttt{ventas-api/app/worker.py} (ejecutable en bucle cada 10s o en modo puntual \texttt{--once}) consulta \texttt{VentaRepository(db).pendientes()} y reintenta \texttt{notificar(id)} hasta completar la entrega en RabbitMQ y promover el campo a \texttt{"ENVIADA"}.
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Fragmentos representativos de código fuente}
+
+\vspace{0.1cm}
+\noindent\textbf{1. Publicador AMQP independiente (\texttt{ventas-api/app/clients/rabbitmq\_publisher.py}):}
+{\small
+\begin{verbatim}
+def publicar_evento_venta(venta_id, vehiculo_id, comprador_id, operacion_id):
+    mensaje = {
+        "eventoId": str(uuid4()),
+        "tipo": "VENTA",
+        "ventaId": venta_id,
+        "vehiculoId": vehiculo_id,
+        "compradorId": comprador_id,
+        "operacionId": operacion_id,
+        "fechaUTC": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
+        params = pika.ConnectionParameters(
+            host=RABBITMQ_HOST, port=RABBITMQ_PORT, credentials=credentials,
+            connection_attempts=3, retry_delay=1, socket_timeout=3)
+        conn = pika.BlockingConnection(params)
+        ch = conn.channel()
+        ch.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
+        ch.basic_publish(
+            exchange="", routing_key=RABBITMQ_QUEUE,
+            body=json.dumps(mensaje),
+            properties=pika.BasicProperties(
+                delivery_mode=pika.DeliveryMode.Persistent,
+                content_type="application/json"))
+        conn.close()
+        return True
+    except Exception as ex:
+        logger.error(f"Fallo al publicar evento en RabbitMQ: {ex}")
+        return False
+\end{verbatim}
+}
+
+\vspace{0.1cm}
+\noindent\textbf{2. Guardia de confirmación y estado pendiente (\texttt{ventas-api/app/services/venta\_service.py}):}
+{\small
+\begin{verbatim}
+def notificar(id):
+    with SessionLocal() as db:
+        v = db.get(Venta, id)
+        if v is None or v.estado != "COMPLETADA" or v.notificacion == "ENVIADA":
+            return
+        venta_id, vehiculo_id = v.id, v.vehiculo_id
+        comprador_id, operacion_id = v.comprador_id, v.operacion_id
+
+    publicado_rmq = publicar_evento_venta(
+        venta_id=venta_id, vehiculo_id=vehiculo_id,
+        comprador_id=comprador_id, operacion_id=operacion_id)
+
+    with SessionLocal.begin() as db:
+        v = VentaRepository(db).bloquear(id)
+        if v is not None:
+            v.notificacion = "ENVIADA" if publicado_rmq else "PENDIENTE"
+\end{verbatim}
+}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Matriz de configuración, durabilidad y escenarios de resiliencia AMQP}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Matriz de configuración RabbitMQ, contrato de evento y escenarios de prueba de la Actividad 8.}
+\label{tab:act8_matriz_rabbitmq}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|X|}
+\hline
+\textbf{Componente / Escenario} & \textbf{Parámetro / Regla} & \textbf{Comportamiento Verificado} \\
+\hline
+Cola RabbitMQ & \texttt{notificaciones.ventas} (\texttt{durable=True}) & Persiste en disco en vhost \texttt{/} tras reinicios del broker. \\
+\hline
+Propiedades Mensaje & \texttt{delivery\_mode=2} (Persistent) & JSON compacto con \texttt{eventoId}, \texttt{tipo}, \texttt{ventaId}, \texttt{vehiculoId}, \texttt{compradorId}, \texttt{operacionId}, \texttt{fechaUTC}; sin PII ni JWT. \\
+\hline
+Venta Rechazada / Idempotente & \texttt{estado != COMPLETADA} o \texttt{notificacion == ENVIADA} & No se emite ningún evento espurio ni duplicado hacia RabbitMQ. \\
+\hline
+Consumidor Detenido & \texttt{notificaciones-service} apagado & \texttt{Consumers = 0}, \texttt{Ready > 0}; eventos retenidos intactos en cola. \\
+\hline
+Reinicio de Consumidor & Arranque en puerto \texttt{8081} & \texttt{Consumers = 1}, \texttt{Ready = 0}; procesamiento único por \texttt{eventoId} sin repetir ventas. \\
+\hline
+RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \texttt{COMPLETADA} con \texttt{notificacion = PENDIENTE}; \texttt{worker.py} reintenta la publicación al recuperarse. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{G. Validación experimental en RabbitMQ Management y consumidor Java}
+
+\noindent El diagnóstico inicial de la cola \texttt{notificaciones.ventas} con el servicio consumidor detenido registró \texttt{durable: True}, \texttt{Consumers: 0} y \texttt{Ready: 7} mensajes acumulados de las ventas confirmadas previas, evidenciando la retención persistente sin pérdida ante ausencia del consumidor, lista para su drenaje automático al iniciar \texttt{notificaciones-service} en el puerto \texttt{8081}.
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
