@@ -2267,13 +2267,13 @@ Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Sin \t
 {\small
 \begin{verbatim}
 {
-  "eventoId": "uuid-v4-unico-para-deduplicacion",
+  "eventoId": "48c4ebd2-ab14-4c46-b867-c87786abeffe",
   "tipo": "VENTA",
-  "ventaId": 33,
-  "vehiculoId": 17,
-  "compradorId": 4,
-  "operacionId": "ace9cb2f-2599-4774-9e32-2aa01aca9eb5",
-  "fechaUTC": "2026-11-21T05:25:33.120415+00:00"
+  "ventaId": 35,
+  "vehiculoId": 30,
+  "compradorId": 1,
+  "operacionId": "1e00b3f7-b0cd-4a7a-83ee-84191208be7b",
+  "fechaUTC": "2026-11-21T20:38:04.052193+00:00"
 }
 \end{verbatim}
 }
@@ -2349,6 +2349,28 @@ def notificar(id):
 \end{verbatim}
 }
 
+\vspace{0.1cm}
+\noindent\textbf{3. Estrategia de reintento ante caída de RabbitMQ (\texttt{venta\_repository.py} y \texttt{worker.py}):}
+{\small
+\begin{verbatim}
+# Selecciona ventas COMPLETADA cuya notificacion quedo PENDIENTE
+def pendientes(self):
+    return self.db.scalars(select(Venta.id).where(or_(
+        Venta.estado.in_(["PENDIENTE", "EN_REVISION"]),
+        (Venta.estado == "COMPLETADA") &
+        (Venta.notificacion != "ENVIADA")))
+        .order_by(Venta.id).limit(100)).all()
+
+# Ciclo de recuperacion en app/worker.py (ejecutable con --once o cada 10s)
+def ciclo():
+    with SessionLocal() as db:
+        ids = VentaRepository(db).pendientes()
+    for id in ids:
+        procesar(id)
+        notificar(id)
+\end{verbatim}
+}
+
 \vspace{0.2cm}
 \noindent\textbf{F. Matriz de configuración, durabilidad y escenarios de resiliencia AMQP}
 
@@ -2356,31 +2378,77 @@ def notificar(id):
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.2}
-\caption{Matriz de configuración RabbitMQ, contrato de evento y escenarios de prueba de la Actividad 8.}
+\caption{Matriz de configuración RabbitMQ, contrato de evento y resultados experimentales de la Actividad 8.}
 \label{tab:act8_matriz_rabbitmq}
 \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{3.4cm}|X|}
 \hline
-\textbf{Componente / Escenario} & \textbf{Parámetro / Regla} & \textbf{Comportamiento Verificado} \\
+\textbf{Componente / Escenario} & \textbf{Parámetro / Regla} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Cola RabbitMQ & \texttt{notificaciones.ventas} (\texttt{durable=True}) & Persiste en disco en vhost \texttt{/} tras reinicios del broker. \\
+Cola RabbitMQ & \texttt{notificaciones.ventas} (\texttt{durable=True}) & Rasgo \texttt{D} en RabbitMQ 3.13.0 (\texttt{rabbit@Caeli25}, vhost \texttt{/}). \\
 \hline
-Propiedades Mensaje & \texttt{delivery\_mode=2} (Persistent) & JSON compacto con \texttt{eventoId}, \texttt{tipo}, \texttt{ventaId}, \texttt{vehiculoId}, \texttt{compradorId}, \texttt{operacionId}, \texttt{fechaUTC}; sin PII ni JWT. \\
+Propiedades Mensaje & \texttt{delivery\_mode=2} (Persistent) & 223 bytes JSON (\texttt{application/json}); \texttt{eventoId: 48c4ebd2-...}, \texttt{ventaId: 35}; sin PII ni JWT. \\
 \hline
 Venta Rechazada / Idempotente & \texttt{estado != COMPLETADA} o \texttt{notificacion == ENVIADA} & No se emite ningún evento espurio ni duplicado hacia RabbitMQ. \\
 \hline
-Consumidor Detenido & \texttt{notificaciones-service} apagado & \texttt{Consumers = 0}, \texttt{Ready > 0}; eventos retenidos intactos en cola. \\
+Consumidor Detenido & \texttt{Graceful shutdown complete} (:8081) & Tras \texttt{POST /api/ventas} (Venta 35, \texttt{201}), cola retiene \texttt{Consumers = 0}, \texttt{Ready = 1}. \\
 \hline
-Reinicio de Consumidor & Arranque en puerto \texttt{8081} & \texttt{Consumers = 1}, \texttt{Ready = 0}; procesamiento único por \texttt{eventoId} sin repetir ventas. \\
+Reinicio de Consumidor & Arranque en puerto \texttt{8081} & Consumo inmediato de \texttt{ventaId=35} (\texttt{ID=1}); cola pasa a \texttt{Consumers = 1}, \texttt{Ready = 0} sin repetir venta. \\
 \hline
-RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \texttt{COMPLETADA} con \texttt{notificacion = PENDIENTE}; \texttt{worker.py} reintenta la publicación al recuperarse. \\
+RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \texttt{COMPLETADA} con \texttt{notificacion = PENDIENTE}; \texttt{worker.py} reintenta al recuperarse. \\
 \hline
 \end{tabularx}
 \end{table}
 
 \vspace{0.2cm}
-\noindent\textbf{G. Validación experimental en RabbitMQ Management y consumidor Java}
+\noindent\textbf{G. Evidencia experimental en RabbitMQ Management y servicio consumidor Java}
 
-\noindent El diagnóstico inicial de la cola \texttt{notificaciones.ventas} con el servicio consumidor detenido registró \texttt{durable: True}, \texttt{Consumers: 0} y \texttt{Ready: 7} mensajes acumulados de las ventas confirmadas previas, evidenciando la retención persistente sin pérdida ante ausencia del consumidor, lista para su drenaje automático al iniciar \texttt{notificaciones-service} en el puerto \texttt{8081}.
+\noindent La prueba controlada de tolerancia a fallos y durabilidad de eventos se ejecutó paso a paso demostrando el ciclo de vida completo de un evento de venta:
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Estado del broker y detención del consumidor:} Se verificó la consola RabbitMQ 3.13.0 operativa en \texttt{localhost:15672} y se ejecutó el apagado ordenado (\texttt{Graceful shutdown complete}) de \texttt{notificaciones-service} en el puerto \texttt{8081} (Figura \ref{fig:act8_rmq_overview_detenido}).
+  \item \textbf{Emisión de venta con consumidor detenido (\texttt{Consumers: 0 / Ready: 1}):} Con el consumidor apagado, se ejecutó \texttt{POST http://localhost:8090/api/ventas} con \texttt{vehiculoId: 30}, \texttt{compradorId: 1} y cabecera \texttt{Idempotency-Key: venta-rmq-act8-01}. FastAPI completó la transacción retornando \texttt{HTTP 201 Created} con \textbf{Venta ID 35} (\texttt{operacionId: 1e00b3f7-b0cd-4a7a-83ee-84191208be7b}, \texttt{\$25,000.00 USD}, \texttt{estado: COMPLETADA}, \texttt{notificacion: ENVIADA}). De inmediato, RabbitMQ reflejó en la cola durable \texttt{notificaciones.ventas} (\texttt{D}) exactamente \textbf{\texttt{Consumers: 0}} y \textbf{\texttt{Ready: 1}} (Figura \ref{fig:act8_venta35_ready1}).
+  \item \textbf{Inspección no destructiva del mensaje persistente:} Empleando \textit{Get messages} con \texttt{Ack Mode: Nack message requeue true}, se constató \texttt{delivery\_mode: 2} (persistente en disco), \texttt{content\_type: application/json} y el payload de 223 bytes con \texttt{eventoId: 48c4ebd2-ab14-4c46-b867-c87786abeffe}, \texttt{tipo: "VENTA"}, \texttt{ventaId: 35}, \texttt{vehiculoId: 30}, \texttt{compradorId: 1}, \texttt{operacionId: 1e00b3f7-...} y \texttt{fechaUTC}, confirmando la omisión total de contraseñas, JWT y datos personales (Figura \ref{fig:act8_payload_persistente}).
+  \item \textbf{Reinicio del consumidor y drenaje automático (\texttt{Consumers: 1 / Ready: 0}):} Al reiniciar \texttt{notificaciones-service}, el listener \texttt{VentasRabbitListener} se conectó a \texttt{amqp://guest@127.0.0.1:5672/}, consumió automáticamente el mensaje retenido e imprimió \texttt{NUEVA NOTIFICACION DE VENTA REGISTRADA: ID=1, ventaId=35, operacionId=1e00b3f7-...} y \texttt{Evento de venta procesado y confirmado: ventaId=35}, sin duplicar la venta en MySQL. Al recargar la pestaña \textit{Queues}, la cola confirmó la transición a \textbf{\texttt{Consumers: 1}} y \textbf{\texttt{Ready: 0}} (Figura \ref{fig:act8_reinicio_consumidor_ready0}).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act8_rabbitmq_overview.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.84\textwidth]{act8_notificaciones_detenido.png}
+  \caption{Preparación del escenario de resiliencia AMQP: panel \textit{Overview} de RabbitMQ 3.13.0 operativo en \texttt{localhost:15672} (arriba) y detención controlada (\texttt{Graceful shutdown complete}) del microservicio consumidor \texttt{notificaciones-service} en el puerto 8081 (abajo).}
+  \label{fig:act8_rmq_overview_detenido}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.78\textwidth]{act8_postman_venta_35_201.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.88\textwidth]{act8_rabbitmq_antes_ready1_c0.png}
+  \caption{Emisión de venta con consumidor detenido: creación exitosa de la Venta \texttt{ID: 35} (\texttt{HTTP 201 Created}, \texttt{vehiculoId: 30}, \texttt{COMPLETADA}, \texttt{ENVIADA}) a través de NGINX (arriba) y retención del mensaje en la cola durable \texttt{notificaciones.ventas} (\texttt{D}) con \texttt{Consumers: 0} y \texttt{Ready: 1} (abajo).}
+  \label{fig:act8_venta35_ready1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.94\textwidth]{act8_rabbitmq_get_message_payload.png}
+  \caption{Inspección del mensaje persistente en RabbitMQ (\texttt{Nack message requeue true}): propiedades \texttt{delivery\_mode: 2} y \texttt{content\_type: application/json} junto al payload JSON limpio de 223 bytes para \texttt{ventaId: 35} (\texttt{eventoId: 48c4ebd2-...}), libre de contraseñas, JWT y datos personales innecesarios.}
+  \label{fig:act8_payload_persistente}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act8_notificaciones_consumo_venta35.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act8_notificaciones_log_zoom.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.88\textwidth]{act8_rabbitmq_despues_venta35_ready0_c1.png}
+  \caption{Recuperación tras reiniciar el consumidor \texttt{notificaciones-service}: conexión a AMQP y consumo automático del evento pendiente de la Venta \texttt{ID: 35} (arriba), detalle de confirmación del listener \texttt{VentasRabbitListener} sin repetir la venta (medio) y estado final de la cola \texttt{notificaciones.ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (abajo).}
+  \label{fig:act8_reinicio_consumidor_ready0}
+\end{figure}
 
 \vspace{0.4cm}
 
