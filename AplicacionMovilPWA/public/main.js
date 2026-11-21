@@ -5,7 +5,7 @@ import {
   listarCompradores,
   registrarVenta,
   consultarVenta,
-} from './api.js';
+} from './api.js?v=2';
 
 // Estado en memoria volátil de la aplicación (nunca persistido en disco)
 let tokenActual = '';
@@ -179,19 +179,34 @@ async function cargarCompradores() {
     selectComprador.replaceChildren();
     const opcionVacia = document.createElement('option');
     opcionVacia.value = '';
-    opcionVacia.textContent = '-- Seleccione un comprador --';
+    opcionVacia.textContent = listaCompradores.length > 0
+      ? `-- Seleccione un comprador (${listaCompradores.length} disponibles) --`
+      : '-- No hay compradores registrados --';
     selectComprador.append(opcionVacia);
 
     for (const c of listaCompradores) {
       const opt = document.createElement('option');
       opt.value = c.id;
-      opt.textContent = `[ID ${c.id}] ${c.nombre} (${c.cedula || c.identificacion || 'S/C'})`;
+      opt.textContent = `[ID ${c.id}] ${c.nombre} (${c.documento || c.cedula || c.identificacion || 'S/D'})`;
       selectComprador.append(opt);
     }
+    return true;
   } catch (error) {
-    console.warn('Error al cargar compradores:', error);
+    selectComprador.replaceChildren();
+    const optErr = document.createElement('option');
+    optErr.value = '';
+    optErr.textContent = `-- Error al cargar compradores (${error.codigoHttp ? 'HTTP ' + error.codigoHttp : 'Sin conexión'}) --`;
+    selectComprador.append(optErr);
+    mostrarMensaje(`Compradores: ${error.message}`, 'error');
+    return false;
   }
 }
+
+// Limpiar contraseña al cambiar de usuario en el selector
+selectUsuario.addEventListener('change', () => {
+  inputContrasena.value = '';
+  inputContrasena.focus();
+});
 
 // Evento cambio de vehículo para autocompletar precio
 selectVehiculo.addEventListener('change', () => {
@@ -208,6 +223,12 @@ formLogin.addEventListener('submit', async (e) => {
   const usuario = selectUsuario.value;
   const contrasena = inputContrasena.value;
 
+  if (!contrasena.trim()) {
+    mostrarMensaje('Ingrese la contraseña de la cuenta para iniciar sesión.', 'error');
+    inputContrasena.focus();
+    return;
+  }
+
   btnLogin.disabled = true;
   mostrarMensaje('Autenticando contra Spring Boot vía NGINX…');
 
@@ -215,13 +236,19 @@ formLogin.addEventListener('submit', async (e) => {
     const res = await loginOAuth(usuario, contrasena);
     tokenActual = res.token;
     campoToken.value = tokenActual;
-    infoSesion.textContent = `Sesión activa: ${usuario} | Scope: ${res.scope || 'read write'} | Expiración: ${res.expiraEn}s`;
-    mostrarMensaje(`HTTP ${res.codigoHttp}: Autenticación exitosa como "${usuario}".`, 'exito');
+    campoToken.type = 'password';
+    botonMostrar.textContent = 'Mostrar';
+    botonMostrar.setAttribute('aria-pressed', 'false');
+    infoSesion.textContent = `Sesión activa: ${usuario} | Scope: ${res.scope || 'vehiculos'} | Expiración: ${res.expiraEn}s (JWT protegido en memoria)`;
+    mostrarMensaje(`HTTP ${res.codigoHttp}: Autenticación exitosa como "${usuario}". Cargando catálogo y compradores…`, 'exito');
 
     // Cargar listas operativas
     await cargarVehiculos();
-    await cargarCompradores();
+    const compradoresOk = await cargarCompradores();
     asignarNuevoUuid();
+    if (compradoresOk) {
+      mostrarMensaje(`HTTP ${res.codigoHttp}: Sesión activa como "${usuario}". ${catalogoVehiculos.length} vehículos y ${listaCompradores.length} compradores cargados.`, 'exito');
+    }
   } catch (error) {
     infoSesion.textContent = 'Estado: Error de autenticación';
     mostrarMensaje(error.message, 'error');
@@ -238,10 +265,13 @@ formularioToken.addEventListener('submit', async (e) => {
     mostrarMensaje('Por favor ingrese un token JWT válido o inicie sesión.', 'error');
     return;
   }
-  infoSesion.textContent = 'Sesión manual establecida con JWT provisto.';
-  mostrarMensaje('Consultando catálogo con token manual…');
+  infoSesion.textContent = 'Sesión manual establecida con JWT provisto en memoria.';
+  mostrarMensaje('Consultando catálogo y compradores con token manual…');
   await cargarVehiculos();
-  await cargarCompradores();
+  const compradoresOk = await cargarCompradores();
+  if (compradoresOk && catalogoVehiculos.length > 0) {
+    mostrarMensaje(`HTTP 200: ${catalogoVehiculos.length} vehículos y ${listaCompradores.length} compradores cargados.`, 'exito');
+  }
 });
 
 botonMostrar.addEventListener('click', () => {
@@ -256,9 +286,14 @@ botonBorrar.addEventListener('click', () => {
   campoToken.value = '';
   campoToken.type = 'password';
   botonMostrar.textContent = 'Mostrar';
+  botonMostrar.setAttribute('aria-pressed', 'false');
   infoSesion.textContent = 'Estado: No autenticado';
   limpiarListado();
-  mostrarMensaje('Sesión y token en memoria eliminados.');
+  selectVehiculo.innerHTML = '<option value="">-- Inicie sesión para cargar vehículos --</option>';
+  selectComprador.innerHTML = '<option value="">-- Inicie sesión para cargar compradores --</option>';
+  contenedorResultadoVenta.style.display = 'none';
+  contenedorDetalleVenta.style.display = 'none';
+  mostrarMensaje('Sesión y token en memoria volátil eliminados.');
 });
 
 // Botones de Idempotency-Key
@@ -304,8 +339,8 @@ formVenta.addEventListener('submit', async (e) => {
 
   try {
     const payload = {
-      vehiculo_id: vehiculoId,
-      comprador_id: compradorId,
+      vehiculoId: vehiculoId,
+      compradorId: compradorId,
       precio: precioVenta,
     };
 
@@ -316,7 +351,16 @@ formVenta.addEventListener('submit', async (e) => {
     badgeEstadoVenta.textContent = `HTTP ${res.codigoHttp}`;
     codigoResultadoVenta.textContent = JSON.stringify(res.venta, null, 2);
 
-    mostrarMensaje(`Venta procesada con éxito [HTTP ${res.codigoHttp}]. Evento encolado en RabbitMQ.`, 'exito');
+    if (res.venta?.id) {
+      inputIdVentaBuscar.value = res.venta.id;
+    }
+
+    const estadoTxt = res.venta?.estado || 'PROCESADA';
+    const notifTxt = res.venta?.notificacion || 'PENDIENTE';
+    mostrarMensaje(
+      `HTTP ${res.codigoHttp}: Venta ID ${res.venta?.id ?? '—'} [${estadoTxt}] | Notificación RabbitMQ: ${notifTxt}.`,
+      'exito',
+    );
 
     // Refrescar catálogo para observar cambio de estado del vehículo
     await cargarVehiculos();

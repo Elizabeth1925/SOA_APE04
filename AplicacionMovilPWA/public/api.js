@@ -44,7 +44,7 @@ export async function loginOAuth(usuario, contrasena, ejecutarFetch = fetch) {
   }
 
   if (!respuesta.ok) {
-    const detalle = datos.error_description || datos.error || 'Credenciales inválidas';
+    const detalle = datos.mensaje || datos.error_description || datos.error || 'Credenciales inválidas';
     const error = new Error(`HTTP ${respuesta.status}: ${detalle}`);
     error.codigoHttp = respuesta.status;
     error.detalles = datos;
@@ -127,7 +127,15 @@ export async function listarCompradores(entradaToken, ejecutarFetch = fetch) {
   }
 
   if (!respuesta.ok) {
-    const error = new Error(`HTTP ${respuesta.status}: Error al consultar compradores.`);
+    const mensajes = {
+      401: 'HTTP 401: JWT ausente, inválido o vencido.',
+      403: 'HTTP 403: el usuario no tiene permiso para consultar compradores.',
+      404: 'HTTP 404: no se encontró /api/compradores.',
+      502: 'HTTP 502: FastAPI (puerto 8002) no responde tras NGINX.',
+      503: 'HTTP 503: servicio de compradores no disponible.',
+      504: 'HTTP 504: tiempo de espera agotado al consultar compradores.',
+    };
+    const error = new Error(mensajes[respuesta.status] || `HTTP ${respuesta.status}: Error al consultar compradores.`);
     error.codigoHttp = respuesta.status;
     throw error;
   }
@@ -170,7 +178,16 @@ export async function registrarVenta(datosVenta, idempotencyKey, entradaToken, e
   }
 
   if (!respuesta.ok) {
-    const mensajeError = datos.detail || datos.message || `HTTP ${respuesta.status}: Registro de venta rechazado.`;
+    const detalleServidor = datos.detail || datos.mensaje || datos.message || datos.title;
+    const mensajesPorDefecto = {
+      401: 'No autorizado. Inicie sesión nuevamente.',
+      403: 'Permisos insuficientes para registrar ventas (requiere rol OPERADOR o ADMIN).',
+      404: 'Vehículo o comprador no encontrado.',
+      409: 'Conflicto de negocio o clave de idempotencia reutilizada con datos distintos.',
+      502: 'Servicio de ventas (FastAPI :8002) no disponible a través de NGINX.',
+      503: 'Servicio de ventas temporalmente no disponible.',
+    };
+    const mensajeError = `HTTP ${respuesta.status}: ${detalleServidor || mensajesPorDefecto[respuesta.status] || 'Registro de venta rechazado.'}`;
     const error = new Error(mensajeError);
     error.codigoHttp = respuesta.status;
     error.detalles = datos;

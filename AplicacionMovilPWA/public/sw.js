@@ -1,9 +1,9 @@
 /**
  * Service Worker: permite abrir la interfaz instalada sin red.
- * Por seguridad NUNCA intercepta /api, Authorization ni las respuestas JSON.
- * Para publicar cambios, se actualiza el sufijo de la versión del caché.
+ * Por seguridad NUNCA intercepta /api, /oauth, Authorization ni las respuestas JSON.
+ * Estrategia Network-First con respaldo en caché para asegurar actualizaciones inmediatas.
  */
-const VERSION = 'vehiculos-pwa-v1';
+const VERSION = 'vehiculos-pwa-v2';
 const RECURSOS = [
   '/', '/index.html', '/styles.css', '/main.js', '/api.js',
   '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'
@@ -30,19 +30,35 @@ self.addEventListener('fetch', (evento) => {
   const url = new URL(solicitud.url);
   if (solicitud.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Los datos protegidos se obtienen siempre en línea; no se guardan.
-  if (url.pathname.startsWith('/api/')) return;
+  // Los datos protegidos y autenticación se obtienen siempre en línea; nunca se cachean.
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/oauth/')) return;
 
   // Al navegar, se intenta obtener una versión nueva; sin conexión, la pantalla almacenada.
   if (solicitud.mode === 'navigate') {
-    evento.respondWith(fetch(solicitud).catch(async () => (
-      (await caches.match('/index.html')) || Response.error()
-    )));
+    evento.respondWith(
+      fetch(solicitud)
+        .then((respuesta) => {
+          const copia = respuesta.clone();
+          caches.open(VERSION).then((c) => c.put('/index.html', copia)).catch(() => {});
+          return respuesta;
+        })
+        .catch(async () => (await caches.match('/index.html')) || Response.error()),
+    );
     return;
   }
 
-  // Solo recursos estáticos declarados se almacenan para habilitar el inicio sin red.
+  // Recursos estáticos del shell PWA: Network-First con respaldo offline en caché.
   if (RECURSOS.includes(url.pathname)) {
-    evento.respondWith(caches.match(solicitud).then((guardado) => guardado || fetch(solicitud)));
+    evento.respondWith(
+      fetch(solicitud)
+        .then((respuesta) => {
+          if (respuesta.ok) {
+            const copia = respuesta.clone();
+            caches.open(VERSION).then((c) => c.put(url.pathname, copia)).catch(() => {});
+          }
+          return respuesta;
+        })
+        .catch(async () => (await caches.match(url.pathname)) || Response.error()),
+    );
   }
 });

@@ -33,9 +33,13 @@ export function crearServidor({
       const abortador = new AbortController();
       const temporizador = setTimeout(() => abortador.abort(), 15000);
       try {
+        const cabecerasExcluidas = new Set([
+          'host', 'connection', 'keep-alive', 'transfer-encoding', 'upgrade',
+          'expect', 'content-length', 'proxy-connection', 'te', 'trailer',
+        ]);
         const encabezados = {};
         for (const [clave, valor] of Object.entries(peticion.headers)) {
-          if (clave.toLowerCase() !== 'host') {
+          if (!cabecerasExcluidas.has(clave.toLowerCase()) && valor !== undefined) {
             encabezados[clave] = valor;
           }
         }
