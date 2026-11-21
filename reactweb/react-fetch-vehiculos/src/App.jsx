@@ -59,13 +59,14 @@ export default function App() {
     let observadas = 0;
 
     for (const v of ventas) {
-      const precioNum = Number(v.precio ?? v.monto ?? 0);
-      if (Number.isFinite(precioNum)) {
-        montoTotal += precioNum;
-      }
       const est = String(v.estado ?? '').toUpperCase();
-      if (est === 'EXITOSA' || est === 'COMPLETADA' || est === 'PROCESADA' || est === 'CONFIRMADA') {
+      const esExitosa = est === 'EXITOSA' || est === 'COMPLETADA' || est === 'PROCESADA' || est === 'CONFIRMADA';
+      if (esExitosa) {
         exitosas++;
+        const precioNum = Number(v.precio ?? v.precioAcordado ?? v.monto ?? 0);
+        if (Number.isFinite(precioNum)) {
+          montoTotal += precioNum;
+        }
       } else {
         observadas++;
       }
@@ -79,21 +80,30 @@ export default function App() {
     };
   }, [ventas]);
 
-  // Consulta de Vehículos (GET /api/vehiculos vía NGINX 8090)
-  async function consultarVehiculos(evento) {
+  // Consulta de Vehículos (GET /api/vehiculos o GET /api/vehiculos?marca=... vía NGINX 8090)
+  async function consultarVehiculos(evento, filtroServidor = '') {
     if (evento) evento.preventDefault();
     setCargando(true);
     setError('');
-    setMensaje('Consultando catálogo de vehículos a través del Gateway NGINX...');
+    const marcaQuery = typeof filtroServidor === 'string' ? filtroServidor.trim() : '';
+    setMensaje(
+      marcaQuery
+        ? `Consultando vehículos de marca "${marcaQuery}" a través del Gateway NGINX...`
+        : 'Consultando catálogo de vehículos a través del Gateway NGINX...',
+    );
     setCodigoHttp(null);
     setVehiculos([]);
     setVehiculoSeleccionado(null);
 
     try {
-      const resultado = await listarVehiculos(token);
+      const resultado = await listarVehiculos(token, marcaQuery);
       setVehiculos(resultado.vehiculos);
       setCodigoHttp(resultado.codigoHttp);
-      setMensaje(`Catálogo consultado con éxito: ${resultado.vehiculos.length} vehículos recibidos.`);
+      setMensaje(
+        marcaQuery
+          ? `Filtro remoto aplicado (${marcaQuery}): ${resultado.vehiculos.length} vehículos recibidos.`
+          : `Catálogo consultado con éxito: ${resultado.vehiculos.length} vehículos recibidos.`,
+      );
     } catch (e) {
       setCodigoHttp(e.status ?? null);
       setError(e.message);
@@ -223,15 +233,38 @@ export default function App() {
               <span className="contador">{vehiculosVisibles.length} visibles</span>
             </div>
 
-            <label htmlFor="filtroMarca">Filtrar por marca en tiempo real</label>
-            <input
-              id="filtroMarca"
-              type="search"
-              placeholder="Ejemplo: Toyota, Chevrolet, Hyundai..."
-              value={marca}
-              onChange={(e) => setMarca(e.target.value)}
-              disabled={cargando}
-            />
+            <label htmlFor="filtroMarca">Filtrar por marca (en tiempo real o consulta directa en API)</label>
+            <div className="linea-token">
+              <input
+                id="filtroMarca"
+                type="search"
+                placeholder="Ejemplo: Toyota, Chevrolet, Hyundai..."
+                value={marca}
+                onChange={(e) => setMarca(e.target.value)}
+                disabled={cargando}
+              />
+              <button
+                className="secundario"
+                type="button"
+                disabled={cargando || !marca.trim()}
+                onClick={() => consultarVehiculos(null, marca)}
+              >
+                Filtrar en API
+              </button>
+              {marca.trim() && (
+                <button
+                  className="secundario"
+                  type="button"
+                  disabled={cargando}
+                  onClick={() => {
+                    setMarca('');
+                    consultarVehiculos(null, '');
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
 
             <div className="tabla-scroll">
               <table>
@@ -295,6 +328,7 @@ export default function App() {
                 <div><dt>Marca</dt><dd>{vehiculoSeleccionado.marca ?? '—'}</dd></div>
                 <div><dt>Modelo</dt><dd>{vehiculoSeleccionado.modelo ?? '—'}</dd></div>
                 <div><dt>Placa</dt><dd>{vehiculoSeleccionado.placa ?? '—'}</dd></div>
+                <div><dt>Chasis (VIN)</dt><dd>{vehiculoSeleccionado.chasis ?? '—'}</dd></div>
                 <div><dt>Año</dt><dd>{vehiculoSeleccionado.anio ?? '—'}</dd></div>
                 <div><dt>Color</dt><dd>{vehiculoSeleccionado.color ?? '—'}</dd></div>
                 <div><dt>Precio</dt><dd>{mostrarPrecio(vehiculoSeleccionado.precio)}</dd></div>
@@ -422,11 +456,13 @@ export default function App() {
             {ventaSeleccionada ? (
               <dl className="detalle">
                 <div><dt>ID Venta</dt><dd>#{ventaSeleccionada.id ?? ventaSeleccionada.idVenta ?? '—'}</dd></div>
+                <div><dt>ID Operación (UUID)</dt><dd>{ventaSeleccionada.operacionId ?? ventaSeleccionada.operacion_id ?? '—'}</dd></div>
                 <div><dt>ID Vehículo</dt><dd>{ventaSeleccionada.vehiculo_id ?? ventaSeleccionada.vehiculoId ?? '—'}</dd></div>
                 <div><dt>ID Comprador</dt><dd>{ventaSeleccionada.comprador_id ?? ventaSeleccionada.compradorId ?? '—'}</dd></div>
-                <div><dt>Precio Transaccionado</dt><dd>{mostrarPrecio(ventaSeleccionada.precio ?? ventaSeleccionada.monto)}</dd></div>
+                <div><dt>Precio Acordado</dt><dd>{mostrarPrecio(ventaSeleccionada.precio ?? ventaSeleccionada.precioAcordado ?? ventaSeleccionada.monto)} {ventaSeleccionada.moneda ?? ''}</dd></div>
                 <div><dt>Estado</dt><dd>{ventaSeleccionada.estado ?? '—'}</dd></div>
-                <div><dt>Fecha de Registro</dt><dd>{formatearFecha(ventaSeleccionada.fecha ?? ventaSeleccionada.created_at)}</dd></div>
+                <div><dt>Notificación RabbitMQ</dt><dd>{ventaSeleccionada.notificacion ?? '—'}</dd></div>
+                <div><dt>Fecha UTC</dt><dd>{formatearFecha(ventaSeleccionada.fechaUTC ?? ventaSeleccionada.fecha ?? ventaSeleccionada.created_at)}</dd></div>
               </dl>
             ) : (
               <p className="ayuda">Haga clic en el número de ID de una venta para inspeccionar sus atributos completos.</p>

@@ -6,27 +6,35 @@
  *
  * La ruta es relativa porque el proxy de Vite (/api) conecta con Java.
  */
-export async function listarVehiculos(token) {
+function normalizarToken(token = '') {
+  return String(token).trim().replace(/^Bearer\s+/i, '').trim();
+}
+
+export async function listarVehiculos(token, marca = '') {
   // Headers es el objeto estándar del navegador para cabeceras HTTP.
   const headers = new Headers({ Accept: 'application/json' });
 
   // Solo se envía Authorization si existe un token escrito por el usuario.
   // Dejarlo vacío permite comprobar el 401 real del backend.
-  if (token.trim()) {
-    headers.set('Authorization', `Bearer ${token.trim()}`);
+  const jwt = normalizarToken(token);
+  if (jwt) {
+    headers.set('Authorization', `Bearer ${jwt}`);
   }
+
+  const filtro = String(marca || '').trim();
+  const ruta = filtro ? `/api/vehiculos?marca=${encodeURIComponent(filtro)}` : '/api/vehiculos';
 
   let respuesta;
   try {
     // fetch solicita recursos sin bloquear la interfaz de React.
-    respuesta = await fetch('/api/vehiculos', {
+    respuesta = await fetch(ruta, {
       method: 'GET',
       headers,
       cache: 'no-store', // Evita mostrar un catálogo almacenado en caché.
     });
   } catch {
     // Un fallo de red impide recibir una respuesta HTTP.
-    throw new Error('No se pudo conectar. Verifique el servidor y la red.');
+    throw new Error('No se pudo conectar. Verifique el Gateway NGINX (:8090) y la red.');
   }
 
   // fetch NO lanza una excepción automática por códigos como 401 o 403.
@@ -37,8 +45,9 @@ export async function listarVehiculos(token) {
       403: 'HTTP 403: El usuario no tiene permiso para consultar.',
       404: 'HTTP 404: No existe la ruta /api/vehiculos.',
       500: 'HTTP 500: Error del servidor o de la conexión con la API Java.',
-      502: 'HTTP 502: El servidor intermedio no pudo contactar a Java.',
+      502: 'HTTP 502: NGINX no pudo contactar a la API Java de vehículos.',
       503: 'HTTP 503: El servicio de vehículos no está disponible.',
+      504: 'HTTP 504: Tiempo de espera agotado al consultar vehículos.',
     };
 
     const error = new Error(

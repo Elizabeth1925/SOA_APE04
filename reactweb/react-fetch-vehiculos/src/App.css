@@ -74,6 +74,8 @@ tr:hover td { background: #fafcff; }
 .badge-estado.disponible { background: #dff4e7; color: #166c39; }
 .badge-estado.vendido { background: #fff1df; color: #96531c; }
 .badge-estado.exitosa, .badge-estado.completada, .badge-estado.procesada, .badge-estado.confirmada { background: #dff4e7; color: #166c39; }
+.badge-estado.fallida { background: #fde4e1; color: #a12018; }
+.badge-estado.en_revision, .badge-estado.pendiente { background: #fff3d6; color: #9a5d00; }
 
 /* Detalle */
 .detalle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
