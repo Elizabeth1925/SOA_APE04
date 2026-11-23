@@ -2700,6 +2700,197 @@ Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}
 \end{tabularx}
 \end{table}
 
+\vspace{0.2cm}
+\noindent\textbf{D. Matriz de correlación de identificadores en la prueba integral P27}
+
+\noindent Durante la ejecución real del \texttt{23/11/2026} entre las \texttt{12:00} y \texttt{12:24} (hora local Ecuador, \texttt{UTC-5}), todos los servicios y clientes operaron de forma simultánea y compartieron de manera coherente los mismos identificadores de negocio sin divergencias ni datos simulados (Tabla \ref{tab:act10_trazabilidad_p27}):
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Trazabilidad y correlación transversal de identificadores reales en la prueba P27 (Actividad 10).}
+\label{tab:act10_trazabilidad_p27}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.9cm}|>{\raggedright\arraybackslash}p{2.6cm}|X|}
+\hline
+\textbf{Componente / Canal} & \textbf{Operación / Evento} & \textbf{Identificadores y Estado Verificado Realmente} \\
+\hline
+Windows Forms (.NET 8) & \texttt{POST /api/vehiculos} y \texttt{POST /api/compradores} & Creó \texttt{vehiculoId=44} (Honda CR-V, \texttt{PBC-2026}, \texttt{2HKRW2H80NH123456}, \$33,500, \texttt{DISPONIBLE}, total 32) y \texttt{compradorId=9} (Carlos Lopez, \texttt{1805556677}, total 6). \\
+\hline
+React Web (:5174) & \texttt{GET /api/vehiculos} (previo) & Consultó \texttt{ID 44} (Honda CR-V, \texttt{PBC-2026}, VIN completo, \$33,500.00) en estado \texttt{DISPONIBLE}. \\
+\hline
+PWA Móvil (:5173) & Login + \texttt{POST /api/ventas} & Autenticado como \texttt{admin} (32 vehículos y 6 compradores); emitió \textbf{\texttt{ventaId=37}} (\texttt{Idempotency-Key: 317f7cbc-...}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{COMPLETADA}, \texttt{ENVIADA}, \texttt{17:23:11Z}). \\
+\hline
+Spring Boot A/B (:8080/:8082) & Balanceo 3:1 y \texttt{reservas} & Ambas instancias atendieron catálogo y verificación de \texttt{reservas} por \texttt{operacion\_id}, consolidando \texttt{vehiculoId=44} como \texttt{VENDIDO}. \\
+\hline
+Windows Forms (post-venta) & \texttt{GET /api/vehiculos/44} y \texttt{GET /api/ventas} & Confirmó \texttt{vehiculoId=44} en \texttt{VENDIDO} y listó 28 ventas encabezadas por \texttt{ID 37} (\texttt{operacionId: 938cf622-...}, \$33,500.00, \texttt{COMPLETADA}, \texttt{ENVIADA}). \\
+\hline
+React Web (post-venta) & \texttt{GET /api/ventas} (auditoría) & Detalle de venta \texttt{\#37} idéntico: \texttt{UUID 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, vehículo \texttt{44}, comprador \texttt{9}, \$33,500.00 USD, \texttt{COMPLETADA}, \texttt{ENVIADA}. \\
+\hline
+RabbitMQ + Notificaciones (:8081) & Cola \texttt{notificaciones.ventas} & Recibió \texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5} (\texttt{12:23:14.255}) y confirmó \texttt{ID=1, ventaId=37} en 113 ms (\texttt{12:23:14.368}); cola en \texttt{Consumers=1, Ready=0}. \\
+\hline
+JavaFX (Escritorio) & Sondeo 3s (\texttt{GET /api/notificaciones}) & Pasó automáticamente de barra azul (0 avisos, \texttt{12:22:12}) a barra verde (\texttt{12:23:42}) mostrando \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{operacionId: 938cf622-...} en \texttt{PROCESADA}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Evidencia del despliegue simultáneo de todos los componentes}
+
+\noindent Siguiendo el orden documentado, se levantaron en paralelo el Gateway NGINX (\texttt{:8090}), las dos instancias Spring Boot de vehículos (\texttt{:8080} PID \texttt{24040} y \texttt{:8082} PID \texttt{17740}, ambas recibiendo peticiones SQL balanceadas en Hibernate), el microservicio FastAPI \texttt{ventas-api} (\texttt{:8002} PID \texttt{22488}), el servicio \texttt{notificaciones-service} (\texttt{:8081} PID \texttt{16648} conectado a RabbitMQ \texttt{127.0.0.1:5672}) y los cuatro clientes multicanal: PWA (\texttt{:5173}), React (\texttt{:5174}), Windows Forms (.NET 8) y JavaFX (JDK 25) (Figuras \ref{fig:act10_srv_backend_gw} a \ref{fig:act10_srv_escritorio}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.62\textwidth]{act10_srv_01_nginx.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act10_srv_02_java_8080.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act10_srv_03_java_8082.png}
+  \caption{Arranque de la capa perimetral y clúster de vehículos: inicio de NGINX en \texttt{C:\textbackslash nginx} (arriba), Spring Boot Instancia A en puerto 8080 (PID 24040) atendiendo consultas SQL (medio) y Spring Boot Instancia B en puerto 8082 (PID 17740) operando simultáneamente bajo balanceo 3:1 (abajo).}
+  \label{fig:act10_srv_backend_gw}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act10_srv_04_fastapi_8002.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act10_srv_05_notificaciones_8081.png}
+  \caption{Despliegue de microservicios de negocio y eventos: Python FastAPI \texttt{ventas-api} ejecutándose con Uvicorn en \texttt{127.0.0.1:8002} (arriba) y \texttt{notificaciones-service} en puerto 8081 (PID 16648) enlazado a RabbitMQ en \texttt{amqp://guest@127.0.0.1:5672/} (abajo).}
+  \label{fig:act10_srv_ventas_notif}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act10_srv_09_pwa_terminal.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.84\textwidth]{act10_srv_10_pwa_web.png}
+  \caption{Despliegue del canal móvil exclusivo (PWA): servidor Node.js \texttt{server.mjs} activo en \texttt{http://localhost:5173} enrutando hacia NGINX \texttt{:8090} (arriba) e interfaz PWA operativa en navegador con credenciales y token protegidos (abajo).}
+  \label{fig:act10_srv_pwa}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act10_srv_07_react_terminal.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.84\textwidth]{act10_srv_08_react_web.png}
+  \caption{Despliegue del portal web de consulta y auditoría (React): servidor de desarrollo Vite v8.3.8 en el puerto dedicado \texttt{http://localhost:5174/} (arriba) e interfaz web de consulta operativa sin conflicto de puertos con la PWA (abajo).}
+  \label{fig:act10_srv_react}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{act10_srv_06_winforms.png}
+
+  \vspace{0.16cm}
+  \includegraphics[width=0.80\textwidth]{act10_srv_11_javafx_terminal.png}
+
+  \vspace{0.16cm}
+  \includegraphics[width=0.80\textwidth]{act10_srv_12_javafx_app.png}
+  \caption{Despliegue de clientes de escritorio: aplicación administrativa Windows Forms (.NET 8) (arriba), ejecución de JavaFX mediante \texttt{mvn javafx:run} (medio) y ventana de escritorio JavaFX con pestañas de catálogo y notificaciones en vivo (abajo).}
+  \label{fig:act10_srv_escritorio}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{F. Evidencia experimental paso a paso de la cadena integrada P27}
+
+\noindent Con toda la infraestructura activa, se ejecutó la secuencia completa de integración multicanal sobre un vehículo y un comprador recién creados (en las capturas de Windows Forms se enmascaró el campo \texttt{Token JWT} por seguridad):
+
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Creación de vehículo (\texttt{ID 44}) y comprador (\texttt{ID 9}) en Windows Forms:} Autenticado con el rol \texttt{admin}, se registró el vehículo \textbf{Honda CR-V}, placa \texttt{PBC-2026}, chasis \texttt{2HKRW2H80NH123456}, año \texttt{2026}, color \texttt{Azul} y precio \texttt{\$33,500.00}, obteniendo \texttt{HTTP 201 Created} con \texttt{ID generado: 44} y elevando el catálogo a \textbf{32 vehículos} en estado \texttt{DISPONIBLE} (Figura \ref{fig:act10_p27_winforms_vehiculo}). En la pestaña «2. Compradores» se registró a \textbf{Carlos Lopez} (\texttt{1805556677}, \texttt{carlos10@uta.edu.ec}), obteniendo \texttt{HTTP 201 Created} con \texttt{ID generado: 9} y actualizando el listado a \textbf{6 compradores} del propietario \texttt{admin} (Figura \ref{fig:act10_p27_winforms_comprador}).
+  \item \textbf{Comprobación previa en React, JavaFX y PWA:} En React (\texttt{:5174}) el vehículo \texttt{ID 44} apareció inmediatamente con todos sus atributos técnicos en estado \texttt{DISPONIBLE}; simultáneamente, JavaFX se mantuvo abierto en la pestaña de notificaciones mostrando la barra azul \texttt{CONECTADO (HTTP 200)} con \texttt{0} avisos a las \texttt{12:22:12} (Figura \ref{fig:act10_p27_react_javafx_previo}). En la PWA (\texttt{:5173}) con sesión \texttt{admin}, la recarga confirmó \texttt{HTTP 200: 32 vehículos y 6 compradores cargados}, permitiendo seleccionar exactamente \texttt{[ID 44] Honda CR-V (PBC-2026) - \$33.500,00 [DISPONIBLE]} y \texttt{[ID 9] Carlos Lopez (1805556677)} junto a la clave \texttt{Idempotency-Key: 317f7cbc-53f9-4d43-8e13-3aed3afd8d0c} (Figura \ref{fig:act10_p27_pwa_auth_seleccion}).
+  \item \textbf{Emisión de la venta exclusiva en PWA (\texttt{ventaId=37}):} Al pulsar «Registrar Venta», el Gateway NGINX retornó \texttt{HTTP 201} confirmando \textbf{\texttt{id: 37}}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{vehiculoId: 44}, \texttt{compradorId: 9}, \texttt{precioAcordado: "33500.00"}, \texttt{moneda: "USD"}, \texttt{estado: "COMPLETADA"}, \texttt{notificacion: "ENVIADA"} y \texttt{fechaUTC: "2026-11-23T17:23:11Z"} (Figura \ref{fig:act10_p27_pwa_venta37}).
+  \item \textbf{Verificación de coherencia real en Windows Forms, React y Spring Boot:} Al consultar nuevamente en Windows Forms, el vehículo \texttt{ID 44} pasó de \texttt{DISPONIBLE} a \textbf{\texttt{VENDIDO}} y la pestaña «3. Ventas» listó \textbf{28 ventas} encabezadas por la \textbf{Venta ID 37} con todos sus metadatos idénticos (Figura \ref{fig:act10_p27_coherencia_winforms}). En React (\texttt{:5174}), el panel «Detalle de la Venta Auditada» presentó exactamente los mismos valores para la venta \texttt{\#37} (\texttt{UUID 938cf622-...}, vehículo \texttt{44}, comprador \texttt{9}, \texttt{\$33.500,00 USD}, \texttt{COMPLETADA}, \texttt{ENVIADA}), mientras los logs de Spring Boot (\texttt{:8082}) evidenciaron la consulta de \texttt{reservas} por \texttt{operacion\_id} durante la orquestación distribuida (Figura \ref{fig:act10_p27_coherencia_react_java}).
+  \item \textbf{Cadena asíncrona completa (FastAPI $\rightarrow$ RabbitMQ $\rightarrow$ Notificaciones $\rightarrow$ JavaFX):} El evento JSON emitido por FastAPI transitó por la cola durable \texttt{notificaciones.ventas} (\texttt{Consumers: 1}, \texttt{Ready: 0}), fue recibido por \texttt{VentasRabbitListener} a las \texttt{12:23:14.255} con \texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5} y confirmado en \texttt{113 ms} (\texttt{12:23:14.368}) como \texttt{ID=1, ventaId=37, operacionId=938cf622-...}. De manera automática, el sondeo cada 3 segundos de JavaFX cambió el indicador a barra verde (\texttt{12:23:42}) desplegando la fila con el mismo \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{Operación ID: 938cf622-...} en estado \texttt{PROCESADA} (Figura \ref{fig:act10_p27_cadena_rmq_javafx}).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act10_p27_01_winforms_vehiculo_creado.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act10_p27_02_winforms_vehiculo_lista.png}
+  \caption{Etapa 1 en Windows Forms (alta de vehículo): registro de Honda CR-V placa \texttt{PBC-2026} devolviendo \texttt{ID generado: 44} y \texttt{HTTP 201 Created} (arriba) y catálogo actualizado a 32 vehículos mostrando la fila 44 en estado \texttt{DISPONIBLE} (abajo).}
+  \label{fig:act10_p27_winforms_vehiculo}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act10_p27_03_winforms_comprador_creado.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act10_p27_04_winforms_comprador_lista.png}
+  \caption{Etapa 1 en Windows Forms (alta de comprador): creación de Carlos Lopez (\texttt{1805556677}) con \texttt{ID generado: 9} y \texttt{HTTP 201 Created} (arriba) y tabla actualizada con los 6 compradores del usuario \texttt{admin} incluyendo el registro 9 (abajo).}
+  \label{fig:act10_p27_winforms_comprador}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act10_p27_05_react_vehiculo_disponible.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.88\textwidth]{act10_p27_06_javafx_antes_venta.png}
+  \caption{Etapa 2 (propagación previa a la venta): verificación en React (\texttt{:5174}) del vehículo \texttt{ID 44} (Honda CR-V, \texttt{PBC-2026}, VIN \texttt{2HKRW2H80NH123456}) en estado \texttt{DISPONIBLE} (arriba) y monitor JavaFX en espera con barra azul \texttt{CONECTADO (HTTP 200)} y 0 notificaciones a las 12:22:12 (abajo).}
+  \label{fig:act10_p27_react_javafx_previo}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{act10_p27_07_pwa_auth_cargado.png}
+
+  \vspace{0.20cm}
+  \includegraphics[width=0.82\textwidth]{act10_p27_08_pwa_seleccion_venta.png}
+  \caption{Etapa 2 y 3 en PWA móvil (\texttt{:5173}): sesión activa \texttt{admin} con credenciales ocultas cargando 32 vehículos y 6 compradores (arriba) y selección exacta de \texttt{[ID 44] Honda CR-V [DISPONIBLE]} y \texttt{[ID 9] Carlos Lopez} con \texttt{Idempotency-Key} única (abajo).}
+  \label{fig:act10_p27_pwa_auth_seleccion}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act10_p27_09_pwa_venta_201_json.png}
+
+  \vspace{0.20cm}
+  \includegraphics[width=0.84\textwidth]{act10_p27_10_pwa_venta_201_banner.png}
+  \caption{Etapa 3 (emisión exclusiva de venta en PWA): respuesta \texttt{HTTP 201} del Gateway NGINX confirmando \texttt{id: 37}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{vehiculoId: 44}, \texttt{compradorId: 9}, \texttt{COMPLETADA} y \texttt{notificacion: ENVIADA} (arriba) junto al indicador visual de confirmación (abajo).}
+  \label{fig:act10_p27_pwa_venta37}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act10_p27_13_winforms_vehiculo_vendido.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act10_p27_12_winforms_ventas_37.png}
+  \caption{Etapa 3 (coherencia post-venta en Windows Forms): consulta directa del vehículo \texttt{ID 44} evidenciando su transición automática a \texttt{VENDIDO} (arriba) y pestaña «3. Ventas» reflejando la Venta \texttt{ID 37} con idéntico \texttt{operacionId}, vehículo 44, comprador 9 y estado \texttt{COMPLETADA / ENVIADA} (abajo).}
+  \label{fig:act10_p27_coherencia_winforms}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act10_p27_14_react_venta_37.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act10_p27_15_springboot_8082_reserva.png}
+  \caption{Etapa 3 (coherencia en React y backend Java): auditoría de la venta \texttt{\#37} en React confirmando \texttt{UUID 938cf622-...}, vehículo 44, comprador 9, \$33,500.00 USD y notificación \texttt{ENVIADA} (arriba) y trazas Hibernate en Spring Boot (\texttt{:8082}) verificando la reserva por \texttt{operacion\_id} (abajo).}
+  \label{fig:act10_p27_coherencia_react_java}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act10_p27_16_rabbitmq_cola_consumida.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.88\textwidth]{act10_p27_17_notificaciones_log_37.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.88\textwidth]{act10_p27_11_javafx_despues_venta.png}
+  \caption{Etapa 4 (trazabilidad asíncrona de \texttt{ventaId=37}): cola durable \texttt{notificaciones.ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (arriba), log de \texttt{notificaciones-service} confirmando \texttt{eventoId: 3b913705-...} y \texttt{ventaId=37} en 113 ms (medio) y recepción automática en JavaFX en verde con los mismos \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{Operación ID: 938cf622-...} (abajo).}
+  \label{fig:act10_p27_cadena_rmq_javafx}
+\end{figure}
+
 \vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
