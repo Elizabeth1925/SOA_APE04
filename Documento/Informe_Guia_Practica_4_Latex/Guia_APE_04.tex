@@ -2637,6 +2637,70 @@ Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.10 Actividad 10. Integración y coherencia de datos entre clientes}
+
+\vspace{0.2cm}
+\noindent En esta actividad se ejecuta la prueba de integración completa de extremo a extremo (\textbf{Prueba P27}) sobre la totalidad de los componentes de la arquitectura multicanal operando de forma simultánea. El objetivo consiste en demostrar que una entidad creada desde el canal administrativo (Windows Forms) se propaga de manera coherente hacia el catálogo web (React) y el canal móvil (PWA), que la transacción de venta ejecutada exclusivamente desde la PWA actualiza atómicamente el inventario y el historial consultado por todos los clientes, y que el evento asíncrono atraviesa FastAPI, RabbitMQ y el servicio de notificaciones hasta desplegarse en JavaFX preservando exactamente los mismos identificadores (\texttt{vehiculoId}, \texttt{compradorId}, \texttt{ventaId} y \texttt{operacionId}).
+
+\vspace{0.2cm}
+\noindent\textbf{A. Secuencia oficial de arranque de servicios y clientes}
+
+\noindent Para evitar dependencias rotas durante la inicialización, los componentes se levantan respetando el orden topológico desde la capa de persistencia y mensajería hasta el API Gateway y los cuatro clientes:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Capa de datos y broker:} MySQL en XAMPP (puerto \texttt{3306}) y RabbitMQ AMQP/Management (puertos \texttt{5672} y \texttt{15672}).
+  \item \textbf{Capa de microservicios backend:} Spring Boot Vehículos \textbf{Instancia A} (\texttt{8080}) e \textbf{Instancia B} (\texttt{8082}), Python FastAPI \texttt{ventas-api} (\texttt{8002}) y Spring Boot \texttt{notificaciones-service} (\texttt{8081}).
+  \item \textbf{Capa perimetral (API Gateway):} NGINX en el puerto \texttt{8090} aplicando balanceo ponderado 3:1 sobre vehículos y enrutamiento hacia compradores, ventas y notificaciones.
+  \item \textbf{Capa de clientes multicanal:} PWA móvil en Node.js (\texttt{5173}), portal web React en Vite (\texttt{5174}), aplicación de administración Windows Forms (.NET 8) y monitor de escritorio JavaFX (JDK 25).
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Cadena comercial integrada y reglas de coherencia}
+
+\noindent La verificación de consistencia transversal se estructura en cuatro etapas encadenadas sobre un mismo conjunto de identificadores:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Etapa 1 — Alta administrativa (Windows Forms):} Creación de un vehículo nuevo (\texttt{POST /api/vehiculos} $\rightarrow$ \texttt{201 Created}, estado \texttt{DISPONIBLE}) y de un comprador nuevo (\texttt{POST /api/compradores} $\rightarrow$ \texttt{201 Created}) autenticados con el rol autorizado a través de NGINX.
+  \item \textbf{Etapa 2 — Propagación al catálogo (React y PWA):} Consulta simultánea desde React (\texttt{http://localhost:5174}) y desde la PWA (\texttt{http://localhost:5173}), comprobando que ambos muestran el vehículo recién creado en estado \texttt{DISPONIBLE} y que la PWA dispone del comprador recién registrado en su selector.
+  \item \textbf{Etapa 3 — Venta exclusiva (PWA) y actualización multicanal (Windows Forms y React):} Inicio de sesión OAuth 2.0 en la PWA y ejecución de \texttt{POST /api/ventas} con \texttt{Idempotency-Key}, generando una venta \texttt{COMPLETADA} (\texttt{201 Created}) y cambiando el estado del vehículo a \texttt{VENDIDO}. Acto seguido, Windows Forms y React refrescan sus consultas verificando exactamente el mismo estado \texttt{VENDIDO} y los mismos datos de la venta (\texttt{ventaId}, monto, fecha UTC y \texttt{notificacion: ENVIADA}).
+  \item \textbf{Etapa 4 — Trazabilidad asíncrona (FastAPI $\rightarrow$ RabbitMQ $\rightarrow$ Notificaciones $\rightarrow$ JavaFX):} Confirmación de la salida del evento desde FastAPI, su tránsito por la cola durable \texttt{notificaciones.ventas}, el registro en \texttt{notificaciones-service} y su aparición automática en JavaFX relacionando de forma exacta el mismo \texttt{ventaId}, \texttt{vehiculoId}, \texttt{compradorId} y \texttt{operacionId}.
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Matriz de orden de arranque y puntos de coherencia (Tabla \ref{tab:act10_orden_coherencia})}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Orden de arranque de componentes y matriz de coherencia transversal de la Actividad 10.}
+\label{tab:act10_orden_coherencia}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\centering\arraybackslash}p{1.6cm}|X|}
+\hline
+\textbf{Paso} & \textbf{Componente} & \textbf{Puerto} & \textbf{Verificación de Coherencia en Cadena Comercial (P27)} \\
+\hline
+1 & MySQL (XAMPP) & 3306 & Persiste tablas \texttt{vehiculos}, \texttt{compradores} y \texttt{ventas} con claves únicas. \\
+\hline
+2 & RabbitMQ & 5672 / 15672 & Cola durable \texttt{notificaciones.ventas} lista para eventos persistentes. \\
+\hline
+3 & Spring Boot A y B & 8080 / 8082 & Atienden catálogo, OAuth 2.0 y reservas de vehículos en balanceo 3:1. \\
+\hline
+4 & FastAPI (\texttt{ventas-api}) & 8002 & Registra comprador, orquesta venta 2 fases y publica evento AMQP. \\
+\hline
+5 & \texttt{notificaciones-service} & 8081 & Consume evento de RabbitMQ y expone historial en \texttt{GET /api/notificaciones}. \\
+\hline
+6 & Gateway NGINX & 8090 & Punto único de entrada hacia los tres microservicios backend. \\
+\hline
+7 & Windows Forms (.NET 8) & Escritorio & Crea vehículo y comprador; luego audita cambio a \texttt{VENDIDO} y nueva venta. \\
+\hline
+8 & PWA Móvil (Node.js) & 5173 & Login OAuth, visualiza alta, emite venta exclusiva con \texttt{Idempotency-Key}. \\
+\hline
+9 & Portal Web React (Vite) & 5174 & Comprueba vehículo \texttt{DISPONIBLE} $\rightarrow$ \texttt{VENDIDO} y nueva venta en métricas. \\
+\hline
+10 & Monitor JavaFX (JDK 25) & Escritorio & Muestra automáticamente el aviso de la nueva venta con idéntico \texttt{ventaId}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
