@@ -2542,27 +2542,99 @@ private void iniciarAutoSync() {
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.2}
-\caption{Matriz de componentes, estados de conexión y pruebas de la Actividad 9 (Notificaciones y JavaFX).}
+\caption{Matriz de componentes, estados de conexión y resultados medidos de la Actividad 9 (Notificaciones y JavaFX).}
 \label{tab:act9_matriz_javafx}
 \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{3.2cm}|X|}
 \hline
-\textbf{Componente / Prueba} & \textbf{Mecanismo Técnico} & \textbf{Resultado Esperado / Verificado} \\
+\textbf{Componente / Prueba} & \textbf{Mecanismo Técnico} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Listener AMQP (:8081) & \texttt{@RabbitListener} en \texttt{notificaciones.ventas} & Consume eventos, deduplica por \texttt{eventoId} y registra historial. \\
+Listener AMQP (:8081) & \texttt{@RabbitListener} en \texttt{notificaciones.ventas} & Consumió \texttt{ventaId=36} (\texttt{eventoId: bcca2835-...}) en 107 ms; deduplicación por \texttt{eventoId}. \\
 \hline
-Endpoint Historial & \texttt{GET http://127.0.0.1:8090/api/notificaciones} & Retorna JSON \texttt{HTTP 200 OK} (verificado con Venta \texttt{ID: 35}). \\
+Endpoint Historial & \texttt{GET http://localhost:8090/api/notificaciones} & Retornó JSON \texttt{HTTP 200 OK} con \texttt{id: 1}, \texttt{ventaId: 36}, \texttt{estado: PROCESADA}, \texttt{fechaRegistro: 2026-11-23 11:43:29}. \\
 \hline
-Sondeo Automático & \texttt{Timeline} cada 3s + \texttt{Platform.runLater} & Nueva venta aparece automáticamente en JavaFX sin refresco manual. \\
+Pantalla Vacía Saludable & JavaFX antes de la venta (\texttt{HTTP 200 []}) & Barra \textbf{azul}: «CONECTADO (HTTP 200) — Servicio operativo, sin notificaciones de ventas registradas todavía.» \\
 \hline
-Pantalla Vacía vs Fallo & \texttt{ResultadoNotificaciones} (200 \texttt{[]} vs 502/red) & Azul para lista vacía saludable; rojo carmesí para \texttt{HTTP 502} o fallo de enlace. \\
+Sondeo Automático (3s) & \texttt{Timeline} cada 3s sin refresco manual & Barra \textbf{verde}: apareció automáticamente \texttt{ID Venta: 36} (\texttt{11:43:43}) con todos sus campos. \\
+\hline
+Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}) & Barra \textbf{roja}: «FALLO DE SERVICIO — HTTP 504 Gateway Timeout» (\texttt{11:46:48}), diferenciando fallo vs lista vacía. \\
 \hline
 \end{tabularx}
 \end{table}
 
 \vspace{0.2cm}
-\noindent\textbf{E. Validación experimental de notificaciones en vivo en JavaFX}
+\noindent\textbf{E. Evidencia experimental integral de notificaciones y visualización JavaFX}
 
-\noindent Se comprobó inicialmente la disponibilidad del endpoint \texttt{GET http://127.0.0.1:8090/api/notificaciones} vía NGINX retornando \texttt{HTTP 200} con el registro de la Venta \texttt{ID: 35} (\texttt{eventoId: 48c4ebd2-...}, \texttt{estado: PROCESADA}, \texttt{fechaRegistro: 2026-11-21 15:45:16}), quedando preparado el entorno para verificar en JavaFX el estado antes y después de una nueva venta en tiempo real y el escenario de fallo controlado al detener \texttt{notificaciones-service}.
+\noindent La demostración de extremo a extremo verificó de manera reproducible el ciclo completo de notificaciones asíncronas desde la emisión de la venta hasta su visualización automática en el cliente de escritorio JavaFX:
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Despliegue simultáneo de servicios y arranque de JavaFX:} Se levantaron \texttt{notificaciones-service} (:8081 conectado a RabbitMQ :5672), \texttt{ventas-api} (:8002), \texttt{venta-vehiculos-api\_security} (:8082) y el cliente \texttt{escritorioFx/consultarvehiculojavafx} con \texttt{mvn javafx:run}, verificando inicialmente el catálogo de 31 vehículos en la pestaña 1 vía NGINX con \texttt{HTTP 200} y token oculto (Figuras \ref{fig:act9_servicios_backend} y \ref{fig:act9_javafx_inicio_catalogo}).
+  \item \textbf{Estado ANTES de la venta (pantalla vacía saludable) y emisión de la Venta 36:} Al abrir la pestaña «Notificaciones en Vivo (RabbitMQ)» con el historial inicialmente vacío, JavaFX desplegó la barra \textbf{azul} \texttt{CONECTADO (HTTP 200) — Servicio operativo, sin notificaciones de ventas registradas todavía.} con \texttt{Notificaciones recibidas: 0} y sondeo automático cada 3 segundos activo (Figura \ref{fig:act9_javafx_antes_venta36}, arriba). Acto seguido se registró una venta nueva (\texttt{POST http://localhost:8090/api/ventas} con \texttt{vehiculoId: 31}, \texttt{compradorId: 1}, \texttt{\$25,000.00}), retornando \texttt{HTTP 201 Created} con \textbf{Venta ID 36} (\texttt{operacionId: 5eb1e89b-28fb-4443-befe-e95a60413d5d}, \texttt{estado: COMPLETADA}, \texttt{notificacion: ENVIADA}) (Figura \ref{fig:act9_javafx_antes_venta36}, abajo).
+  \item \textbf{Recepción por listener RabbitMQ e historial vía \texttt{GET /api/notificaciones}:} A las \texttt{11:43:29.375}, \texttt{VentasRabbitListener} recibió el evento \texttt{eventoId: bcca2835-b3ce-498d-ad63-88030f2dea86} y en 107 ms (\texttt{11:43:29.482}) \texttt{NotificacionService} registró \texttt{ID=1, ventaId=36}. La consulta directa en navegador hacia \texttt{http://localhost:8090/api/notificaciones} corroboró el objeto JSON recuperable, mientras RabbitMQ confirmó \texttt{Consumers: 1} y \texttt{Ready: 0} en la cola durable \texttt{notificaciones.ventas} (Figura \ref{fig:act9_consumidor_historial_rmq}).
+  \item \textbf{Estado DESPUÉS de la venta en JavaFX sin refresco manual:} Sin pulsar ningún botón de actualización, el sondeo automático cada 3 segundos actualizó la interfaz de JavaFX pasando la barra a color \textbf{verde} (\texttt{CONECTADO (HTTP 200) — Sondeo activo vía NGINX (:8090). 1 notificación(es) en historial.}) y presentando automáticamente la fila de la \textbf{Venta ID 36} con su \texttt{Evento ID}, \texttt{Operación ID}, mensaje, estado \texttt{PROCESADA} y fecha \texttt{2026-11-23 11:43:29} (Figura \ref{fig:act9_javafx_despues_auto}).
+  \item \textbf{Diferenciación entre pantalla vacía y fallo de servicio:} Finalmente, se detuvo \texttt{notificaciones-service} a las \texttt{11:46:26} (\texttt{Graceful shutdown complete}). En el siguiente ciclo de sondeo (\texttt{11:46:48}), JavaFX interceptó el fallo y cambió la barra a color \textbf{rojo} con la alerta \texttt{FALLO DE SERVICIO — HTTP 504 Gateway Timeout: tiempo de espera agotado hacia notificaciones-service.}, demostrando la distinción inequívoca frente a una pantalla vacía saludable en azul (Figura \ref{fig:act9_javafx_fallo_504}).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act9_srv_notificaciones_8081.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act9_srv_ventas_8002.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.84\textwidth]{act9_srv_vehiculos_8082.png}
+  \caption{Despliegue de los microservicios backend para la Actividad 9: \texttt{notificaciones-service} en puerto 8081 conectado a AMQP 5672 (arriba), \texttt{ventas-api} FastAPI en puerto 8002 (medio) y \texttt{venta-vehiculos-api\_security} en puerto 8082 (abajo).}
+  \label{fig:act9_servicios_backend}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act9_srv_javafx_run.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.84\textwidth]{act9_javafx_catalogo_31.png}
+  \caption{Ejecución del cliente de escritorio JavaFX: arranque mediante \texttt{mvn javafx:run} en \texttt{escritorioFx/consultarvehiculojavafx} (arriba) y pestaña «Catálogo de Vehículos» listando los 31 automotores vía NGINX con código \texttt{HTTP 200} y token protegido (abajo).}
+  \label{fig:act9_javafx_inicio_catalogo}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act9_javafx_pantalla_vacia_200.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.76\textwidth]{act9_postman_venta_36_201.png}
+  \caption{Estado inicial en JavaFX y emisión de venta nueva: pestaña de notificaciones \textbf{antes} de la venta mostrando barra azul \texttt{CONECTADO (HTTP 200)} con pantalla vacía saludable y sondeo cada 3s (arriba) y creación de la Venta \texttt{ID: 36} (\texttt{HTTP 201 Created}, \texttt{vehiculoId: 31}, \texttt{COMPLETADA}, \texttt{ENVIADA}) (abajo).}
+  \label{fig:act9_javafx_antes_venta36}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{act9_notificaciones_log_venta36.png}
+
+  \vspace{0.2cm}
+  \includegraphics[width=0.76\textwidth]{act9_navegador_get_notificaciones.png}
+
+  \vspace{0.2cm}
+  \includegraphics[width=0.86\textwidth]{act9_rabbitmq_queues_consumido.png}
+  \caption{Procesamiento en consumidor e historial recuperable: trazas de \texttt{VentasRabbitListener} confirmando \texttt{ventaId=36} (arriba), respuesta JSON de \texttt{GET http://localhost:8090/api/notificaciones} vía NGINX (medio) y estado de la cola \texttt{notificaciones.ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (abajo).}
+  \label{fig:act9_consumidor_historial_rmq}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.94\textwidth]{act9_javafx_despues_venta_36.png}
+  \caption{Estado en JavaFX \textbf{después} de la venta sin refresco manual: aparición automática de la Venta \texttt{ID: 36} mediante el sondeo de 3 segundos con barra verde \texttt{CONECTADO (HTTP 200)}, mostrando \texttt{Evento ID}, \texttt{Operación ID}, mensaje, estado \texttt{PROCESADA} y fecha de registro.}
+  \label{fig:act9_javafx_despues_auto}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act9_notificaciones_detenido_fallo.png}
+
+  \vspace{0.25cm}
+  \includegraphics[width=0.90\textwidth]{act9_javafx_fallo_servicio_504.png}
+  \caption{Diferenciación visual de fallo de servicio en JavaFX: detención controlada de \texttt{notificaciones-service} a las 11:46:26 (arriba) y alerta inmediata en rojo \texttt{FALLO DE SERVICIO — HTTP 504 Gateway Timeout} detectada automáticamente a las 11:46:48, distinguiéndose claramente de la pantalla vacía saludable en azul (abajo).}
+  \label{fig:act9_javafx_fallo_504}
+\end{figure}
 
 \vspace{0.4cm}
 
