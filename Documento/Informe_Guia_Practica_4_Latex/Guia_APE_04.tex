@@ -3,7 +3,7 @@
 \usepackage[spanish,es-tabla,es-noshorthands]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{mathptmx}
-\usepackage[scaled=0.84]{zi4}
+\usepackage[scaled=1.0]{zi4}
 \usepackage{microtype}
 \usepackage{geometry}
 \geometry{
@@ -26,6 +26,11 @@
 \usepackage{xcolor}
 \usepackage{xurl}
 \usepackage{listings}
+\usepackage{caption}
+
+% Pies de figura en Times New Roman 9pt cursiva
+\DeclareCaptionFont{timesnineit}{\rmfamily\itshape\fontsize{9}{11}\selectfont}
+\captionsetup[figure]{font=timesnineit, labelfont=timesnineit, justification=justified, singlelinecheck=false}
 
 % Control estricto de margenes en texto, rutas, tablas y bloques de codigo
 \setlength{\emergencystretch}{3em}
@@ -35,12 +40,15 @@
 \let\oldunderscore\_
 \renewcommand{\_}{\oldunderscore\allowbreak}
 
+% Codigo, carpetas, archivos y rutas en fuente consola 9pt (respetando tablas compactas)
+\makeatletter
 \DeclareRobustCommand{\texttt}[1]{%
-  {\ttfamily\hyphenchar\font=`\-\relax #1}%
+  {\ttfamily\upshape\ifdim\f@size pt>8.5pt\fontsize{9}{10.8}\selectfont\fi\hyphenchar\font=`\-\relax #1}%
 }
+\makeatother
 
 \lstset{
-  basicstyle=\ttfamily\fontsize{8.2}{10.0}\selectfont,
+  basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont,
   breaklines=true,
   breakatwhitespace=false,
   postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
@@ -342,7 +350,7 @@ React / PWA en desarrollo & 5173 / 5174 & Se pueden usar puertos distintos al ej
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
   \item Organizar los siete proyectos base en repositorios o directorios identificados. Se autoriza modificar todos sus archivos y componentes para cumplir la integración; conservar un README por proyecto con requisitos, configuración, compilación y ejecución.
   \item Registrar los cambios efectuados en cada proyecto y justificar su relación con el requisito funcional correspondiente. Separar configuraciones locales de secretos y publicar únicamente plantillas sin valores reales.
-  \item Comprobar que los proyectos compilan y que no se incluyen node\_modules, target, bin, obj, .venv, .git ni archivos temporales.
+  \item Comprobar que los proyectos compilan y que no se incluyen \texttt{node\_modules}, target, bin, obj, \texttt{.venv}, \texttt{.git} ni archivos temporales.
 \end{itemize}
 \textbf{Evidencia mínima:} Capturas de estructura de carpetas, comandos de compilación y estados de control de versiones sin archivos sensibles.
 
@@ -355,7 +363,7 @@ React / PWA en desarrollo & 5173 / 5174 & Se pueden usar puertos distintos al ej
   \item Configurar rutas de entrada hacia FastAPI y notificaciones mediante proxy cuando corresponda, sin asumir que el balanceo de vehículos se aplica automáticamente a otros servicios.
   \item Comprobar la sintaxis de NGINX y el funcionamiento de /nginx-ping y /actuator/health; reutilizar el monitor de estados, estadísticas y alertas cuando esté disponible.
 \end{itemize}
-\textbf{Evidencia mínima:} Configuración nginx.conf, respuesta de las dos instancias, nginx -t, al menos 100 GET con conteos reales y una prueba de continuidad con una instancia detenida.
+\textbf{Evidencia mínima:} Configuración \texttt{nginx.conf}, respuesta de las dos instancias, \texttt{nginx -t}, al menos 100 GET con conteos reales y una prueba de continuidad con una instancia detenida.
 
 \vspace{0.2cm}
 
@@ -587,10 +595,10 @@ P28 & Sin credenciales ni resultados ficticios & Repositorio y evidencia no expo
 \begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
   \item INFORME\_APE04\_APELLIDO\_NOMBRE.pdf: portada individual, objetivos, diagramas inicial y final, arquitectura por componente, flujo de login y venta, matriz de modificaciones a los proyectos base, capturas legibles de los cuatro clientes, NGINX, RabbitMQ y bases de datos, pruebas P01–P28 con resultados reales, análisis, conclusiones, recomendaciones y referencias IEEE.
   \item APE04\_APELLIDO\_NOMBRE.zip: código fuente completo y modificado de Windows Forms, JavaFX, React, PWA móvil, API Java de vehículos, API Python de ventas y servicio de notificaciones; configuración NGINX, definición reproducible de RabbitMQ, scripts SQL o migraciones y README general con orden de arranque, dependencias, puertos y comandos.
-  \item En caso de reutilizar monitor-balancer-service, se incluirá el código/configuración necesarios para reproducir las pruebas de disponibilidad y balanceo.
+  \item En caso de reutilizar \texttt{monitor-balancer-service}, se incluirá el código/configuración necesarios para reproducir las pruebas de disponibilidad y balanceo.
 \end{itemize}
 
-\noindent Exclusiones obligatorias del ZIP: carpetas target, bin, obj, node\_modules, .venv, .git, compilaciones, cachés, bases completas con datos personales, contraseñas, JWT reales y archivos .env o application.properties que contengan secretos.
+\noindent Exclusiones obligatorias del ZIP: carpetas \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{node\_modules}, \texttt{.venv}, \texttt{.git}, compilaciones, cachés, bases completas con datos personales, contraseñas, JWT reales y archivos \texttt{.env} o \texttt{application.properties} que contengan secretos.
 
 \vspace{0.3cm}
 
@@ -633,14 +641,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent La solución integra siete subsistemas principales y dos componentes de soporte de infraestructura:
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
-  \item \textbf{venta-vehiculos-api\_security (Java Spring Boot, Puertos 8080 y 8082):} Servicio encargado de la gestión de vehículos, persistencia JPA/Hibernate en MySQL, emisión y validación de tokens JWT (HMAC-SHA256) mediante el endpoint \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, y métricas de salud con Spring Boot Actuator (\texttt{/\allowbreak{}actuator/\allowbreak{}health}). Opera en dos instancias para balanceo ponderado 3:1.
-  \item \textbf{ventas-api (Python FastAPI, Puerto 8002):} Microservicio REST responsable de la persistencia de compradores y transacciones comerciales de venta. Utiliza SQLAlchemy ORM, esquemas Pydantic v2, control de concurrencia e idempotencia mediante cabecera \texttt{Idempotency-Key}, y el publicador asíncrono AMQP hacia RabbitMQ.
-  \item \textbf{notificaciones-service (Java Spring Boot, Puerto 8081):} Consumidor asíncrono de eventos de venta suscrito a la cola durable \texttt{notificaciones.\allowbreak{}ventas} de RabbitMQ. Incluye lógica de desduplicación por \texttt{eventoId} y expone la API de consulta \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}.
-  \item \textbf{monitor-balancer-service (Java Spring Boot, Puerto 8083):} Servicio supervisor independiente que sondea periódicamente la salud Actuator de las instancias Java, analiza los registros de acceso de NGINX aplicando una ventana temporal estricta y expone métricas y alertas.
-  \item \textbf{ConsultaVehiculosForms (C\# .NET 8 Desktop):} Cliente de administración para personal operativo. Consume la API REST de vehículos y ventas vía NGINX para dar de alta vehículos, registrar compradores y listar catálogos e históricos de venta.
-  \item \textbf{AplicacionMovilPWA (HTML5 / Vanilla JS / Service Worker, Puerto 5173):} Cliente web progresivo para dispositivos móviles. Representa el \textbf{único canal autorizado} para autenticar al vendedor mediante OAuth 2.0 y ejecutar transacciones de venta (\texttt{POST /\allowbreak{}api/\allowbreak{}ventas}).
-  \item \textbf{reactweb (React 19 / Vite, Puerto 5174):} Portal web de consulta y auditoría comercial. Consume el catálogo de vehículos con filtrado por marca en memoria y consulta ventas para presentar indicadores acumulados en tiempo real, sin facultades de mutación.
-  \item \textbf{escritorioFx (Java 25 / OpenJFX 21 Desktop):} Aplicación de escritorio encargada de presentar en una tabla en tiempo real las notificaciones de ventas recibidas a través de RabbitMQ mediante sondeo asíncrono cada 3 segundos.
+  \item \textbf{\texttt{venta-vehiculos-api\_security} (Java Spring Boot, Puertos 8080 y 8082):} Servicio encargado de la gestión de vehículos, persistencia JPA/Hibernate en MySQL, emisión y validación de tokens JWT (HMAC-SHA256) mediante el endpoint \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, y métricas de salud con Spring Boot Actuator (\texttt{/\allowbreak{}actuator/\allowbreak{}health}). Opera en dos instancias para balanceo ponderado 3:1.
+  \item \textbf{\texttt{ventas-api} (Python FastAPI, Puerto 8002):} Microservicio REST responsable de la persistencia de compradores y transacciones comerciales de venta. Utiliza SQLAlchemy ORM, esquemas Pydantic v2, control de concurrencia e idempotencia mediante cabecera \texttt{Idempotency-Key}, y el publicador asíncrono AMQP hacia RabbitMQ.
+  \item \textbf{\texttt{notificaciones-service} (Java Spring Boot, Puerto 8081):} Consumidor asíncrono de eventos de venta suscrito a la cola durable \texttt{notificaciones.\allowbreak{}ventas} de RabbitMQ. Incluye lógica de desduplicación por \texttt{eventoId} y expone la API de consulta \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}.
+  \item \textbf{\texttt{monitor-balancer-service} (Java Spring Boot, Puerto 8083):} Servicio supervisor independiente que sondea periódicamente la salud Actuator de las instancias Java, analiza los registros de acceso de NGINX aplicando una ventana temporal estricta y expone métricas y alertas.
+  \item \textbf{\texttt{ConsultaVehiculosForms} (C\# .NET 8 Desktop):} Cliente de administración para personal operativo. Consume la API REST de vehículos y ventas vía NGINX para dar de alta vehículos, registrar compradores y listar catálogos e históricos de venta.
+  \item \textbf{\texttt{AplicacionMovilPWA} (HTML5 / Vanilla JS / Service Worker, Puerto 5173):} Cliente web progresivo para dispositivos móviles. Representa el \textbf{único canal autorizado} para autenticar al vendedor mediante OAuth 2.0 y ejecutar transacciones de venta (\texttt{POST /\allowbreak{}api/\allowbreak{}ventas}).
+  \item \textbf{\texttt{reactweb} (React 19 / Vite, Puerto 5174):} Portal web de consulta y auditoría comercial. Consume el catálogo de vehículos con filtrado por marca en memoria y consulta ventas para presentar indicadores acumulados en tiempo real, sin facultades de mutación.
+  \item \textbf{\texttt{escritorioFx} (Java 25 / OpenJFX 21 Desktop):} Aplicación de escritorio encargada de presentar en una tabla en tiempo real las notificaciones de ventas recibidas a través de RabbitMQ mediante sondeo asíncrono cada 3 segundos.
   \item \textbf{NGINX Gateway (Puerto 8090) y RabbitMQ (Puertos 5672/15672):} Componentes de infraestructura que unifican el enrutamiento de peticiones, balanceo ponderado 3:1 y transporte durable de eventos desacoplados.
 \end{enumerate}
 
@@ -782,73 +790,73 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \noindent Cada uno de los proyectos cliente y servidor se estructuró en su propio directorio independiente dentro del repositorio \texttt{SOA\_APE04}, provisto de su correspondiente archivo \texttt{README.md}. En dichos documentos se especifican los prerrequisitos de entorno, variables de configuración, puertos de red, comandos de compilación, ejecución y verificación de endpoints para los siete proyectos base:
 
 \begin{enumerate}[leftmargin=*,itemsep=4pt,topsep=2pt]
-  \item \textbf{AplicacionMovilPWA (PWA Móvil):} En las Figuras \ref{fig:act2_readme_pwa_1} y \ref{fig:act2_readme_pwa_2} se documenta el archivo \texttt{README.md} de la aplicación móvil PWA, detallando requisitos de Node.js v20+, gestor npm, configuración de proxy NGINX, comandos de pruebas unitarias (\texttt{npm test}), empaquetado de producción y modo de ejecución independiente en puerto 5174.
+  \item \textbf{\texttt{AplicacionMovilPWA} (PWA Móvil):} En las Figuras \ref{fig:act2_readme_pwa_1} y \ref{fig:act2_readme_pwa_2} se documenta el archivo \texttt{README.md} de la aplicación móvil PWA, detallando requisitos de Node.js v20+, gestor npm, configuración de proxy NGINX, comandos de pruebas unitarias (\texttt{npm test}), empaquetado de producción y modo de ejecución independiente en puerto 5174.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_pwa_1.png}
-    \caption{Documentación técnica de AplicacionMovilPWA: Requisitos previos y configuración.}
+    \caption{Documentación técnica de \texttt{AplicacionMovilPWA}: Requisitos previos y configuración.}
     \label{fig:act2_readme_pwa_1}
   \end{figure}
 
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_pwa_2.png}
-    \caption{Documentación técnica de AplicacionMovilPWA: Compilación, pruebas unitarias y ejecución.}
+    \caption{Documentación técnica de \texttt{AplicacionMovilPWA}: Compilación, pruebas unitarias y ejecución.}
     \label{fig:act2_readme_pwa_2}
   \end{figure}
 
-  \item \textbf{ConsultaVehiculosForms (Cliente Windows Forms):} En la Figura \ref{fig:act2_readme_forms} se evidencia la documentación técnica del cliente administrativo de escritorio desarrollado en C\# y .NET SDK 8, describiendo su arquitectura x64, dependencias con NGINX (puerto 8090), MySQL en XAMPP y los endpoints consumidos de vehículos y ventas.
+  \item \textbf{\texttt{ConsultaVehiculosForms} (Cliente Windows Forms):} En la Figura \ref{fig:act2_readme_forms} se evidencia la documentación técnica del cliente administrativo de escritorio desarrollado en C\# y .NET SDK 8, describiendo su arquitectura x64, dependencias con NGINX (puerto 8090), MySQL en XAMPP y los endpoints consumidos de vehículos y ventas.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_forms.png}
-    \caption{Documentación técnica de ConsultaVehiculosForms: Requisitos de .NET 8 y servicios requeridos.}
+    \caption{Documentación técnica de \texttt{ConsultaVehiculosForms}: Requisitos de .NET 8 y servicios requeridos.}
     \label{fig:act2_readme_forms}
   \end{figure}
 
-  \item \textbf{escritorioFx (Cliente JavaFX):} En la Figura \ref{fig:act2_readme_javafx} se expone el \texttt{README.md} del cliente de escritorio JavaFX para monitoreo reactivo de ventas en tiempo real, especificando compatibilidad con OpenJDK 17+/25, Apache Maven 3.9, OpenJFX 21 y la integración asíncrona hacia el servicio de notificaciones (puerto 8081).
+  \item \textbf{\texttt{escritorioFx} (Cliente JavaFX):} En la Figura \ref{fig:act2_readme_javafx} se expone el \texttt{README.md} del cliente de escritorio JavaFX para monitoreo reactivo de ventas en tiempo real, especificando compatibilidad con OpenJDK 17+/25, Apache Maven 3.9, OpenJFX 21 y la integración asíncrona hacia el servicio de notificaciones (puerto 8081).
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_javafx.png}
-    \caption{Documentación técnica de escritorioFx: Requisitos de OpenJDK, Maven y OpenJFX.}
+    \caption{Documentación técnica de \texttt{escritorioFx}: Requisitos de OpenJDK, Maven y OpenJFX.}
     \label{fig:act2_readme_javafx}
   \end{figure}
 
-  \item \textbf{notificaciones-service (Consumidor RabbitMQ Spring Boot):} En la Figura \ref{fig:act2_readme_notificaciones} se presenta la documentación técnica del microservicio de notificaciones, detallando el puerto de escucha 8081, la conexión AMQP con RabbitMQ en el puerto 5672, la suscripción a la cola durable \texttt{notificaciones.\allowbreak{}ventas} y la lógica de desduplicación.
+  \item \textbf{\texttt{notificaciones-service} (Consumidor RabbitMQ Spring Boot):} En la Figura \ref{fig:act2_readme_notificaciones} se presenta la documentación técnica del microservicio de notificaciones, detallando el puerto de escucha 8081, la conexión AMQP con RabbitMQ en el puerto 5672, la suscripción a la cola durable \texttt{notificaciones.\allowbreak{}ventas} y la lógica de desduplicación.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_notificaciones.png}
-    \caption{Documentación técnica de notificaciones-service: Requisitos Java, puertos y broker RabbitMQ.}
+    \caption{Documentación técnica de \texttt{notificaciones-service}: Requisitos Java, puertos y broker RabbitMQ.}
     \label{fig:act2_readme_notificaciones}
   \end{figure}
 
-  \item \textbf{reactweb (Plataforma Web React):} En la Figura \ref{fig:act2_readme_react} se documenta la plataforma web de consulta y auditoría comercial desarrollada en React 19 y Vite, indicando requisitos de Node.js v20+, resolución de dependencias npm, enrutamiento por proxy hacia NGINX (8090) y visualización de catálogos y métricas.
+  \item \textbf{\texttt{reactweb} (Plataforma Web React):} En la Figura \ref{fig:act2_readme_react} se documenta la plataforma web de consulta y auditoría comercial desarrollada en React 19 y Vite, indicando requisitos de Node.js v20+, resolución de dependencias npm, enrutamiento por proxy hacia NGINX (8090) y visualización de catálogos y métricas.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_react.png}
-    \caption{Documentación técnica de reactweb: Requisitos previos, Node.js y conexión con NGINX.}
+    \caption{Documentación técnica de \texttt{reactweb}: Requisitos previos, Node.js y conexión con NGINX.}
     \label{fig:act2_readme_react}
   \end{figure}
 
-  \item \textbf{venta-vehiculos-api\_security (Microservicio Vehículos Java):} En la Figura \ref{fig:act2_readme_vehiculos_java} se expone el \texttt{README.md} del microservicio central de catálogo y seguridad OAuth 2.0 en Spring Boot, describiendo la configuración JPA con MySQL en XAMPP (puerto 3306), el endpoint Actuator \texttt{/\allowbreak{}actuator/\allowbreak{}health} y la topología de balanceo ponderado 3:1.
+  \item \textbf{\texttt{venta-vehiculos-api\_security} (Microservicio Vehículos Java):} En la Figura \ref{fig:act2_readme_vehiculos_java} se expone el \texttt{README.md} del microservicio central de catálogo y seguridad OAuth 2.0 en Spring Boot, describiendo la configuración JPA con MySQL en XAMPP (puerto 3306), el endpoint Actuator \texttt{/\allowbreak{}actuator/\allowbreak{}health} y la topología de balanceo ponderado 3:1.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_vehiculos_java.png}
-    \caption{Documentación técnica de venta-vehiculos-api\_security: Requisitos Java, base de datos y Actuator.}
+    \caption{Documentación técnica de \texttt{venta-vehiculos-api\_security}: Requisitos Java, base de datos y Actuator.}
     \label{fig:act2_readme_vehiculos_java}
   \end{figure}
 
-  \item \textbf{ventas-api (Microservicio Ventas FastAPI):} En la Figura \ref{fig:act2_readme_ventas_fastapi} se evidencia la documentación del microservicio Python FastAPI de gestión comercial, detallando la versión de Python 3.12+, entorno virtual \texttt{.venv}, persistencia relacional con SQLAlchemy en MySQL, garantía de idempotencia y publicador asíncrono RabbitMQ.
+  \item \textbf{\texttt{ventas-api} (Microservicio Ventas FastAPI):} En la Figura \ref{fig:act2_readme_ventas_fastapi} se evidencia la documentación del microservicio Python FastAPI de gestión comercial, detallando la versión de Python 3.12+, entorno virtual \texttt{.venv}, persistencia relacional con SQLAlchemy en MySQL, garantía de idempotencia y publicador asíncrono RabbitMQ.
   
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_ventas_fastapi.png}
-    \caption{Documentación técnica de ventas-api: Requisitos de Python, MySQL, broker AMQP y Gateway.}
+    \caption{Documentación técnica de \texttt{ventas-api}: Requisitos de Python, MySQL, broker AMQP y Gateway.}
     \label{fig:act2_readme_ventas_fastapi}
   \end{figure}
 \end{enumerate}
@@ -870,13 +878,13 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \hline
 \textbf{Microservicio} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{venta-vehiculos-api\_security} \newline\textit{(Spring Boot 8080/8082)} & VehiculoRepository, SecurityConfig, application.properties & 1) Bloqueo pesimista nativo mediante SELECT * FROM vehiculos WHERE id\_vehiculo = :id FOR UPDATE con dialecto MariaDBDialect.\newline 2) Permiso público en seguridad para /actuator/health.\newline 3) Configuración de dos instancias (8080 y 8082). & Elimina el error sintáctico de bloqueo pesimista contra MariaDB 10.4 en XAMPP; permite que NGINX y el monitor supervisen la salud real del servicio; soporte de balanceo 3:1 (P01, P23, P24, P25). \\
+\textbf{\texttt{venta-vehiculos-api\_security}} \newline\textit{(Spring Boot 8080/8082)} & \texttt{VehiculoRepository}, \texttt{SecurityConfig}, \texttt{application.properties} & 1) Bloqueo pesimista nativo mediante SELECT * FROM vehiculos WHERE id\_vehiculo = :id FOR UPDATE con dialecto MariaDBDialect.\newline 2) Permiso público en seguridad para /actuator/health.\newline 3) Configuración de dos instancias (8080 y 8082). & Elimina el error sintáctico de bloqueo pesimista contra MariaDB 10.4 en XAMPP; permite que NGINX y el monitor supervisen la salud real del servicio; soporte de balanceo 3:1 (P01, P23, P24, P25). \\
 \hline
-\textbf{ventas-api} \newline\textit{(Python FastAPI 8002)} & venta\_service.py, ventas.py, schemas.py, rabbitmq\_publisher.py & 1) Desacoplamiento transaccional (db.commit()) antes de llamadas externas o publicación AMQP.\newline 2) Implementación de GET /api/compradores y GET /api/ventas.\newline 3) Esquemas Pydantic flexibles (documento/cedula).\newline 4) Publicador RabbitMQ con pika. & Garantiza no encolar eventos de venta ante transacciones rechazadas o errores de negocio; provee listados para Windows Forms y React; asegura idempotencia con Idempotency-Key (P05, P06, P10, P11, P12, P18). \\
+\textbf{\texttt{ventas-api}} \newline\textit{(Python FastAPI 8002)} & \texttt{venta\_service.py}, \texttt{ventas.py}, \texttt{schemas.py}, \texttt{rabbitmq\_publisher.py} & 1) Desacoplamiento transaccional (db.commit()) antes de llamadas externas o publicación AMQP.\newline 2) Implementación de GET /api/compradores y GET /api/ventas.\newline 3) Esquemas Pydantic flexibles (documento/cedula).\newline 4) Publicador RabbitMQ con pika. & Garantiza no encolar eventos de venta ante transacciones rechazadas o errores de negocio; provee listados para Windows Forms y React; asegura idempotencia con Idempotency-Key (P05, P06, P10, P11, P12, P18). \\
 \hline
-\textbf{notificaciones-service} \newline\textit{(Spring Boot 8081)} & VentasRabbitListener, NotificacionController, NotificacionKeyFilter, application.properties & 1) Consumidor AMQP @RabbitListener en cola durable notificaciones.ventas.\newline 2) Desduplicación de avisos por eventoId.\newline 3) Endpoint GET /api/notificaciones exento de filtros restrictivos. & Recepción confiable de mensajes aunque el consumidor se reinicie; evita registrar notificaciones duplicadas; abastece el sondeo de JavaFX (P17, P19, P20, P21, P22). \\
+\textbf{\texttt{notificaciones-service}} \newline\textit{(Spring Boot 8081)} & \texttt{VentasRabbitListener}, \texttt{NotificacionController}, \texttt{NotificacionKeyFilter}, \texttt{application.properties} & 1) Consumidor AMQP @RabbitListener en cola durable notificaciones.ventas.\newline 2) Desduplicación de avisos por eventoId.\newline 3) Endpoint GET /api/notificaciones exento de filtros restrictivos. & Recepción confiable de mensajes aunque el consumidor se reinicie; evita registrar notificaciones duplicadas; abastece el sondeo de JavaFX (P17, P19, P20, P21, P22). \\
 \hline
-\textbf{monitor-balancer-service} \newline\textit{(Spring Boot 8083)} & HealthCheckClient, NginxLogParserService, EstadisticasResponse & 1) Auditoría estricta de Actuator validando cuerpo JSON \{"status":"UP"\}.\newline 2) Filtrado temporal estricto en ventana móvil de minutos sobre el archivo access.log de NGINX. & Supervisión desacoplada que calcula la proporción real del balanceo 3:1 y emite alertas fidedignas ante caídas de nodos Java (P23, P26). \\
+\textbf{\texttt{monitor-balancer-service}} \newline\textit{(Spring Boot 8083)} & \texttt{HealthCheckClient}, \texttt{NginxLogParserService}, \texttt{EstadisticasResponse} & 1) Auditoría estricta de Actuator validando cuerpo JSON \{"status":"UP"\}.\newline 2) Filtrado temporal estricto en ventana móvil de minutos sobre el archivo \texttt{access.log} de NGINX. & Supervisión desacoplada que calcula la proporción real del balanceo 3:1 y emite alertas fidedignas ante caídas de nodos Java (P23, P26). \\
 \hline
 \end{tabularx}
 \label{tab:modificaciones_backend}
@@ -894,13 +902,13 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \hline
 \textbf{Cliente} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{ConsultaVehiculos\allowbreak{}Forms} \newline\textit{(C\# .NET 8 Desktop)} & VehiculosApiClient.cs, VentasApiClient.cs, Form1.cs, Form1.Designer.cs & 1) Interfaz gráfica en pestañas para Vehículos, Compradores y Ventas.\newline 2) Cliente HTTP con token Bearer JWT hacia Gateway NGINX (8090).\newline 3) Manejo de códigos 400, 401, 403 y 404. & Proporciona la herramienta administrativa para roles ADMIN y OPERADOR; respeta la restricción de negocio: no registra ventas directamente (P02, P03, P04, P05, P06). \\
+\textbf{\texttt{ConsultaVehiculos\allowbreak{}Forms}} \newline\textit{(C\# .NET 8 Desktop)} & \texttt{VehiculosApiClient.cs}, \texttt{VentasApiClient.cs}, \texttt{Form1.cs}, \texttt{Form1.Designer.cs} & 1) Interfaz gráfica en pestañas para Vehículos, Compradores y Ventas.\newline 2) Cliente HTTP con token Bearer JWT hacia Gateway NGINX (8090).\newline 3) Manejo de códigos 400, 401, 403 y 404. & Proporciona la herramienta administrativa para roles ADMIN y OPERADOR; respeta la restricción de negocio: no registra ventas directamente (P02, P03, P04, P05, P06). \\
 \hline
-\textbf{AplicacionMovil\allowbreak{}PWA} \newline\textit{(HTML5 / JS PWA 5173)} & server.mjs, public/api.js, public/main.js, public/index.html & 1) Autenticación OAuth 2.0 en login con almacenamiento seguro de JWT.\newline 2) Formulario exclusivo de registro de ventas (POST /api/ventas).\newline 3) Inyección de UUID en cabecera Idempotency-Key.\newline 4) Proxy inverso hacia NGINX (8090). & Canal móvil mandatario y exclusivo para registrar ventas comerciales; previene duplicidad de transacciones ante reintentos de red por parte del vendedor (P07, P08, P09, P10, P11). \\
+\textbf{\texttt{AplicacionMovil\allowbreak{}PWA}} \newline\textit{(HTML5 / JS PWA 5173)} & \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/index.html} & 1) Autenticación OAuth 2.0 en login con almacenamiento seguro de JWT.\newline 2) Formulario exclusivo de registro de ventas (POST /api/ventas).\newline 3) Inyección de UUID en cabecera Idempotency-Key.\newline 4) Proxy inverso hacia NGINX (8090). & Canal móvil mandatario y exclusivo para registrar ventas comerciales; previene duplicidad de transacciones ante reintentos de red por parte del vendedor (P07, P08, P09, P10, P11). \\
 \hline
-\textbf{reactweb} \newline\textit{(React 19 / Vite 5174)} & vite.config.js, src/api/ventasApi.js, src/App.jsx & 1) Proxy Vite hacia NGINX (8090).\newline 2) Vista de catálogo con filtrado por marca en memoria.\newline 3) Vista de auditoría de ventas con métricas agregadas (totales y montos acumulados). & Opera como canal web de consulta y auditoría sin facultades de mutación ni formularios de venta, preservando la seguridad de los datos (P14, P15, P16). \\
+\textbf{\texttt{reactweb}} \newline\textit{(React 19 / Vite 5174)} & \texttt{vite.config.js}, \texttt{src/api/ventasApi.js}, \texttt{src/App.jsx} & 1) Proxy Vite hacia NGINX (8090).\newline 2) Vista de catálogo con filtrado por marca en memoria.\newline 3) Vista de auditoría de ventas con métricas agregadas (totales y montos acumulados). & Opera como canal web de consulta y auditoría sin facultades de mutación ni formularios de venta, preservando la seguridad de los datos (P14, P15, P16). \\
 \hline
-\textbf{escritorioFx} \newline\textit{(Java 25 / JavaFX Desktop)} & VehiculosApiClient.java, VehiculosApp.java, Notificacion\allowbreak{}VentaDto.java & 1) Sondeo asíncrono en segundo plano cada 3 segundos hacia GET /api/notificaciones.\newline 2) Mapeo de DTO y renderizado en TableView mediante Platform.runLater. & Permite a los supervisores visualizar en tiempo real los eventos de venta emitidos por RabbitMQ sin necesidad de recargar la ventana manualmente (P21, P22, P27). \\
+\textbf{\texttt{escritorioFx}} \newline\textit{(Java 25 / JavaFX Desktop)} & \texttt{VehiculosApiClient.java}, \texttt{VehiculosApp.java}, \texttt{Notificacion\allowbreak{}VentaDto.java} & 1) Sondeo asíncrono en segundo plano cada 3 segundos hacia GET /api/notificaciones.\newline 2) Mapeo de DTO y renderizado en TableView mediante Platform.runLater. & Permite a los supervisores visualizar en tiempo real los eventos de venta emitidos por RabbitMQ sin necesidad de recargar la ventana manualmente (P21, P22, P27). \\
 \hline
 \end{tabularx}
 \label{tab:modificaciones_clientes}
