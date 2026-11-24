@@ -2892,6 +2892,210 @@ JavaFX (Escritorio) & Sondeo 3s (\texttt{GET /api/notificaciones}) & Pasó autom
 \end{figure}
 
 \vspace{0.4cm}
+\noindent\textbf{1.7.11 Actividad 11. Seguridad, tolerancia a fallos y recuperación}
+
+\vspace{0.2cm}
+\noindent En esta actividad se sometió la arquitectura multicanal a un conjunto exhaustivo de pruebas adversariales de seguridad, conmutación ante fallos (\textit{failover}), resiliencia de mensajería y recuperación idempotente sin desactivar ningún filtro de autorización ni simular respuestas ficticias. Todas las mediciones se capturaron en vivo con marcas temporales reales del \texttt{23/11/2026} (hora Ecuador \texttt{UTC-5}) empleando el Gateway NGINX (\texttt{:8090}), el monitor independiente \texttt{monitor-balancer-service} (\texttt{:8083}), RabbitMQ (\texttt{:5672/:15672}), los microservicios Java/Python y la PWA móvil (\texttt{:5173}).
+
+\vspace{0.2cm}
+\noindent\textbf{A. Pruebas de seguridad JWT, control de acceso por roles (\texttt{401}/\texttt{403}) y matriz de errores HTTP}
+
+\noindent Manteniendo intactas la cadena \texttt{SecurityFilterChain} de Spring Security (política \texttt{STATELESS} con \texttt{JwtAuthenticationFilter}) y la validación delegada \texttt{identidad()}/\texttt{vendedor()} de FastAPI (\texttt{ventas-api/app/security.py}), se ejecutaron 12 casos de seguridad (credenciales erróneas, token ausente, firma manipulada, token vencido con \texttt{exp=2020-01-01} y privilegios insuficientes con roles \texttt{CONSULTA} y \texttt{OPERADOR}) junto a 6 casos de fallo y recuperación de servicios (Tabla \ref{tab:act11_matriz_seguridad_errores}):
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.18}
+\caption{Matriz de errores HTTP reales, seguridad JWT/RBAC y recuperación idempotente con marcas temporales (Actividad 11).}
+\label{tab:act11_matriz_seguridad_errores}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\centering\arraybackslash}p{1.5cm}|>{\raggedright\arraybackslash}p{2.7cm}|>{\centering\arraybackslash}p{1.6cm}|>{\centering\arraybackslash}p{1.0cm}|X|}
+\hline
+\textbf{Caso} & \textbf{Hora (UTC-5)} & \textbf{Método y Ruta} & \textbf{Rol / Estado} & \textbf{HTTP} & \textbf{Respuesta Real Verificada (Sin JWT Expuesto)} \\
+\hline
+SEC-01 & 12:42:35 & \texttt{POST /oauth/token} & \texttt{admin} (clave err.) & 401 & \texttt{"Usuario o contraseña incorrectos"} (P08). \\
+\hline
+SEC-02 & 12:42:35 & \texttt{GET /api/vehiculos} & Sin token & 401 & \texttt{\{"title":"No autenticado","status":401\}}. \\
+\hline
+SEC-03 & 12:42:35 & \texttt{POST /api/ventas} & Sin token & 401 & \texttt{NO\_AUTENTICADO}: «Enviar access token». \\
+\hline
+SEC-04 & 12:42:39 & \texttt{GET /api/vehiculos} & JWT inválido & 401 & Firma alterada rechazada por \texttt{JwtService} (401). \\
+\hline
+SEC-05 & 12:42:41 & \texttt{GET /api/ventas} & JWT inválido & 401 & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
+\hline
+SEC-06 & 12:42:42 & \texttt{GET /api/vehiculos} & JWT vencido & 401 & Payload \texttt{exp=2020-01-01} rechazado (401). \\
+\hline
+SEC-07 & 12:42:45 & \texttt{GET /api/ventas} & JWT vencido & 401 & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
+\hline
+SEC-08 & 12:42:46 & \texttt{GET /api/vehiculos} & \texttt{CONSULTA} & 200 & Lectura autorizada: devolvió 32 vehículos reales. \\
+\hline
+SEC-09 & 12:42:47 & \texttt{POST /api/vehiculos} & \texttt{CONSULTA} & 403 & \texttt{\{"title":"Sin permiso","status":403\}}. \\
+\hline
+SEC-10 & 12:42:49 & \texttt{POST /api/compradores} & \texttt{CONSULTA} & 403 & \texttt{SIN\_PERMISO}: «Se requiere OPERADOR o ADMIN». \\
+\hline
+SEC-11 & 12:42:51 & \texttt{POST /api/ventas} & \texttt{CONSULTA} & 403 & \texttt{SIN\_PERMISO}: venta denegada sin evento (P13). \\
+\hline
+SEC-12 & 12:42:52 & \texttt{DELETE /api/vehiculos/44} & \texttt{OPERADOR} & 403 & Eliminación restringida solo a \texttt{ROLE\_ADMIN}. \\
+\hline
+RES-01 & 19:12:40 & \texttt{POST /api/ventas} (PWA) & FastAPI apagado & 504 & NGINX \texttt{504 Gateway Timeout} (\texttt{connect\_timeout 2s}); sin confirmación ficticia. \\
+\hline
+RES-02 & 19:17:30 & \texttt{POST /api/ventas} (PWA) & MySQL apagado & 503 & \texttt{BD\_NO\_DISPONIBLE} (\texttt{traceId: 168c9705-...}); sin confirmación ficticia. \\
+\hline
+RES-03 & 19:20:08 & \texttt{POST /api/ventas} (PWA) & Recuperado (\texttt{admin}) & 201 & Misma clave \texttt{8eaa0174-...} $\rightarrow$ Venta \texttt{ID 38}, \texttt{COMPLETADA}, \texttt{ENVIADA}. \\
+\hline
+RES-04 & 19:23:12 & \texttt{POST /api/ventas} (P10) & Misma clave y JSON & 200 & Retorna el mismo \texttt{ID 38} (\texttt{f43ffc57-...}) sin duplicar venta ni evento. \\
+\hline
+RES-05 & 19:23:13 & \texttt{POST /api/ventas} (P11) & Misma clave, \$25,100 & 409 & \texttt{CLAVE\_REUTILIZADA} (\texttt{traceId: 0e7e6ccb-...}): requiere mismo cuerpo. \\
+\hline
+RES-06 & 19:23:18 & \texttt{POST /api/ventas} (P12) & Veh. 32 ya \texttt{VENDIDO} & 409 & \texttt{VENTA\_RECHAZADA}; crea \texttt{ID 39} como \texttt{FALLIDA} / \texttt{notificacion: PENDIENTE}. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Balanceo 3:1 (100 GET), caída de Java B (\texttt{:8082}), continuidad por NGINX y recuperación stateless}
+
+\noindent Con \texttt{monitor-balancer-service} (\texttt{:8083}, PID \texttt{14988}) sondeando cada 5 segundos \texttt{/nginx-ping}, \texttt{8080/actuator/health} y \texttt{8082/actuator/health}, se midieron tres ventanas reales consecutivas reutilizando \textbf{exactamente el mismo JWT stateless} emitido a las \texttt{12:42:36} sin volver a iniciar sesión (Tabla \ref{tab:act11_balanceo_failover}):
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\caption{Mediciones reales del balanceador NGINX y \texttt{monitor-balancer-service} en operación normal, caída y recuperación.}
+\label{tab:act11_balanceo_failover}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.8cm}|>{\centering\arraybackslash}p{1.9cm}|>{\centering\arraybackslash}p{1.2cm}|>{\centering\arraybackslash}p{1.2cm}|>{\centering\arraybackslash}p{1.6cm}|X|}
+\hline
+\textbf{Escenario (Prueba)} & \textbf{Ventana (\texttt{desde})} & \textbf{Inst. A (:8080)} & \textbf{Inst. B (:8082)} & \textbf{Estado Monitor} & \textbf{Resultado Medido y Tiempos de Reacción} \\
+\hline
+Normal: 100 GET (P23, P26) & 12:42:53 & 75 (75\%) & 25 (25\%) & \texttt{NORMAL} & \texttt{100/100 HTTP 200} en 2565.2 ms (promedio 17.21 ms; 13.15 ms sobre 177 pet. incl. sondeos JavaFX en \texttt{sinUpstream}); \texttt{/nginx-ping} = \texttt{200 UP}. \\
+\hline
+Caída Java B (:8082) (P24) & 12:48:41 & 20 (100\%) & 0 (0\%) & \texttt{DEGRADADO} & Java B detenida a \texttt{12:47:09.385}; monitor alertó a \texttt{12:47:14.198} (\textbf{4.8 s}); \texttt{20/20 HTTP 200} por A con cero errores \texttt{5xx}. \\
+\hline
+Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \texttt{NORMAL} & Java B reiniciada (PID 20688) a \texttt{12:53:38.838}; monitor recuperó a \texttt{12:53:39.375} (\textbf{537 ms}); \texttt{20/20 HTTP 200} usando el \textbf{mismo JWT} de las 12:42:36. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent Es importante destacar la transparencia del análisis de \texttt{access.log}: en las capturas del navegador del monitor aparece un conteo adicional bajo \texttt{sinUpstream} (por ejemplo, 70 en la ventana de 3 minutos 20 s de las 12:42:54 a las 12:46:15 y 35 en la ventana de recuperación), correspondiente a los sondeos periódicos automáticos cada 3 segundos del cliente JavaFX hacia \texttt{GET /api/notificaciones} (:8081), ruta fuera del upstream ponderado \texttt{vehiculos\_backend}. Aisladas las peticiones de vehículos, el reparto fue exactamente \textbf{75 a 25} (3:1 puro) en operación normal, \textbf{20 a 0} durante la caída de B y \textbf{16 a 4} tras su recuperación.
+
+\vspace{0.2cm}
+\noindent\textbf{C. Persistencia con consumidor RabbitMQ detenido y deduplicación por \texttt{eventoId} (P19, P20, P22)}
+
+\noindent La tolerancia a fallos del consumidor AMQP fue comprobada en dos frentes complementarios:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Consumidor detenido y reactivado sin repetir POST (P19 y P20):} Como quedó evidenciado en la Sección 1.7.8 (Figuras \ref{fig:act8_venta35_ready1} a \ref{fig:act8_reinicio_consumidor_ready0}), al detener \texttt{notificaciones-service} y registrar la Venta \texttt{ID 35}, RabbitMQ retuvo el mensaje persistente (\texttt{delivery\_mode=2}) en la cola durable \texttt{notificaciones.ventas} con \texttt{Consumers=0} y \texttt{Ready=1}; al reiniciar el servicio sin repetir el \texttt{POST}, el listener consumió el aviso (\texttt{Consumers=1}, \texttt{Ready=0}) sin duplicar registros en MySQL.
+  \item \textbf{Reentrega de evento ya procesado — Deduplicación (P22):} A las \texttt{12:42:59.670}, con la notificación de la Venta \texttt{ID 37} (\texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5}) ya presente en historial (\texttt{1} registro), se reinyectó exactamente el mismo \texttt{eventoId} en \texttt{notificaciones.ventas}. \texttt{NotificacionService} registró \texttt{WARN: EVENTO DUPLICADO DESCARTADO: eventoId=3b913705-...} y \texttt{VentasRabbitListener} confirmó \texttt{Evento ya existente o descartado}, manteniendo el conteo de \texttt{GET /api/notificaciones} invariante en \textbf{1} notificación (Figura \ref{fig:act11_monitor_normal_p22}, abajo).
+\end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Caída de API Python (\texttt{:8002}), fallo de persistencia (\texttt{:3306}), reintento idempotente y diferenciación de estados}
+
+\noindent Para validar el cuarto requisito de la Actividad 11 sin generar confirmaciones ficticias:
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Fijación de clave y parada de FastAPI (\texttt{:8002}):} En la PWA móvil se seleccionó \texttt{[ID 32] Toyota Corolla (\$25,000, DISPONIBLE)} y \texttt{[ID 9] Carlos Lopez}, fijando la clave \texttt{Idempotency-Key: 8eaa0174-a633-438b-9c2f-0d8fdf609c86}. Tras detener Uvicorn (\texttt{Finished server process [21356]}), el intento de venta devolvió \textbf{\texttt{HTTP 504}} desde NGINX (al agotarse \texttt{proxy\_connect\_timeout 2s} en Windows sobre el puerto cerrado), que la PWA mostró en rojo sin crear ninguna venta ficticia (Figura \ref{fig:act11_fastapi_apagado_504}).
+  \item \textbf{Fallo de persistencia MySQL (\texttt{HTTP 503}):} Al reiniciar FastAPI con MySQL (\texttt{:3306}) temporalmente detenido, el reintento devolvió \textbf{\texttt{HTTP 503 Service Unavailable}} en formato Problem Details (\texttt{codigo: "BD\_NO\_DISPONIBLE"}, \texttt{"No se pudo acceder a la persistencia"}, \texttt{traceId: 168c9705-67e2-41df-8eb9-e596b9856b6c}), nuevamente sin confirmaciones ficticias (Figura \ref{fig:act11_fastapi_reinicio_503}).
+  \item \textbf{Recuperación idempotente, doble barrera y diferenciación de estados:} Tras iniciar MySQL, el reintento con la \textbf{misma clave \texttt{8eaa0174-...}} devolvió \textbf{\texttt{HTTP 201}} creando la \textbf{Venta \texttt{ID 38}} (\texttt{operacionId: f43ffc57-031c-4c23-88ea-307e344cc87a}, \texttt{COMPLETADA}, \texttt{ENVIADA}). De inmediato, la PWA bloqueó en interfaz el vehículo ya vendido (\textit{«Seleccione un vehículo disponible para la venta»}) (Figura \ref{fig:act11_recuperacion_venta38_bloqueo}); a nivel de API, el reenvío idéntico con la misma clave retornó \textbf{\texttt{HTTP 200}} devolviendo exactamente \texttt{ID 38} sin duplicación (\textbf{P10}), la variación del precio a \texttt{\$25,100} con la misma clave devolvió \textbf{\texttt{HTTP 409 CLAVE\_REUTILIZADA}} (\textbf{P11}) y una nueva clave sobre el vehículo \texttt{ID 32} vendido devolvió \textbf{\texttt{HTTP 409 VENTA\_RECHAZADA}} registrando la Venta \texttt{ID 39} como \texttt{FALLIDA} con \texttt{notificacion: PENDIENTE} (\textbf{P12/P18}). Al cierre de pruebas, las \textbf{39 ventas reales} en MySQL (30 de \texttt{admin} y 9 de \texttt{operador}) se diferencian claramente en \textbf{18 \texttt{COMPLETADA}} (todas \texttt{ENVIADA}), \textbf{7 \texttt{FALLIDA}}, \textbf{10 \texttt{EN\_REVISION}} y \textbf{4 \texttt{PENDIENTE}} (las 21 no confirmadas en \texttt{notificacion: PENDIENTE}, cero eventos espurios).
+\end{enumerate}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Evidencia experimental completa de la Actividad 11}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act11_01_monitor_normal.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.88\textwidth]{act11_02_p22_duplicado_descartado.png}
+  \caption{Operación inicial del monitor y deduplicación \texttt{P22}: \texttt{monitor-balancer-service} (\texttt{:8083}, PID 14988) reportando \texttt{NGINX: UP, A(8080): UP, B(8082): UP => NORMAL} (arriba) y traza real en \texttt{notificaciones-service} descartando el \texttt{eventoId} duplicado \texttt{3b913705-...} a las 12:42:59 sin generar segunda notificación (abajo).}
+  \label{fig:act11_monitor_normal_p22}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act11_03_monitor_balanceo_75_25.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act11_04_monitor_estadisticas_100get.png}
+  \caption{Medición real de los 100 \texttt{GET /api/vehiculos} en \texttt{monitor-balancer-service} (\texttt{P23}): reparto exacto 3:1 con \texttt{solicitudesA: 75} y \texttt{solicitudesB: 25} más sondeos JavaFX en \texttt{sinUpstream} (arriba) y estadísticas acumuladas con \texttt{total2xx: 177}, \texttt{total4xx: 0}, \texttt{total5xx: 0} y latencia media de 13.15 ms (abajo).}
+  \label{fig:act11_balanceo_estadisticas_100get}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act11_05_java_b_detenida.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act11_09_monitor_terminal_degradado.png}
+  \caption{Detención de la Instancia Java B (\texttt{P24}): apagado ordenado de Spring Boot \texttt{:8082} (PID 17740) a las 12:47:09.385 (arriba) y detección inmediata en consola del monitor reportando \texttt{A(8080): UP, B(8082): DOWN => ESTADO: DEGRADADO} (abajo).}
+  \label{fig:act11_caida_java_b_terminal}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.62\textwidth]{act11_06_monitor_estado_degradado.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.68\textwidth]{act11_07_monitor_alertas_down.png}
+
+  \vspace{0.18cm}
+  \includegraphics[width=0.82\textwidth]{act11_08_monitor_balanceo_20_0.png}
+  \caption{Continuidad por NGINX y telemetría en estado \texttt{DEGRADADO}: \texttt{/api/monitor/estado} con \texttt{8080: UP} y \texttt{8082: DOWN} (arriba), \texttt{/api/monitor/alertas} registrando las transiciones a las 12:47:14.198 (medio) y \texttt{/api/monitor/balanceo} confirmando \texttt{solicitudesA: 20} y \texttt{solicitudesB: 0} sin fallos al cliente (abajo).}
+  \label{fig:act11_monitor_degradado_api}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act11_10_java_b_reiniciada.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.88\textwidth]{act11_11_monitor_recuperacion_normal.png}
+  \caption{Recuperación de la Instancia Java B (\texttt{P25}): reinicio en puerto 8082 (nuevo PID 20688) a las 12:53:38.838 (arriba) y detección de recuperación en 537 ms (\texttt{12:53:39.375}) por el monitor con \texttt{Vehiculos\_8082: DOWN -> UP} y \texttt{ESTADO\_GENERAL: DEGRADADO -> NORMAL} (abajo).}
+  \label{fig:act11_recuperacion_java_b}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act11_12_monitor_balanceo_recuperado_16_4.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.72\textwidth]{act11_13_monitor_alertas_ciclo_completo.png}
+  \caption{Retorno al balanceo con JWT stateless y ciclo completo de alertas: \texttt{/api/monitor/balanceo} evidenciando \texttt{solicitudesA: 16} y \texttt{solicitudesB: 4} con el mismo JWT emitido a las 12:42:36 (arriba) e historial completo de 4 alertas en \texttt{/api/monitor/alertas} (\texttt{UP -> DOWN -> UP}) (abajo).}
+  \label{fig:act11_monitor_recuperado_alertas}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.78\textwidth]{act11_14_pwa_clave_fija.png}
+
+  \vspace{0.16cm}
+  \includegraphics[width=0.84\textwidth]{act11_15_fastapi_detenida.png}
+
+  \vspace{0.16cm}
+  \includegraphics[width=0.82\textwidth]{act11_16_pwa_fallo_504_sin_confirmacion.png}
+  \caption{Prueba con API Python apagada (\texttt{P28}): fijación de la clave \texttt{8eaa0174-...} en la PWA sobre vehículo \texttt{ID 32} (arriba), detención de FastAPI \texttt{:8002} (medio) y respuesta real \texttt{HTTP 504} de NGINX sin generar ninguna confirmación ficticia (abajo).}
+  \label{fig:act11_fastapi_apagado_504}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act11_17_fastapi_reiniciada.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.84\textwidth]{act11_18_pwa_503_bd_no_disponible.png}
+  \caption{Reinicio de FastAPI y manejo controlado de caída de MySQL: Uvicorn nuevamente activo en \texttt{127.0.0.1:8002} (arriba) y respuesta RFC 7807 \texttt{HTTP 503 BD\_NO\_DISPONIBLE} (\texttt{traceId: 168c9705-...}) al detectarse la base de datos temporalmente detenida, evitando confirmaciones falsas (abajo).}
+  \label{fig:act11_fastapi_reinicio_503}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.84\textwidth]{act11_19_pwa_recuperacion_venta38_201.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.84\textwidth]{act11_20_pwa_bloqueo_ui_vendido.png}
+  \caption{Recuperación idempotente tras reactivar MySQL y protección en interfaz: reintento con la misma \texttt{Idempotency-Key} \texttt{8eaa0174-...} completando la Venta \texttt{ID 38} (\texttt{HTTP 201}, \texttt{COMPLETADA}, \texttt{ENVIADA}) (arriba) y bloqueo inmediato del vehículo \texttt{ID 32} en la PWA impidiendo una segunda selección accidental (abajo).}
+  \label{fig:act11_recuperacion_venta38_bloqueo}
+\end{figure}
+
+\vspace{0.4cm}
 
 \noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
 
