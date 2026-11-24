@@ -20,6 +20,7 @@
 \usepackage{fancyhdr}
 \usepackage{enumitem}
 \usepackage{tabularx}
+\usepackage{xltabular}
 \usepackage{array}
 \usepackage{float}
 \usepackage{amssymb}
@@ -28,24 +29,26 @@
 \usepackage{listings}
 \usepackage{caption}
 
-% Pies de figura en Times New Roman 9pt cursiva
+% Pies de figura en Times New Roman 9pt cursiva y titulos de tabla en Times New Roman 11pt
 \DeclareCaptionFont{timesnineit}{\rmfamily\itshape\fontsize{9}{11}\selectfont}
 \captionsetup[figure]{font=timesnineit, labelfont=timesnineit, justification=justified, singlelinecheck=false}
+\captionsetup[table]{font={rm,normalsize}, labelfont={rm,normalsize,bf}, justification=justified, singlelinecheck=false}
 
-% Control estricto de margenes en texto, rutas, tablas y bloques de codigo
+% Control estricto de margenes y tablas multipagina (xltabular) en Times New Roman 11pt
 \setlength{\emergencystretch}{3em}
 \setlength{\tabcolsep}{4pt}
+\setlength{\LTcapwidth}{\textwidth}
+\setlength{\LTpre}{6pt}
+\setlength{\LTpost}{6pt}
 \renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash\hspace{0pt}}p{#1}}
 
 \let\oldunderscore\_
 \renewcommand{\_}{\oldunderscore\allowbreak}
 
-% Codigo, carpetas, archivos y rutas en fuente consola 9pt (respetando tablas compactas)
-\makeatletter
+% Todo codigo, carpetas, archivos, rutas y comandos en fuente consola 9pt exacta
 \DeclareRobustCommand{\texttt}[1]{%
-  {\ttfamily\upshape\ifdim\f@size pt>8.5pt\fontsize{9}{10.8}\selectfont\fi\hyphenchar\font=`\-\relax #1}%
+  {\upshape\ttfamily\fontsize{9}{10.8}\selectfont\hyphenchar\font=`\-\relax #1}%
 }
-\makeatother
 
 \lstset{
   basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont,
@@ -184,14 +187,25 @@
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{4.2cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|X|}
 \hline
-Componente & Funciones exigidas \\
+\textbf{Componente} & \textbf{Funciones exigidas} \\
 \hline
+\endfirsthead
+\hline
+\textbf{Componente} & \textbf{Funciones exigidas \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{2}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Windows Forms $\cdot$ C\# / .NET 8 & Crear vehículos; crear compradores; listar vehículos, compradores y ventas. Mostrar códigos HTTP y errores del servicio. \\
 \hline
-PWA móvil $\cdot$ HTML/CSS/JavaScript & Iniciar sesión con usuario y contraseña; obtener JWT mediante /oauth/token; consultar datos necesarios; registrar ventas y consultar su estado. \\
+PWA móvil $\cdot$ HTML/CSS/JavaScript & Iniciar sesión con usuario y contraseña; obtener JWT mediante \texttt{/\allowbreak{}oauth/\allowbreak{}token}; consultar datos necesarios; registrar ventas y consultar su estado. \\
 \hline
 React $\cdot$ Vite + Fetch & Consultar vehículos; filtrar por marca; consultar ventas y visualizar resultados o indicadores sustentados en información real. No registrar ventas. \\
 \hline
@@ -204,8 +218,8 @@ API de ventas $\cdot$ Python FastAPI & Operaciones de compradores y ventas, vali
 Notificaciones $\cdot$ Spring Boot & Consumir RabbitMQ, registrar notificaciones y exponer un canal de consulta/actualización para JavaFX. \\
 \hline
 NGINX, RabbitMQ y MySQL & Enrutamiento y balanceo; transporte persistente de eventos; persistencia de los datos con responsabilidades separadas. \\
-\hline
-\end{tabularx}
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -227,32 +241,43 @@ NGINX, RabbitMQ y MySQL & Enrutamiento y balanceo; transporte persistente de eve
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{4.5cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.8cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{4.5cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.6cm}|X|}
 \hline
 \textbf{Método y ruta} & \textbf{Servicio} & \textbf{Condición} \\
 \hline
-POST /oauth/token & Vehículos / autenticación & Existente; autentica y emite JWT. \\
+\endfirsthead
 \hline
-GET /api/vehiculos & Vehículos & Existente; catálogo autorizado. \\
+\textbf{Método y ruta} & \textbf{Servicio} & \textbf{Condición \textit{(continuación)}} \\
 \hline
-POST /api/vehiculos & Vehículos & Verificar el contrato actual; conservar o completar la operación administrativa sin alterar reglas. \\
+\endhead
 \hline
-POST /api/compradores & Ventas / compradores & Existente; registrar comprador. \\
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-GET /api/compradores & Ventas / compradores & Incorporar si aún no existe; listar compradores autorizados. \\
+\endfoot
 \hline
-POST /api/ventas & Ventas & Existente; registrar venta con Idempotency-Key. \\
+\endlastfoot
+\texttt{POST /\allowbreak{}oauth/\allowbreak{}token} & Vehículos / autenticación & Existente; autentica y emite JWT. \\
 \hline
-GET /api/ventas/\{id\} & Ventas & Existente; consultar estado individual. \\
+\texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos & Existente; catálogo autorizado. \\
 \hline
-GET /api/ventas & Ventas & Incorporar si aún no existe; listado administrativo y consulta web. \\
+\texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos & Verificar el contrato actual; conservar o completar la operación administrativa sin alterar reglas. \\
 \hline
-GET /api/notificaciones & Notificaciones & Incorporar o utilizar ruta equivalente; consultar historial para JavaFX. \\
+\texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Ventas / compradores & Existente; registrar comprador. \\
 \hline
-GET /api/notificaciones/stream & Notificaciones & Alternativa opcional a polling: SSE o WebSocket documentado. \\
+\texttt{GET /\allowbreak{}api/\allowbreak{}compradores} & Ventas / compradores & Incorporar si aún no existe; listar compradores autorizados. \\
 \hline
-\end{tabularx}
+\texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Ventas & Existente; registrar venta con \texttt{Idempotency-Key}. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}} & Ventas & Existente; consultar estado individual. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Ventas & Incorporar si aún no existe; listado administrativo y consulta web. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} & Notificaciones & Incorporar o utilizar ruta equivalente; consultar historial para JavaFX. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones/\allowbreak{}stream} & Notificaciones & Alternativa opcional a polling: SSE o WebSocket documentado. \\
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -260,20 +285,31 @@ GET /api/notificaciones/stream & Notificaciones & Alternativa opcional a polling
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{5.5cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{5.4cm}|X|}
 \hline
-Herramienta / recurso & Uso mínimo \\
+\textbf{Herramienta / recurso} & \textbf{Uso mínimo} \\
 \hline
+\endfirsthead
+\hline
+\textbf{Herramienta / recurso} & \textbf{Uso mínimo \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{2}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Windows 10/11 y VS Code / Visual Studio & Edición, compilación y ejecución de aplicaciones cliente. \\
 \hline
 JDK 17, Maven y JavaFX & Servicios Java y cliente JavaFX, manteniendo la versión efectiva del proyecto. \\
 \hline
 .NET SDK 8 y Visual Studio & Aplicación administrativa Windows Forms. \\
 \hline
-Python, pip y entorno virtual & Ejecución del servicio FastAPI y migraciones de su base. \\
+Python, \texttt{pip} y entorno virtual & Ejecución del servicio FastAPI y migraciones de su base. \\
 \hline
-Node.js y npm & Clientes React y PWA móvil en el navegador. \\
+Node.js y \texttt{npm} & Clientes React y PWA móvil en el navegador. \\
 \hline
 MySQL o XAMPP & Base de datos operativa de vehículos y ventas; almacenamiento de avisos cuando corresponda. \\
 \hline
@@ -282,8 +318,8 @@ NGINX & Enrutamiento y balanceo hacia dos instancias Spring Boot. \\
 RabbitMQ con interfaz de administración & Cola durable y verificación de mensajes pendientes y consumidos. \\
 \hline
 Postman, navegador y Git / GitHub & Pruebas HTTP, revisión de peticiones y trazabilidad de código. \\
-\hline
-\end{tabularx}
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -291,28 +327,39 @@ Postman, navegador y Git / GitHub & Pruebas HTTP, revisión de peticiones y traz
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{4.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.6cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.6cm}|X|}
 \hline
-Componente & Puerto & Observación \\
+\textbf{Componente} & \textbf{Puerto} & \textbf{Observación} \\
 \hline
-NGINX & 8090 & Punto único de entrada REST en entorno local. \\
+\endfirsthead
 \hline
-Vehículos A y B & 8080 / 8082 & Dos procesos equivalentes conectados a los mismos datos. \\
+\textbf{Componente} & \textbf{Puerto} & \textbf{Observación \textit{(continuación)}} \\
 \hline
-Ventas FastAPI & 8002 & Servicio de compradores y ventas. \\
+\endhead
 \hline
-Notificaciones & 8081 & API de consulta de avisos y consumidor RabbitMQ. \\
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-Monitor de NGINX & 8083 & Servicio de supervisión reutilizable y externo al flujo de venta. \\
+\endfoot
 \hline
-RabbitMQ & 5672 / 15672 & AMQP y panel de administración, respectivamente. \\
+\endlastfoot
+NGINX & \texttt{8090} & Punto único de entrada REST en entorno local. \\
 \hline
-MySQL & 3306 & Puerto habitual; verificar configuración local. \\
+Vehículos A y B & \texttt{8080} / \texttt{8082} & Dos procesos equivalentes conectados a los mismos datos. \\
 \hline
-React / PWA en desarrollo & 5173 / 5174 & Se pueden usar puertos distintos al ejecutarse simultáneamente. \\
+Ventas FastAPI & \texttt{8002} & Servicio de compradores y ventas. \\
 \hline
-\end{tabularx}
+Notificaciones & \texttt{8081} & API de consulta de avisos y consumidor RabbitMQ. \\
+\hline
+Monitor de NGINX & \texttt{8083} & Servicio de supervisión reutilizable y externo al flujo de venta. \\
+\hline
+RabbitMQ & \texttt{5672} / \texttt{15672} & AMQP y panel de administración, respectivamente. \\
+\hline
+MySQL & \texttt{3306} & Puerto habitual; verificar configuración local. \\
+\hline
+React / PWA en desarrollo & \texttt{5173} / \texttt{5174} & Se pueden usar puertos distintos al ejecutarse simultáneamente. \\
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -477,11 +524,22 @@ React / PWA en desarrollo & 5173 / 5174 & Se pueden usar puertos distintos al ej
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.8cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.2cm}|X|}
 \hline
-ID & Prueba & Resultado esperado \\
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado} \\
 \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 P01 & Inicio y conectividad de servicios & Se ejecutan los servicios exigidos y responden los endpoints correspondientes. \\
 \hline
 P02 & Windows Forms crea vehículo & Registro exitoso; el identificador aparece en la API y MySQL. \\
@@ -494,21 +552,21 @@ P05 & Windows Forms lista compradores & Listado correcto desde el endpoint autor
 \hline
 P06 & Windows Forms lista ventas & Muestra resultados reales de FastAPI, sin registrarlas. \\
 \hline
-P07 & PWA inicia sesión con credenciales válidas & POST /oauth/token emite JWT para el usuario autenticado. \\
+P07 & PWA inicia sesión con credenciales válidas & \texttt{POST /\allowbreak{}oauth/\allowbreak{}token} emite JWT para el usuario autenticado. \\
 \hline
 P08 & Login inválido o JWT vencido & Se rechaza el acceso; no se ejecuta una venta. \\
 \hline
 P09 & PWA registra una venta válida & Venta persistida y resultado HTTP/estado conforme al contrato. \\
 \hline
-P10 & Reintento con misma Idempotency-Key y cuerpo & No se crea segunda venta; se conserva la referencia existente. \\
+P10 & Reintento con misma \texttt{Idempotency-Key} y cuerpo & No se crea segunda venta; se conserva la referencia existente. \\
 \hline
-P11 & Misma clave con cuerpo distinto & Conflicto de idempotencia sin duplicación, normalmente HTTP 409. \\
+P11 & Misma clave con cuerpo distinto & Conflicto de idempotencia sin duplicación, normalmente \texttt{HTTP 409}. \\
 \hline
 P12 & Venta de vehículo no disponible o datos inválidos & Respuesta de negocio correcta; sin venta nueva ni evento de éxito. \\
 \hline
-P13 & Permiso insuficiente para registrar venta & HTTP 403 u otro código previsto por la política; operación denegada. \\
-\hline
-\end{tabularx}
+P13 & Permiso insuficiente para registrar venta & \texttt{HTTP 403} u otro código previsto por la política; operación denegada. \\
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -516,12 +574,23 @@ P13 & Permiso insuficiente para registrar venta & HTTP 403 u otro código previs
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.8cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.2cm}|X|}
 \hline
-ID & Prueba & Resultado esperado \\
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado} \\
 \hline
-P14 & React consulta catálogo & GET real, filas visibles y manejo de listado vacío. \\
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+P14 & React consulta catálogo & \texttt{GET} real, filas visibles y manejo de listado vacío. \\
 \hline
 P15 & React filtra por marca y muestra detalle & Coinciden filas filtradas y datos de vehículo seleccionado. \\
 \hline
@@ -531,15 +600,15 @@ P17 & Publicación de evento de venta & RabbitMQ recibe un único evento por ven
 \hline
 P18 & Venta rechazada & No se publica evento de éxito en RabbitMQ. \\
 \hline
-P19 & Consumidor detenido durante una venta & Cola durable registra Consumers = 0 y Ready aumenta. \\
+P19 & Consumidor detenido durante una venta & Cola durable registra \texttt{Consumers = 0} y \texttt{Ready} aumenta. \\
 \hline
-P20 & Consumidor reiniciado sin repetir venta & Mensaje pendiente se consume, Ready disminuye a 0 si no hay otros pendientes. \\
+P20 & Consumidor reiniciado sin repetir venta & Mensaje pendiente se consume, \texttt{Ready} disminuye a 0 si no hay otros pendientes. \\
 \hline
-P21 & Notificaciones y JavaFX & La nueva notificación aparece automáticamente, con el mismo ventaId. \\
+P21 & Notificaciones y JavaFX & La nueva notificación aparece automáticamente, con el mismo \texttt{ventaId}. \\
 \hline
 P22 & Reentrega de un evento ya procesado & No se duplica la notificación visible ni el registro persistente. \\
-\hline
-\end{tabularx}
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -547,24 +616,35 @@ P22 & Reentrega de un evento ya procesado & No se duplica la notificación visib
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.8cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{6.2cm}|X|}
 \hline
-ID & Prueba & Resultado esperado \\
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado} \\
 \hline
-P23 & Balanceo 3:1 y 100 GET & Conteos reales por instancia y porcentajes obtenidos de logs; no valores fijos. \\
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Prueba} & \textbf{Resultado esperado \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+P23 & Balanceo 3:1 y 100 \texttt{GET} & Conteos reales por instancia y porcentajes obtenidos de logs; no valores fijos. \\
 \hline
 P24 & Falla de una instancia Java & NGINX continúa atendiendo por la instancia disponible. \\
 \hline
 P25 & Recuperación y JWT stateless & Ambas instancias vuelven a responder y aceptan el mismo JWT válido. \\
 \hline
-P26 & Monitor y rutas de servicio & Estados y alertas reales; /nginx-ping no requiere acceder al backend. \\
+P26 & Monitor y rutas de servicio & Estados y alertas reales; \texttt{/nginx-ping} no requiere acceder al backend. \\
 \hline
 P27 & Cadena comercial completa & Windows Forms $\rightarrow$ PWA venta $\rightarrow$ FastAPI $\rightarrow$ RabbitMQ $\rightarrow$ notificaciones $\rightarrow$ JavaFX; React consulta datos consistentes. \\
 \hline
 P28 & Sin credenciales ni resultados ficticios & Repositorio y evidencia no exponen secretos; fallos se comunican sin inventar operaciones. \\
-\hline
-\end{tabularx}
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.2cm}
 
@@ -606,11 +686,22 @@ P28 & Sin credenciales ni resultados ficticios & Repositorio y evidencia no expo
 
 \vspace{0.1cm}
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{5.5cm}|X|}
+{\renewcommand{\arraystretch}{1.15}
+\begin{xltabular}{\textwidth}{|>{\bfseries\raggedright\arraybackslash\hspace{0pt}}p{5.2cm}|X|}
 \hline
-Sección & Contenido mínimo \\
+\textbf{Sección} & \textbf{Contenido mínimo} \\
 \hline
+\endfirsthead
+\hline
+\textbf{Sección} & \textbf{Contenido mínimo \textit{(continuación)}} \\
+\hline
+\endhead
+\hline
+\multicolumn{2}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Portada e identificación & Tema, apellidos y nombres de quien desarrolla la práctica, asignatura y modalidad individual. \\
 \hline
 Arquitectura & Diagrama inicial/final, puertos, rutas, flujos REST y RabbitMQ. \\
@@ -622,8 +713,8 @@ Pruebas & P01–P28 con entradas, resultado real y evidencia rotulada. \\
 Resultados y análisis & Datos consistentes, métricas de balanceo, mensajes entregados y fallos detectados. \\
 \hline
 Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendaciones derivadas y normas IEEE. \\
-\hline
-\end{tabularx}
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 
@@ -708,36 +799,45 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \noindent A continuación se define la matriz formal de contratos de integración que rige la comunicación multicanal:
 
 \vspace{0.1cm}
-\noindent
-{\footnotesize
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.0cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.9cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|X|}
 \hline
-\textbf{Método y Ruta} & \textbf{Microservicio} & \textbf{Rol Mínimo} & \textbf{Códigos HTTP} & \textbf{Función y Restricción} \\
+\textbf{Método y Ruta} & \textbf{Servicio y Rol Mínimo} & \textbf{Códigos HTTP} & \textbf{Función y Restricción} \\
 \hline
-\texttt{POST /\allowbreak{}oauth/\allowbreak{}token} & Vehículos (Java) & Cliente Basic & 200, 400, 401 & Autentica credenciales y emite JWT Bearer. \\
+\endfirsthead
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos (Java) & CONSULTA & 200, 401, 403 & Catálogo balanceado 3:1 por NGINX. \\
+\textbf{Método y Ruta} & \textbf{Servicio y Rol Mínimo} & \textbf{Códigos HTTP} & \textbf{Función y Restricción \textit{(cont.)}} \\
 \hline
-\texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos (Java) & ADMIN & 201, 400, 403 & Alta de vehículos con chasis de 17 caracteres. \\
+\endhead
 \hline
-\texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Ventas (FastAPI) & OPERADOR & 201, 400, 403 & Registro administrativo de compradores. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}compradores} & Ventas (FastAPI) & CONSULTA & 200, 401, 403 & \textit{Endpoint incorporado} para listado de clientes. \\
+\endfoot
 \hline
-\texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Ventas (FastAPI) & OPERADOR & 201, 200, 409 & Venta con Idempotency-Key. Exclusivo canal PWA. \\
+\endlastfoot
+\texttt{POST /\allowbreak{}oauth/\allowbreak{}token} & Vehículos (Java)\newline Cliente Basic & 200, 400, 401 & Autentica credenciales y emite JWT Bearer. \\
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Ventas (FastAPI) & CONSULTA & 200, 401, 403 & \textit{Endpoint incorporado} para auditoría Forms/React. \\
+\texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos (Java)\newline \texttt{CONSULTA} & 200, 401, 403 & Catálogo balanceado 3:1 por NGINX. \\
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}} & Ventas (FastAPI) & OPERADOR & 200, 404, 403 & Consulta y seguimiento individual de venta. \\
+\texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} & Vehículos (Java)\newline \texttt{ADMIN} & 201, 400, 403 & Alta de vehículos con chasis de 17 caracteres. \\
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} & Notificaciones & Interno & 200 & \textit{Endpoint incorporado} para sondeo JavaFX. \\
+\texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Ventas (FastAPI)\newline \texttt{OPERADOR} & 201, 400, 403 & Registro administrativo de compradores. \\
 \hline
-\texttt{GET /\allowbreak{}nginx-ping} & NGINX & Público & 200 & Verificación local inmediata sin upstream. \\
+\texttt{GET /\allowbreak{}api/\allowbreak{}compradores} & Ventas (FastAPI)\newline \texttt{CONSULTA} & 200, 401, 403 & \textit{Endpoint incorporado} para listado de clientes. \\
 \hline
-\texttt{GET /\allowbreak{}actuator/\allowbreak{}health} & Vehículos & Público & 200, 503 & Diagnóstico de salud validando status UP. \\
+\texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Ventas (FastAPI)\newline \texttt{OPERADOR} & 201, 200, 409 & Venta con \texttt{Idempotency-Key}. Exclusivo canal PWA. \\
 \hline
-\end{tabularx}
-}
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Ventas (FastAPI)\newline \texttt{CONSULTA} & 200, 401, 403 & \textit{Endpoint incorporado} para auditoría Forms/React. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}} & Ventas (FastAPI)\newline \texttt{OPERADOR} & 200, 404, 403 & Consulta y seguimiento individual de venta. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} & Notificaciones\newline Interno & 200 & \textit{Endpoint incorporado} para sondeo JavaFX. \\
+\hline
+\texttt{GET /\allowbreak{}nginx-ping} & NGINX\newline Público & 200 & Verificación local inmediata sin upstream. \\
+\hline
+\texttt{GET /\allowbreak{}actuator/\allowbreak{}health} & Vehículos\newline Público & 200, 503 & Diagnóstico de salud validando status \texttt{UP}. \\
+\end{xltabular}
+\addtocounter{table}{-1}}
 
 \vspace{0.3cm}
 \noindent\textbf{E. Validación de servicios en ejecución con respuestas reales}
@@ -872,47 +972,64 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \noindent En la Tabla \ref{tab:modificaciones_backend} se detallan las refactorizaciones efectuadas en los servicios del lado servidor para cumplir con los contratos de persistencia, seguridad, durabilidad y tolerancia a fallos.
 
 \vspace{0.1cm}
-\noindent
-{\footnotesize
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\sloppy}p{2.6cm}|>{\raggedright\arraybackslash\sloppy}p{3.2cm}|X|>{\raggedright\arraybackslash\sloppy}p{4.2cm}|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|X|>{\raggedright\arraybackslash\hspace{0pt}}p{4.5cm}|}
+\caption{Modificaciones técnicas implementadas en los microservicios backend y componentes de soporte.}\label{tab:modificaciones_backend}\\
 \hline
-\textbf{Microservicio} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
+\textbf{Microservicio y Archivos Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{\texttt{venta-vehiculos-api\_security}} \newline\textit{(Spring Boot 8080/8082)} & \texttt{VehiculoRepository}, \texttt{SecurityConfig}, \texttt{application.properties} & 1) Bloqueo pesimista nativo mediante SELECT * FROM vehiculos WHERE id\_vehiculo = :id FOR UPDATE con dialecto MariaDBDialect.\newline 2) Permiso público en seguridad para /actuator/health.\newline 3) Configuración de dos instancias (8080 y 8082). & Elimina el error sintáctico de bloqueo pesimista contra MariaDB 10.4 en XAMPP; permite que NGINX y el monitor supervisen la salud real del servicio; soporte de balanceo 3:1 (P01, P23, P24, P25). \\
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Modificaciones técnicas implementadas en los microservicios backend y componentes de soporte.}\\[4pt]
 \hline
-\textbf{\texttt{ventas-api}} \newline\textit{(Python FastAPI 8002)} & \texttt{venta\_service.py}, \texttt{ventas.py}, \texttt{schemas.py}, \texttt{rabbitmq\_publisher.py} & 1) Desacoplamiento transaccional (db.commit()) antes de llamadas externas o publicación AMQP.\newline 2) Implementación de GET /api/compradores y GET /api/ventas.\newline 3) Esquemas Pydantic flexibles (documento/cedula).\newline 4) Publicador RabbitMQ con pika. & Garantiza no encolar eventos de venta ante transacciones rechazadas o errores de negocio; provee listados para Windows Forms y React; asegura idempotencia con Idempotency-Key (P05, P06, P10, P11, P12, P18). \\
+\textbf{Microservicio y Archivos Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{\texttt{notificaciones-service}} \newline\textit{(Spring Boot 8081)} & \texttt{VentasRabbitListener}, \texttt{NotificacionController}, \texttt{NotificacionKeyFilter}, \texttt{application.properties} & 1) Consumidor AMQP @RabbitListener en cola durable notificaciones.ventas.\newline 2) Desduplicación de avisos por eventoId.\newline 3) Endpoint GET /api/notificaciones exento de filtros restrictivos. & Recepción confiable de mensajes aunque el consumidor se reinicie; evita registrar notificaciones duplicadas; abastece el sondeo de JavaFX (P17, P19, P20, P21, P22). \\
+\endhead
 \hline
-\textbf{\texttt{monitor-balancer-service}} \newline\textit{(Spring Boot 8083)} & \texttt{HealthCheckClient}, \texttt{NginxLogParserService}, \texttt{EstadisticasResponse} & 1) Auditoría estricta de Actuator validando cuerpo JSON \{"status":"UP"\}.\newline 2) Filtrado temporal estricto en ventana móvil de minutos sobre el archivo \texttt{access.log} de NGINX. & Supervisión desacoplada que calcula la proporción real del balanceo 3:1 y emite alertas fidedignas ante caídas de nodos Java (P23, P26). \\
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-\end{tabularx}
-\label{tab:modificaciones_backend}
-}
+\endfoot
+\hline
+\endlastfoot
+\texttt{venta-vehiculos-api\_security}\newline \textit{(Spring Boot 8080/8082)}\newline \textbf{Archivos:} \texttt{VehiculoRepository}, \texttt{SecurityConfig}, \texttt{application.\allowbreak{}properties} & 1) Bloqueo pesimista nativo mediante \texttt{SELECT * FROM vehiculos WHERE id\_vehiculo = :id FOR UPDATE} con dialecto \texttt{MariaDBDialect}.\newline 2) Permiso público en seguridad para \texttt{/\allowbreak{}actuator/\allowbreak{}health}.\newline 3) Configuración de dos instancias (\texttt{8080} y \texttt{8082}). & Elimina el error sintáctico de bloqueo pesimista contra MariaDB 10.4 en XAMPP; permite que NGINX y el monitor supervisen la salud real del servicio; soporte de balanceo 3:1 (P01, P23, P24, P25). \\
+\hline
+\texttt{ventas-api}\newline \textit{(Python FastAPI 8002)}\newline \textbf{Archivos:} \texttt{venta\_service.py}, \texttt{ventas.py}, \texttt{schemas.py}, \texttt{rabbitmq\_publisher.py} & 1) Desacoplamiento transaccional (\texttt{db.commit()}) antes de llamadas externas o publicación AMQP.\newline 2) Implementación de \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} y \texttt{GET /\allowbreak{}api/\allowbreak{}ventas}.\newline 3) Esquemas Pydantic flexibles (\texttt{documento}/\texttt{cedula}).\newline 4) Publicador RabbitMQ con \texttt{pika}. & Garantiza no encolar eventos de venta ante transacciones rechazadas o errores de negocio; provee listados para Windows Forms y React; asegura idempotencia con \texttt{Idempotency-Key} (P05, P06, P10, P11, P12, P18). \\
+\hline
+\texttt{notificaciones-service}\newline \textit{(Spring Boot 8081)}\newline \textbf{Archivos:} \texttt{VentasRabbitListener}, \texttt{NotificacionController}, \texttt{NotificacionKeyFilter}, \texttt{application.\allowbreak{}properties} & 1) Consumidor AMQP \texttt{@RabbitListener} en cola durable \texttt{notificaciones.\allowbreak{}ventas}.\newline 2) Desduplicación de avisos por \texttt{eventoId}.\newline 3) Endpoint \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} exento de filtros restrictivos. & Recepción confiable de mensajes aunque el consumidor se reinicie; evita registrar notificaciones duplicadas; abastece el sondeo de JavaFX (P17, P19, P20, P21, P22). \\
+\hline
+\texttt{monitor-balancer-service}\newline \textit{(Spring Boot 8083)}\newline \textbf{Archivos:} \texttt{HealthCheckClient}, \texttt{NginxLogParserService}, \texttt{EstadisticasResponse} & 1) Auditoría estricta de Actuator validando cuerpo JSON \texttt{\{"status":\allowbreak{}"UP"\}}.\newline 2) Filtrado temporal estricto en ventana móvil de minutos sobre el archivo \texttt{access.log} de NGINX. & Supervisión desacoplada que calcula la proporción real del balanceo 3:1 y emite alertas fidedignas ante caídas de nodos Java (P23, P26). \\
+\end{xltabular}}
 
-\vspace{0.4cm}
+\vspace{0.3cm}
 \noindent\textbf{2. Aplicaciones Clientes Multicanal}
 
 \noindent En la Tabla \ref{tab:modificaciones_clientes} se especifican las ampliaciones desarrolladas sobre los cuatro clientes de usuario, asegurando la coherencia transaccional y el cumplimiento estricto del perfil de cada canal.
 
-\vspace{0.1cm}
-\noindent
-{\footnotesize
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|X|>{\raggedright\arraybackslash\hspace{0pt}}p{3.6cm}|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|X|>{\raggedright\arraybackslash\hspace{0pt}}p{4.5cm}|}
+\caption{Modificaciones técnicas implementadas en las aplicaciones clientes multicanal.}\label{tab:modificaciones_clientes}\\
 \hline
-\textbf{Cliente} & \textbf{Componentes Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
+\textbf{Cliente y Archivos Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{\texttt{ConsultaVehiculos\allowbreak{}Forms}} \newline\textit{(C\# .NET 8 Desktop)} & \texttt{VehiculosApiClient.cs}, \texttt{VentasApiClient.cs}, \texttt{Form1.cs}, \texttt{Form1.Designer.cs} & 1) Interfaz gráfica en pestañas para Vehículos, Compradores y Ventas.\newline 2) Cliente HTTP con token Bearer JWT hacia Gateway NGINX (8090).\newline 3) Manejo de códigos 400, 401, 403 y 404. & Proporciona la herramienta administrativa para roles ADMIN y OPERADOR; respeta la restricción de negocio: no registra ventas directamente (P02, P03, P04, P05, P06). \\
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Modificaciones técnicas implementadas en las aplicaciones clientes multicanal.}\\[4pt]
 \hline
-\textbf{\texttt{AplicacionMovil\allowbreak{}PWA}} \newline\textit{(HTML5 / JS PWA 5173)} & \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/index.html} & 1) Autenticación OAuth 2.0 en login con almacenamiento seguro de JWT.\newline 2) Formulario exclusivo de registro de ventas (POST /api/ventas).\newline 3) Inyección de UUID en cabecera Idempotency-Key.\newline 4) Proxy inverso hacia NGINX (8090). & Canal móvil mandatario y exclusivo para registrar ventas comerciales; previene duplicidad de transacciones ante reintentos de red por parte del vendedor (P07, P08, P09, P10, P11). \\
+\textbf{Cliente y Archivos Clave} & \textbf{Modificación Técnica Implementada} & \textbf{Justificación Funcional (APE 04)} \\
 \hline
-\textbf{\texttt{reactweb}} \newline\textit{(React 19 / Vite 5174)} & \texttt{vite.config.js}, \texttt{src/api/ventasApi.js}, \texttt{src/App.jsx} & 1) Proxy Vite hacia NGINX (8090).\newline 2) Vista de catálogo con filtrado por marca en memoria.\newline 3) Vista de auditoría de ventas con métricas agregadas (totales y montos acumulados). & Opera como canal web de consulta y auditoría sin facultades de mutación ni formularios de venta, preservando la seguridad de los datos (P14, P15, P16). \\
+\endhead
 \hline
-\textbf{\texttt{escritorioFx}} \newline\textit{(Java 25 / JavaFX Desktop)} & \texttt{VehiculosApiClient.java}, \texttt{VehiculosApp.java}, \texttt{Notificacion\allowbreak{}VentaDto.java} & 1) Sondeo asíncrono en segundo plano cada 3 segundos hacia GET /api/notificaciones.\newline 2) Mapeo de DTO y renderizado en TableView mediante Platform.runLater. & Permite a los supervisores visualizar en tiempo real los eventos de venta emitidos por RabbitMQ sin necesidad de recargar la ventana manualmente (P21, P22, P27). \\
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-\end{tabularx}
-\label{tab:modificaciones_clientes}
-}
+\endfoot
+\hline
+\endlastfoot
+\texttt{ConsultaVehiculos\allowbreak{}Forms}\newline \textit{(C\# .NET 8 Desktop)}\newline \textbf{Archivos:} \texttt{VehiculosApiClient.cs}, \texttt{VentasApiClient.cs}, \texttt{Form1.cs}, \texttt{Form1.Designer.cs} & 1) Interfaz gráfica en pestañas para Vehículos, Compradores y Ventas.\newline 2) Cliente HTTP con token Bearer JWT hacia Gateway NGINX (\texttt{8090}).\newline 3) Manejo de códigos \texttt{400}, \texttt{401}, \texttt{403} y \texttt{404}. & Proporciona la herramienta administrativa para roles \texttt{ADMIN} y \texttt{OPERADOR}; respeta la restricción de negocio: no registra ventas directamente (P02, P03, P04, P05, P06). \\
+\hline
+\texttt{AplicacionMovil\allowbreak{}PWA}\newline \textit{(HTML5 / JS PWA 5173)}\newline \textbf{Archivos:} \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/index.html} & 1) Autenticación OAuth 2.0 en login con almacenamiento seguro de JWT.\newline 2) Formulario exclusivo de registro de ventas (\texttt{POST /\allowbreak{}api/\allowbreak{}ventas}).\newline 3) Inyección de UUID en cabecera \texttt{Idempotency-Key}.\newline 4) Proxy inverso hacia NGINX (\texttt{8090}). & Canal móvil mandatario y exclusivo para registrar ventas comerciales; previene duplicidad de transacciones ante reintentos de red por parte del vendedor (P07, P08, P09, P10, P11). \\
+\hline
+\texttt{reactweb}\newline \textit{(React 19 / Vite 5174)}\newline \textbf{Archivos:} \texttt{vite.config.js}, \texttt{src/api/ventasApi.js}, \texttt{src/App.jsx} & 1) Proxy Vite hacia NGINX (\texttt{8090}).\newline 2) Vista de catálogo con filtrado por marca en memoria.\newline 3) Vista de auditoría de ventas con métricas agregadas (totales y montos acumulados). & Opera como canal web de consulta y auditoría sin facultades de mutación ni formularios de venta, preservando la seguridad de los datos (P14, P15, P16). \\
+\hline
+\texttt{escritorioFx}\newline \textit{(Java 25 / JavaFX Desktop)}\newline \textbf{Archivos:} \texttt{VehiculosApiClient.java}, \texttt{VehiculosApp.java}, \texttt{Notificacion\allowbreak{}VentaDto.java} & 1) Sondeo asíncrono en segundo plano cada 3 segundos hacia \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}.\newline 2) Mapeo de DTO y renderizado en \texttt{TableView} mediante \texttt{Platform.runLater}. & Permite a los supervisores visualizar en tiempo real los eventos de venta emitidos por RabbitMQ sin necesidad de recargar la ventana manualmente (P21, P22, P27). \\
+\end{xltabular}}
 
 \vspace{0.3cm}
 \noindent\textbf{C. Separación de configuraciones locales y protección de secretos}
@@ -1224,27 +1341,34 @@ $token = $auth.access_token
 
 \noindent El módulo de enrutamiento principal (\texttt{ventas-api/\allowbreak{}app/\allowbreak{}routers/\allowbreak{}ventas.\allowbreak{}py}) expone los cinco endpoints requeridos por el contrato arquitectónico de la práctica, asegurando compatibilidad integral tanto con los clientes de escritorio (.NET 8 Windows Forms y JavaFX) como con los clientes web (React y Progressive Web Apps):
 
-\begin{table}[H]
-\centering
-\caption{Matriz de contratos REST del microservicio de Ventas y Compradores (FastAPI).}
-\label{tab:act4_endpoints_fastapi}
-\small
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.7cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.7cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.3cm}|X|}
+\caption{Matriz de contratos REST del microservicio de Ventas y Compradores (FastAPI).}\label{tab:act4_endpoints_fastapi}\\
 \hline
-\textbf{Método y Ruta} & \textbf{Propósito Funcional} & \textbf{Autenticación} & \textbf{Códigos HTTP} & \textbf{Detalle de Cabeceras y Carga Útil} \\
+\textbf{Método y Ruta} & \textbf{Propósito y Autenticación} & \textbf{Códigos HTTP} & \textbf{Detalle de Cabeceras y Carga Útil} \\
 \hline
-\texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Registro de nuevo comprador & Bearer JWT (Vendedor) & 201, 400, 401, 403 & Requiere \texttt{documento}, \texttt{nombre}, \texttt{correo}. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de contratos REST del microservicio de Ventas y Compradores (FastAPI).}\\[4pt]
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}compradores} & Consulta de compradores autorizados & Bearer JWT (RBAC) & 200, 401, 403 & ADMIN/OPERADOR ven catálogo global; otros solo propios. \\
+\textbf{Método y Ruta} & \textbf{Propósito y Autenticación} & \textbf{Códigos HTTP} & \textbf{Detalle de Cabeceras y Carga Útil} \\
 \hline
-\texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Orquestación transaccional de venta & Bearer JWT (Vendedor) & 201, 200, 202, 404, 409 & Obligatorio \texttt{Idempotency-Key}. Retorna \texttt{Location: /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}}. \\
+\endhead
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Histórico y listado de transacciones & Bearer JWT (RBAC) & 200, 401, 403 & Lista transacciones ordenadas descendentemente por ID. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-\texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}} & Consulta detallada de una venta & Bearer JWT (Propietario) & 200, 401, 403, 404 & Valida pertenencia de usuario o privilegio administrativo. \\
+\endfoot
 \hline
-\end{tabularx}
-\end{table}
+\endlastfoot
+\texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Registro de nuevo comprador\newline \textit{Bearer JWT (Vendedor)} & 201, 400, 401, 403 & Requiere \texttt{documento}, \texttt{nombre}, \texttt{correo}. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}compradores} & Consulta de compradores autorizados\newline \textit{Bearer JWT (RBAC)} & 200, 401, 403 & \texttt{ADMIN}/\texttt{OPERADOR} ven catálogo global; otros solo propios. \\
+\hline
+\texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Orquestación transaccional de venta\newline \textit{Bearer JWT (Vendedor)} & 201, 200, 202, 404, 409 & Obligatorio \texttt{Idempotency-Key}. Retorna \texttt{Location: /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}}. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Histórico y listado de transacciones\newline \textit{Bearer JWT (RBAC)} & 200, 401, 403 & Lista transacciones ordenadas descendentemente por ID. \\
+\hline
+\texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}\{id\}} & Consulta detallada de una venta\newline \textit{Bearer JWT (Propietario)} & 200, 401, 403, 404 & Valida pertenencia de usuario o privilegio administrativo. \\
+\end{xltabular}}
 
 \vspace{0.15cm}
 \noindent\textbf{B. Autenticación delegada, validación perimetral JWT y control de acceso (RBAC)}
@@ -1389,28 +1513,34 @@ def identidad(authorization: str | None = Header(default=None)):
 
 \noindent En la Tabla \ref{tab:act4_auditoria} se resume la consolidación de las pruebas experimentales ejecutadas sobre el microservicio de FastAPI a través del API Gateway NGINX, correlacionando el identificador asignado, la clave de idempotencia, los códigos de estado HTTP y la consistencia en el almacenamiento relacional y la mensajería asíncrona:
 
-\begin{table}[H]
-\centering
-\caption{Matriz de auditoría transaccional y validación experimental de la Actividad 4.}
-\label{tab:act4_auditoria}
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{0.8cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.9cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.6cm}|>{\centering\arraybackslash\hspace{0pt}}p{0.9cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.0cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{1.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.0cm}|X|}
+\caption{Matriz de auditoría transaccional y validación experimental de la Actividad 4.}\label{tab:act4_auditoria}\\
 \hline
-\textbf{ID} & \textbf{Endpoint / Método} & \textbf{Idempotency-Key} & \textbf{Vehículo} & \textbf{HTTP} & \textbf{Estado MySQL} & \textbf{Notificación} \\
+\textbf{ID / HTTP} & \textbf{Endpoint e \texttt{Idempotency-Key}} & \textbf{Vehículo} & \textbf{Estado MySQL y Notificación} \\
 \hline
-32 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{venta-postman-ape4-10} & 15 (\$18,900) & 201 & \texttt{COMPLETADA} & \texttt{ENVIADA} (AMQP) \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de auditoría transaccional y validación experimental de la Actividad 4.}\\[4pt]
 \hline
-32 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{venta-postman-ape4-10} (Misma) & 15 (\$18,900) & 200 & \texttt{COMPLETADA} & Sin reemisión \\
+\textbf{ID / HTTP} & \textbf{Endpoint e \texttt{Idempotency-Key}} & \textbf{Vehículo} & \textbf{Estado MySQL y Notificación} \\
 \hline
-N/A & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{venta-postman-ape4-01} (Reuso) & 14 (Alterado) & 409 & Rechazo previo & Bloqueada \\
+\endhead
 \hline
-31 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{venta-postman-ape4-05} & 14 (No disp.) & 409 & \texttt{FALLIDA} & \texttt{PENDIENTE} (Omitida) \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-30 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{test-key-check-01} & 14 (\$42,000) & 201 & \texttt{COMPLETADA} & \texttt{ENVIADA} (AMQP) \\
+\endfoot
 \hline
-\end{tabularx}
-\end{table}
+\endlastfoot
+ID 32\newline \textbf{201} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline \texttt{venta-postman-ape4-10} & 15 (\$18,900) & \texttt{COMPLETADA}\newline \texttt{ENVIADA} (AMQP) \\
+\hline
+ID 32\newline \textbf{200} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline \texttt{venta-postman-ape4-10} (Misma) & 15 (\$18,900) & \texttt{COMPLETADA}\newline Sin reemisión \\
+\hline
+N/A\newline \textbf{409} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline \texttt{venta-postman-ape4-01} (Reuso) & 14 (Alterado) & Rechazo previo\newline Bloqueada \\
+\hline
+ID 31\newline \textbf{409} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline \texttt{venta-postman-ape4-05} & 14 (No disp.) & \texttt{FALLIDA}\newline \texttt{PENDIENTE} (Omitida) \\
+\hline
+ID 30\newline \textbf{201} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline \texttt{test-key-check-01} & 14 (\$42,000) & \texttt{COMPLETADA}\newline \texttt{ENVIADA} (AMQP) \\
+\end{xltabular}}
 
 \vspace{0.4cm}
 \noindent\textbf{1.7.5 Actividad 5. Cliente Windows Forms de administración (.NET 8 C\#)}
@@ -1701,34 +1831,40 @@ Al intentar ejecutar una consulta de catálogo o registrar un vehículo, el clie
 
 \noindent En la Tabla \ref{tab:act5_matriz_operaciones} se resume la totalidad de las operaciones evaluadas en el cliente de escritorio .NET 8, detallando el método HTTP, el endpoint enrutado a través de NGINX en el puerto 8090, el microservicio destino, los códigos de estado obtenidos experimentalmente, la evidencia visual generada y la verificación en la base de datos MySQL:
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Matriz de operaciones, endpoints y verificación relacional en Windows Forms (.NET 8 C\#).}
-\label{tab:act5_matriz_operaciones}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.6cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.8cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.3cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.9cm}|X|}
+\caption{Matriz de operaciones, endpoints y verificación relacional en Windows Forms (.NET 8 C\#).}\label{tab:act5_matriz_operaciones}\\
 \hline
-\textbf{Operación} & \textbf{Método} & \textbf{Endpoint NGINX (:8090)} & \textbf{Servicio Destino} & \textbf{Código HTTP} & \textbf{Evidencia y Persistencia en MySQL} \\
+\textbf{Operación} & \textbf{Método, Endpoint NGINX (\texttt{:8090}) y Destino} & \textbf{HTTP} & \textbf{Evidencia y Persistencia en MySQL} \\
 \hline
-Op 1A: Catálogo General & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos} & Spring Boot (:8082) & 200 OK & Grilla con 30 vehículos; tabla \texttt{vehiculo} completa. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de operaciones, endpoints y verificación relacional en Windows Forms (.NET 8 C\#).}\\[4pt]
 \hline
-Op 1B: Filtrado por Marca & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}toyota} & Spring Boot (:8082) & 200 OK & Grilla con 4 vehículos coincidentes de marca Toyota. \\
+\textbf{Operación} & \textbf{Método, Endpoint NGINX (\texttt{:8090}) y Destino} & \textbf{HTTP} & \textbf{Evidencia y Persistencia en MySQL} \\
 \hline
-Op 2: Alta de Vehículo & POST & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos} & Spring Boot (:8082) & 201 Created & Modal ID 43; inserción en MySQL \texttt{id\_vehiculo: 43}. \\
+\endhead
 \hline
-Op 3: Listar Compradores & GET & \texttt{/\allowbreak{}api/\allowbreak{}compradores} & FastAPI (:8002) & 200 OK & Grilla con compradores de \texttt{admin}; tabla \texttt{compradores}. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-Op 4: Alta de Comprador & POST & \texttt{/\allowbreak{}api/\allowbreak{}compradores} & FastAPI (:8002) & 201 Created & Modal ID 8; inserción en MySQL con \texttt{usuario = 'admin'}. \\
+\endfoot
 \hline
-Op 5A: Histórico Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 OK & Grilla con 25 ventas; selección Venta 32 en verde. \\
+\endlastfoot
+Op 1A: Catálogo General & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Spring Boot (\texttt{:8082}) & 200 OK & Grilla con 30 vehículos; tabla \texttt{vehiculo} completa. \\
 \hline
-Op 5B: Detalle de Venta & GET & \texttt{/\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}30} & FastAPI (:8002) & 200 OK & Panel lateral Venta 30; tupla \texttt{id: 30} en MySQL. \\
+Op 1B: Filtrado por Marca & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}toyota}\newline Spring Boot (\texttt{:8082}) & 200 OK & Grilla con 4 vehículos coincidentes de marca Toyota. \\
 \hline
-Control de Seguridad & GET/\allowbreak{}POST & Todos los endpoints & Gateway / APIs & 401 Unauth. & Modal Error 401; acceso denegado sin credencial. \\
+Op 2: Alta de Vehículo & \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos}\newline Spring Boot (\texttt{:8082}) & 201 Created & Modal ID 43; inserción en MySQL \texttt{id\_vehiculo: 43}. \\
 \hline
-\end{tabularx}
-\end{table}
+Op 3: Listar Compradores & \texttt{GET /\allowbreak{}api/\allowbreak{}compradores}\newline FastAPI (\texttt{:8002}) & 200 OK & Grilla con compradores de \texttt{admin}; tabla \texttt{compradores}. \\
+\hline
+Op 4: Alta de Comprador & \texttt{POST /\allowbreak{}api/\allowbreak{}compradores}\newline FastAPI (\texttt{:8002}) & 201 Created & Modal ID 8; inserción en MySQL con \texttt{usuario = 'admin'}. \\
+\hline
+Op 5A: Histórico Ventas & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas}\newline FastAPI (\texttt{:8002}) & 200 OK & Grilla con 25 ventas; selección Venta 32 en verde. \\
+\hline
+Op 5B: Detalle de Venta & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}30}\newline FastAPI (\texttt{:8002}) & 200 OK & Panel lateral Venta 30; tupla \texttt{id: 30} en MySQL. \\
+\hline
+Control de Seguridad & \texttt{GET}/\texttt{POST} Todos los endpoints\newline Gateway / APIs & 401 Unauth. & Modal Error 401; acceso denegado sin credencial. \\
+\end{xltabular}}
 
 \vspace{0.4cm}
 \noindent\textbf{1.7.6 Actividad 6. PWA móvil con login y registro exclusivo de ventas}
@@ -1897,32 +2033,38 @@ export async function registrarVenta(
 
 \noindent En la Tabla \ref{tab:act6_matriz_operaciones} se sistematizan las operaciones canalizadas a través de la PWA, los endpoints asociados en NGINX, los códigos de estado esperados y los impactos en las bases de datos y la mensajería asíncrona:
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Matriz de operaciones, contratos HTTP y resultados experimentales del Canal Móvil PWA.}
-\label{tab:act6_matriz_operaciones}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.6cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.8cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.3cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.9cm}|X|}
+\caption{Matriz de operaciones, contratos HTTP y resultados experimentales del Canal Móvil PWA.}\label{tab:act6_matriz_operaciones}\\
 \hline
-\textbf{Operación} & \textbf{Método} & \textbf{Endpoint NGINX (:8090)} & \textbf{Servicio Destino} & \textbf{Código HTTP} & \textbf{Resultado Medido y Evidencia} \\
+\textbf{Operación} & \textbf{Método, Endpoint NGINX (\texttt{:8090}) y Destino} & \textbf{HTTP} & \textbf{Resultado Medido y Evidencia} \\
 \hline
-Autenticación OAuth & POST & \texttt{/\allowbreak{}oauth/\allowbreak{}token} & Spring Boot (:8082) & 200 OK & Login directo como \texttt{admin} y \texttt{operador}; \texttt{Scope: vehiculos}, 1800s, JWT oculto en memoria. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de operaciones, contratos HTTP y resultados experimentales del Canal Móvil PWA.}\\[4pt]
 \hline
-Catálogo Vehículos & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos} & Spring Boot (:8082) & 200 OK & 31 vehículos cargados; unidades \texttt{[VENDIDO]} bloqueadas en el selector. \\
+\textbf{Operación} & \textbf{Método, Endpoint NGINX (\texttt{:8090}) y Destino} & \textbf{HTTP} & \textbf{Resultado Medido y Evidencia} \\
 \hline
-Lista Compradores & GET & \texttt{/\allowbreak{}api/\allowbreak{}compradores} & FastAPI (:8002) & 200 OK & 5 compradores (\texttt{admin}) y 3 (\texttt{operador}); \texttt{consulta} sin compradores asignados (RBAC). \\
+\endhead
 \hline
-Emisión de Venta & POST & \texttt{/api/ventas} & FastAPI (:8002) & 201 Created & Venta \texttt{ID: 33} (Kia Rio ID 17, \$17,200, \texttt{COMPLETADA}, \texttt{ENVIADA}) y \texttt{ID: 34} (Mazda 3 ID 19). \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-Auditoría por ID & GET & \texttt{/\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}33} & FastAPI (:8002) & 200 OK & Detalle íntegro con \texttt{operacionId: ace9cb2f-...} verificable tras la operación. \\
+\endfoot
 \hline
-Conflicto Idempotente & POST & \texttt{/api/ventas} & FastAPI (:8002) & 409 Conflict & «La misma clave requiere el mismo cuerpo» al reutilizar \texttt{Idempotency-Key} alterada. \\
+\endlastfoot
+Autenticación OAuth & \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}\newline Spring Boot (\texttt{:8082}) & 200 OK & Login directo como \texttt{admin} y \texttt{operador}; \texttt{Scope: vehiculos}, 1800 s, JWT oculto en memoria. \\
 \hline
-Instalación PWA & GET & \texttt{/\allowbreak{}manifest.\allowbreak{}webmanifest} & Node PWA (:5173) & 200 OK & Vista responsiva \texttt{iPhone SE (375x667)} e instalación \texttt{standalone} en escritorio. \\
+Catálogo Vehículos & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Spring Boot (\texttt{:8082}) & 200 OK & 31 vehículos cargados; unidades \texttt{[VENDIDO]} bloqueadas en el selector. \\
 \hline
-\end{tabularx}
-\end{table}
+Lista Compradores & \texttt{GET /\allowbreak{}api/\allowbreak{}compradores}\newline FastAPI (\texttt{:8002}) & 200 OK & 5 compradores (\texttt{admin}) y 3 (\texttt{operador}); \texttt{consulta} sin compradores asignados (RBAC). \\
+\hline
+Emisión de Venta & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline FastAPI (\texttt{:8002}) & 201 Created & Venta \texttt{ID: 33} (Kia Rio ID 17, \$17,200, \texttt{COMPLETADA}, \texttt{ENVIADA}) y \texttt{ID: 34} (Mazda 3 ID 19). \\
+\hline
+Auditoría por ID & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}33}\newline FastAPI (\texttt{:8002}) & 200 OK & Detalle íntegro con \texttt{operacionId: ace9cb2f-...} verificable tras la operación. \\
+\hline
+Conflicto Idempotente & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline FastAPI (\texttt{:8002}) & 409 Conflict & «La misma clave requiere el mismo cuerpo» al reutilizar \texttt{Idempotency-Key} alterada. \\
+\hline
+Instalación PWA & \texttt{GET /\allowbreak{}manifest.\allowbreak{}webmanifest}\newline Node PWA (\texttt{:5173}) & 200 OK & Vista responsiva \texttt{iPhone SE (375x667)} e instalación \texttt{standalone} en escritorio. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{I. Evidencia experimental y validación integral de la Actividad 6}
@@ -2151,32 +2293,38 @@ export async function listarVentas(token) {
 
 \noindent Antes de las pruebas en navegador, se ejecutó la verificación estática \texttt{npm run lint} (\texttt{oxlint}, 0 advertencias y 0 errores sobre 104 reglas) y la compilación productiva \texttt{npm run build} (\texttt{vite build}, completada en 328 ms). En la Tabla \ref{tab:act7_matriz_operaciones} se sintetizan los contratos de consulta implementados en el cliente React:
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Matriz de operaciones de consulta, rutas proxy y resultados medidos en el cliente React.}
-\label{tab:act7_matriz_operaciones}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.6cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.8cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.3cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.9cm}|X|}
+\caption{Matriz de operaciones de consulta, rutas proxy y resultados medidos en el cliente React.}\label{tab:act7_matriz_operaciones}\\
 \hline
-\textbf{Operación} & \textbf{Método} & \textbf{Ruta Proxy Vite $\rightarrow$ NGINX} & \textbf{Servicio Destino} & \textbf{Código Medido} & \textbf{Resultado Experimental Verificado} \\
+\textbf{Operación} & \textbf{Método, Ruta Proxy Vite y Destino} & \textbf{Código} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Control Sin Token & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos} & Spring Boot (:8082) & 401 Unauth. & Alerta roja: «HTTP 401: Falta el JWT o el token ya no es válido.» \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de operaciones de consulta, rutas proxy y resultados medidos en el cliente React.}\\[4pt]
 \hline
-Catálogo Vehículos & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos} & Spring Boot (:8082) & 200 OK & 31 vehículos recibidos (5.6 kB, 29 ms en DevTools Network). \\
+\textbf{Operación} & \textbf{Método, Ruta Proxy Vite y Destino} & \textbf{Código} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Filtro por Marca & GET & \texttt{/\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}Toyota} & Spring Boot (:8082) & 200 OK & 5 visibles (IDs 14, 30, 31, 32 y 43 Corolla Cross). \\
+\endhead
 \hline
-Detalle Vehículo & Local & Selección ID 14 & Memoria React & N/A & Toyota Hilux, placa \texttt{EFG1122}, VIN \texttt{MR0EX8CD5N0123456}, \$42,000. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-Listado Vacío & Local & Filtro \texttt{ferrari} & Memoria React & 0 visibles & Mensaje explícito: «No se encontraron vehículos que coincidan...» \\
+\endfoot
 \hline
-Auditoría Ventas & GET & \texttt{/api/ventas} & FastAPI (:8002) & 200 OK & 25 ventas, \$304,400.00 facturados, 10 exitosas, 15 en rev./fallidas (\texttt{nginx/\allowbreak{}1.\allowbreak{}30.\allowbreak{}5}). \\
+\endlastfoot
+Control Sin Token & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Spring Boot (\texttt{:8082}) & 401 Unauth. & Alerta roja: «HTTP 401: Falta el JWT o el token ya no es válido.» \\
 \hline
-Registro de Ventas & N/A & \textit{Omitido por diseño} & Ninguno & N/A & Sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} ni formularios; aviso explícito de solo consulta. \\
+Catálogo Vehículos & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Spring Boot (\texttt{:8082}) & 200 OK & 31 vehículos recibidos (5.6 kB, 29 ms en DevTools Network). \\
 \hline
-\end{tabularx}
-\end{table}
+Filtro por Marca & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}Toyota}\newline Spring Boot (\texttt{:8082}) & 200 OK & 5 visibles (IDs 14, 30, 31, 32 y 43 Corolla Cross). \\
+\hline
+Detalle Vehículo & Local: Selección ID 14\newline Memoria React & N/A & Toyota Hilux, placa \texttt{EFG1122}, VIN \texttt{MR0EX8CD5N0123456}, \$42,000. \\
+\hline
+Listado Vacío & Local: Filtro \texttt{ferrari}\newline Memoria React & 0 visibles & Mensaje explícito: «No se encontraron vehículos que coincidan...» \\
+\hline
+Auditoría Ventas & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas}\newline FastAPI (\texttt{:8002}) & 200 OK & 25 ventas, \$304,400.00 facturados, 10 exitosas, 15 en rev./fallidas (\texttt{nginx/\allowbreak{}1.\allowbreak{}30.\allowbreak{}5}). \\
+\hline
+Registro de Ventas & \textit{Omitido por diseño}\newline Ninguno & N/A & Sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} ni formularios; aviso explícito de solo consulta. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{I. Evidencia experimental y verificación en navegador (incluyendo Network/Red)}
@@ -2384,30 +2532,36 @@ def ciclo():
 \vspace{0.2cm}
 \noindent\textbf{F. Matriz de configuración, durabilidad y escenarios de resiliencia AMQP}
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Matriz de configuración RabbitMQ, contrato de evento y resultados experimentales de la Actividad 8.}
-\label{tab:act8_matriz_rabbitmq}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.8cm}|X|}
+\caption{Matriz de configuración RabbitMQ, contrato de evento y resultados experimentales de la Actividad 8.}\label{tab:act8_matriz_rabbitmq}\\
 \hline
 \textbf{Componente / Escenario} & \textbf{Parámetro / Regla} & \textbf{Resultado Experimental Verificado} \\
 \hline
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de configuración RabbitMQ, contrato de evento y resultados experimentales de la Actividad 8.}\\[4pt]
+\hline
+\textbf{Componente / Escenario} & \textbf{Parámetro / Regla} & \textbf{Resultado Experimental Verificado} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Cola RabbitMQ & \texttt{notificaciones.\allowbreak{}ventas} (\texttt{durable=\allowbreak{}True}) & Rasgo \texttt{D} en RabbitMQ 3.13.0 (\texttt{rabbit@Caeli25}, vhost \texttt{/}). \\
 \hline
 Propiedades Mensaje & \texttt{delivery\_mode=\allowbreak{}2} (Persistent) & 223 bytes JSON (\texttt{application/\allowbreak{}json}); \texttt{eventoId: 48c4ebd2-...}, \texttt{ventaId: 35}; sin PII ni JWT. \\
 \hline
 Venta Rechazada / Idempotente & \texttt{estado != COMPLETADA} o \texttt{notificacion =\allowbreak{}= ENVIADA} & No se emite ningún evento espurio ni duplicado hacia RabbitMQ. \\
 \hline
-Consumidor Detenido & \texttt{Graceful shutdown complete} (:8081) & Tras \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (Venta 35, \texttt{201}), cola retiene \texttt{Consumers = 0}, \texttt{Ready = 1}. \\
+Consumidor Detenido & \texttt{Graceful shutdown complete} (\texttt{:8081}) & Tras \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (Venta 35, \texttt{201}), cola retiene \texttt{Consumers = 0}, \texttt{Ready = 1}. \\
 \hline
 Reinicio de Consumidor & Arranque en puerto \texttt{8081} & Consumo inmediato de \texttt{ventaId=35} (\texttt{ID=1}); cola pasa a \texttt{Consumers = 1}, \texttt{Ready = 0} sin repetir venta. \\
 \hline
 RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \texttt{COMPLETADA} con \texttt{notificacion = PENDIENTE}; \texttt{worker.py} reintenta al recuperarse. \\
-\hline
-\end{tabularx}
-\end{table}
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{G. Evidencia experimental en RabbitMQ Management y servicio consumidor Java}
@@ -2544,28 +2698,34 @@ private void iniciarAutoSync() {
 \vspace{0.2cm}
 \noindent\textbf{D. Matriz de verificación de la Actividad 9}
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Matriz de componentes, estados de conexión y resultados medidos de la Actividad 9 (Notificaciones y JavaFX).}
-\label{tab:act9_matriz_javafx}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.2cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.3cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|X|}
+\caption{Matriz de componentes, estados de conexión y resultados medidos de la Actividad 9 (Notificaciones y JavaFX).}\label{tab:act9_matriz_javafx}\\
 \hline
 \textbf{Componente / Prueba} & \textbf{Mecanismo Técnico} & \textbf{Resultado Experimental Verificado} \\
 \hline
-Listener AMQP (:8081) & \texttt{@RabbitListener} en \texttt{notificaciones.\allowbreak{}ventas} & Consumió \texttt{ventaId=36} (\texttt{eventoId: bcca2835-...}) en 107 ms; deduplicación por \texttt{eventoId}. \\
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de componentes, estados de conexión y resultados medidos de la Actividad 9 (Notificaciones y JavaFX).}\\[4pt]
+\hline
+\textbf{Componente / Prueba} & \textbf{Mecanismo Técnico} & \textbf{Resultado Experimental Verificado} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+Listener AMQP (\texttt{:8081}) & \texttt{@RabbitListener} en \texttt{notificaciones.\allowbreak{}ventas} & Consumió \texttt{ventaId=36} (\texttt{eventoId: bcca2835-...}) en 107 ms; deduplicación por \texttt{eventoId}. \\
 \hline
 Endpoint Historial & \texttt{GET http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}8090/\allowbreak{}api/\allowbreak{}notificaciones} & Retornó JSON \texttt{HTTP 200 OK} con \texttt{id: 1}, \texttt{ventaId: 36}, \texttt{estado: PROCESADA}, \texttt{fechaRegistro: 2026-11-23 11:\allowbreak{}43:\allowbreak{}29}. \\
 \hline
 Pantalla Vacía Saludable & JavaFX antes de la venta (\texttt{HTTP 200 []}) & Barra \textbf{azul}: «CONECTADO (HTTP 200) — Servicio operativo, sin notificaciones de ventas registradas todavía.» \\
 \hline
-Sondeo Automático (3s) & \texttt{Timeline} cada 3s sin refresco manual & Barra \textbf{verde}: apareció automáticamente \texttt{ID Venta: 36} (\texttt{11:43:43}) con todos sus campos. \\
+Sondeo Automático (3 s) & \texttt{Timeline} cada 3 s sin refresco manual & Barra \textbf{verde}: apareció automáticamente \texttt{ID Venta: 36} (\texttt{11:43:43}) con todos sus campos. \\
 \hline
 Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}) & Barra \textbf{roja}: «FALLO DE SERVICIO — HTTP 504 Gateway Timeout» (\texttt{11:46:48}), diferenciando fallo vs lista vacía. \\
-\hline
-\end{tabularx}
-\end{table}
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{E. Evidencia experimental integral de notificaciones y visualización JavaFX}
@@ -2673,72 +2833,84 @@ Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}
 \vspace{0.2cm}
 \noindent\textbf{C. Matriz de orden de arranque y puntos de coherencia (Tabla \ref{tab:act10_orden_coherencia})}
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Orden de arranque de componentes y matriz de coherencia transversal de la Actividad 10.}
-\label{tab:act10_orden_coherencia}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{0.8cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.6cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{1.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|X|}
+\caption{Orden de arranque de componentes y matriz de coherencia transversal de la Actividad 10.}\label{tab:act10_orden_coherencia}\\
 \hline
 \textbf{Paso} & \textbf{Componente} & \textbf{Puerto} & \textbf{Verificación de Coherencia en Cadena Comercial (P27)} \\
 \hline
-1 & MySQL (XAMPP) & 3306 & Persiste tablas \texttt{vehiculos}, \texttt{compradores} y \texttt{ventas} con claves únicas. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Orden de arranque de componentes y matriz de coherencia transversal de la Actividad 10.}\\[4pt]
 \hline
-2 & RabbitMQ & 5672 / 15672 & Cola durable \texttt{notificaciones.\allowbreak{}ventas} lista para eventos persistentes. \\
+\textbf{Paso} & \textbf{Componente} & \textbf{Puerto} & \textbf{Verificación de Coherencia en Cadena Comercial (P27)} \\
 \hline
-3 & Spring Boot A y B & 8080 / 8082 & Atienden catálogo, OAuth 2.0 y reservas de vehículos en balanceo 3:1. \\
+\endhead
 \hline
-4 & FastAPI (\texttt{ventas-api}) & 8002 & Registra comprador, orquesta venta 2 fases y publica evento AMQP. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-5 & \texttt{notificaciones-service} & 8081 & Consume evento de RabbitMQ y expone historial en \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}. \\
+\endfoot
 \hline
-6 & Gateway NGINX & 8090 & Punto único de entrada hacia los tres microservicios backend. \\
+\endlastfoot
+1 & MySQL (XAMPP) & \texttt{3306} & Persiste tablas \texttt{vehiculos}, \texttt{compradores} y \texttt{ventas} con claves únicas. \\
+\hline
+2 & RabbitMQ & \texttt{5672}/\texttt{15672} & Cola durable \texttt{notificaciones.\allowbreak{}ventas} lista para eventos persistentes. \\
+\hline
+3 & Spring Boot A y B & \texttt{8080}/\texttt{8082} & Atienden catálogo, OAuth 2.0 y reservas de vehículos en balanceo 3:1. \\
+\hline
+4 & FastAPI (\texttt{ventas-api}) & \texttt{8002} & Registra comprador, orquesta venta 2 fases y publica evento AMQP. \\
+\hline
+5 & \texttt{notificaciones-service} & \texttt{8081} & Consume evento de RabbitMQ y expone historial en \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}. \\
+\hline
+6 & Gateway NGINX & \texttt{8090} & Punto único de entrada hacia los tres microservicios backend. \\
 \hline
 7 & Windows Forms (.NET 8) & Escritorio & Crea vehículo y comprador; luego audita cambio a \texttt{VENDIDO} y nueva venta. \\
 \hline
-8 & PWA Móvil (Node.js) & 5173 & Login OAuth, visualiza alta, emite venta exclusiva con \texttt{Idempotency-Key}. \\
+8 & PWA Móvil (Node.js) & \texttt{5173} & Login OAuth, visualiza alta, emite venta exclusiva con \texttt{Idempotency-Key}. \\
 \hline
-9 & Portal Web React (Vite) & 5174 & Comprueba vehículo \texttt{DISPONIBLE} $\rightarrow$ \texttt{VENDIDO} y nueva venta en métricas. \\
+9 & Portal Web React (Vite) & \texttt{5174} & Comprueba vehículo \texttt{DISPONIBLE} $\rightarrow$ \texttt{VENDIDO} y nueva venta en métricas. \\
 \hline
 10 & Monitor JavaFX (JDK 25) & Escritorio & Muestra automáticamente el aviso de la nueva venta con idéntico \texttt{ventaId}. \\
-\hline
-\end{tabularx}
-\end{table}
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{D. Matriz de correlación de identificadores en la prueba integral P27}
 
 \noindent Durante la ejecución real del \texttt{23/11/2026} entre las \texttt{12:00} y \texttt{12:24} (hora local Ecuador, \texttt{UTC-5}), todos los servicios y clientes operaron de forma simultánea y compartieron de manera coherente los mismos identificadores de negocio sin divergencias ni datos simulados (Tabla \ref{tab:act10_trazabilidad_p27}):
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Trazabilidad y correlación transversal de identificadores reales en la prueba P27 (Actividad 10).}
-\label{tab:act10_trazabilidad_p27}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.9cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.6cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.3cm}|X|}
+\caption{Trazabilidad y correlación transversal de identificadores reales en la prueba P27 (Actividad 10).}\label{tab:act10_trazabilidad_p27}\\
 \hline
 \textbf{Componente / Canal} & \textbf{Operación / Evento} & \textbf{Identificadores y Estado Verificado Realmente} \\
 \hline
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Trazabilidad y correlación transversal de identificadores reales en la prueba P27 (Actividad 10).}\\[4pt]
+\hline
+\textbf{Componente / Canal} & \textbf{Operación / Evento} & \textbf{Identificadores y Estado Verificado Realmente} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Windows Forms (.NET 8) & \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} y \texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & Creó \texttt{vehiculoId=\allowbreak{}44} (Honda CR-V, \texttt{PBC-2026}, \texttt{2HKRW2H80NH123456}, \$33,500, \texttt{DISPONIBLE}, total 32) y \texttt{compradorId=\allowbreak{}9} (Carlos Lopez, \texttt{1805556677}, total 6). \\
 \hline
-React Web (:5174) & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} (previo) & Consultó \texttt{ID 44} (Honda CR-V, \texttt{PBC-2026}, VIN completo, \$33,500.00) en estado \texttt{DISPONIBLE}. \\
+React Web (\texttt{:5174}) & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} (previo) & Consultó \texttt{ID 44} (Honda CR-V, \texttt{PBC-2026}, VIN completo, \$33,500.00) en estado \texttt{DISPONIBLE}. \\
 \hline
-PWA Móvil (:5173) & Login + \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Autenticado como \texttt{admin} (32 vehículos y 6 compradores); emitió \textbf{\texttt{ventaId=37}} (\texttt{Idempotency-Key: 317f7cbc-...}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{COMPLETADA}, \texttt{ENVIADA}, \texttt{17:23:11Z}). \\
+PWA Móvil (\texttt{:5173}) & Login + \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Autenticado como \texttt{admin} (32 vehículos y 6 compradores); emitió \textbf{\texttt{ventaId=37}} (\texttt{Idempotency-Key: 317f7cbc-...}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{COMPLETADA}, \texttt{ENVIADA}, \texttt{17:23:11Z}). \\
 \hline
-Spring Boot A/B (:8080/:8082) & Balanceo 3:1 y \texttt{reservas} & Ambas instancias atendieron catálogo y verificación de \texttt{reservas} por \texttt{operacion\_id}, consolidando \texttt{vehiculoId=\allowbreak{}44} como \texttt{VENDIDO}. \\
+Spring Boot A/B (\texttt{:8080}/\texttt{:8082}) & Balanceo 3:1 y \texttt{reservas} & Ambas instancias atendieron catálogo y verificación de \texttt{reservas} por \texttt{operacion\_id}, consolidando \texttt{vehiculoId=\allowbreak{}44} como \texttt{VENDIDO}. \\
 \hline
 Windows Forms (post-venta) & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos/\allowbreak{}44} y \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & Confirmó \texttt{vehiculoId=\allowbreak{}44} en \texttt{VENDIDO} y listó 28 ventas encabezadas por \texttt{ID 37} (\texttt{operacionId: 938cf622-...}, \$33,500.00, \texttt{COMPLETADA}, \texttt{ENVIADA}). \\
 \hline
 React Web (post-venta) & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} (auditoría) & Detalle de venta \texttt{\#37} idéntico: \texttt{UUID 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, vehículo \texttt{44}, comprador \texttt{9}, \$33,500.00 USD, \texttt{COMPLETADA}, \texttt{ENVIADA}. \\
 \hline
-RabbitMQ + Notificaciones (:8081) & Cola \texttt{notificaciones.\allowbreak{}ventas} & Recibió \texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5} (\texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}255}) y confirmó \texttt{ID=\allowbreak{}1, ventaId=\allowbreak{}37} en 113 ms (\texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}368}); cola en \texttt{Consumers=\allowbreak{}1, Ready=\allowbreak{}0}. \\
+RabbitMQ + Notificaciones (\texttt{:8081}) & Cola \texttt{notificaciones.\allowbreak{}ventas} & Recibió \texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5} (\texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}255}) y confirmó \texttt{ID=\allowbreak{}1, ventaId=\allowbreak{}37} en 113 ms (\texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}368}); cola en \texttt{Consumers=\allowbreak{}1, Ready=\allowbreak{}0}. \\
 \hline
-JavaFX (Escritorio) & Sondeo 3s (\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}) & Pasó automáticamente de barra azul (0 avisos, \texttt{12:22:12}) a barra verde (\texttt{12:23:42}) mostrando \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{operacionId: 938cf622-...} en \texttt{PROCESADA}. \\
-\hline
-\end{tabularx}
-\end{table}
+JavaFX (Escritorio) & Sondeo 3 s (\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}) & Pasó automáticamente de barra azul (0 avisos, \texttt{12:22:12}) a barra verde (\texttt{12:23:42}) mostrando \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{operacionId: 938cf622-...} en \texttt{PROCESADA}. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{E. Evidencia del despliegue simultáneo de todos los componentes}
@@ -2908,78 +3080,90 @@ JavaFX (Escritorio) & Sondeo 3s (\texttt{GET /\allowbreak{}api/\allowbreak{}noti
 
 \noindent Manteniendo intactas la cadena \texttt{SecurityFilterChain} de Spring Security (política \texttt{STATELESS} con \texttt{JwtAuthenticationFilter}) y la validación delegada \texttt{identidad()}/\texttt{vendedor()} de FastAPI (\texttt{ventas-api/\allowbreak{}app/\allowbreak{}security.\allowbreak{}py}), se ejecutaron 12 casos de seguridad (credenciales erróneas, token ausente, firma manipulada, token vencido con \texttt{exp=\allowbreak{}2020-01-01} y privilegios insuficientes con roles \texttt{CONSULTA} y \texttt{OPERADOR}) junto a 6 casos de fallo y recuperación de servicios (Tabla \ref{tab:act11_matriz_seguridad_errores}):
 
-\begin{table}[H]
-\centering
-\scriptsize
-\renewcommand{\arraystretch}{1.18}
-\caption{Matriz de errores HTTP reales, seguridad JWT/RBAC y recuperación idempotente con marcas temporales (Actividad 11).}
-\label{tab:act11_matriz_seguridad_errores}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.5cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.7cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.6cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.0cm}|X|}
+{\renewcommand{\arraystretch}{1.16}
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{2.2cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.3cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.3cm}|X|}
+\caption{Matriz de errores HTTP reales, seguridad JWT/RBAC y recuperación idempotente con marcas temporales (Actividad 11).}\label{tab:act11_matriz_seguridad_errores}\\
 \hline
-\textbf{Caso} & \textbf{Hora (UTC-5)} & \textbf{Método y Ruta} & \textbf{Rol / Estado} & \textbf{HTTP} & \textbf{Respuesta Real Verificada (Sin JWT Expuesto)} \\
+\textbf{Caso y Hora} & \textbf{Método, Ruta y Rol/Estado} & \textbf{HTTP} & \textbf{Respuesta Real Verificada (Sin JWT Expuesto)} \\
 \hline
-SEC-01 & 12:42:35 & \texttt{POST /\allowbreak{}oauth/\allowbreak{}token} & \texttt{admin} (clave err.) & 401 & \texttt{"Usuario o contraseña incorrectos"} (P08). \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz de errores HTTP reales, seguridad JWT/RBAC y recuperación idempotente con marcas temporales (Actividad 11).}\\[4pt]
 \hline
-SEC-02 & 12:42:35 & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & Sin token & 401 & \texttt{\{"title":\allowbreak{}"No autenticado",\allowbreak{}"status":\allowbreak{}401\}}. \\
+\textbf{Caso y Hora} & \textbf{Método, Ruta y Rol/Estado} & \textbf{HTTP} & \textbf{Respuesta Real Verificada (Sin JWT Expuesto)} \\
 \hline
-SEC-03 & 12:42:35 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & Sin token & 401 & \texttt{NO\_AUTENTICADO}: «Enviar access token». \\
+\endhead
 \hline
-SEC-04 & 12:42:39 & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & JWT inválido & 401 & Firma alterada rechazada por \texttt{JwtService} (401). \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-SEC-05 & 12:42:41 & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & JWT inválido & 401 & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
+\endfoot
 \hline
-SEC-06 & 12:42:42 & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & JWT vencido & 401 & Payload \texttt{exp=\allowbreak{}2020-01-01} rechazado (401). \\
+\endlastfoot
+\textbf{SEC-01}\newline \texttt{12:42:35} & \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}\newline \texttt{admin} (clave err.) & \textbf{401} & \texttt{"Usuario o contraseña incorrectos"} (P08). \\
 \hline
-SEC-07 & 12:42:45 & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} & JWT vencido & 401 & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
+\textbf{SEC-02}\newline \texttt{12:42:35} & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Sin token & \textbf{401} & \texttt{\{"title":\allowbreak{}"No autenticado",\allowbreak{}"status":\allowbreak{}401\}}. \\
 \hline
-SEC-08 & 12:42:46 & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & \texttt{CONSULTA} & 200 & Lectura autorizada: devolvió 32 vehículos reales. \\
+\textbf{SEC-03}\newline \texttt{12:42:35} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline Sin token & \textbf{401} & \texttt{NO\_AUTENTICADO}: «Enviar access token». \\
 \hline
-SEC-09 & 12:42:47 & \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} & \texttt{CONSULTA} & 403 & \texttt{\{"title":\allowbreak{}"Sin permiso",\allowbreak{}"status":\allowbreak{}403\}}. \\
+\textbf{SEC-04}\newline \texttt{12:42:39} & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline JWT inválido & \textbf{401} & Firma alterada rechazada por \texttt{JwtService} (401). \\
 \hline
-SEC-10 & 12:42:49 & \texttt{POST /\allowbreak{}api/\allowbreak{}compradores} & \texttt{CONSULTA} & 403 & \texttt{SIN\_PERMISO}: «Se requiere OPERADOR o ADMIN». \\
+\textbf{SEC-05}\newline \texttt{12:42:41} & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas}\newline JWT inválido & \textbf{401} & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
 \hline
-SEC-11 & 12:42:51 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} & \texttt{CONSULTA} & 403 & \texttt{SIN\_PERMISO}: venta denegada sin evento (P13). \\
+\textbf{SEC-06}\newline \texttt{12:42:42} & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline JWT vencido & \textbf{401} & Payload \texttt{exp=\allowbreak{}2020-01-01} rechazado (401). \\
 \hline
-SEC-12 & 12:42:52 & \texttt{DELETE /\allowbreak{}api/\allowbreak{}vehiculos/\allowbreak{}44} & \texttt{OPERADOR} & 403 & Eliminación restringida solo a \texttt{ROLE\_ADMIN}. \\
+\textbf{SEC-07}\newline \texttt{12:42:45} & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas}\newline JWT vencido & \textbf{401} & \texttt{ACCESO\_RECHAZADO}: «Token no autorizado». \\
 \hline
-RES-01 & 19:12:40 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA) & FastAPI apagado & 504 & NGINX \texttt{504 Gateway Timeout} (\texttt{connect\_timeout 2s}); sin confirmación ficticia. \\
+\textbf{SEC-08}\newline \texttt{12:42:46} & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}\newline Rol: \texttt{CONSULTA} & \textbf{200} & Lectura autorizada: devolvió 32 vehículos reales. \\
 \hline
-RES-02 & 19:17:30 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA) & MySQL apagado & 503 & \texttt{BD\_NO\_DISPONIBLE} (\texttt{traceId: 168c9705-...}); sin confirmación ficticia. \\
+\textbf{SEC-09}\newline \texttt{12:42:47} & \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos}\newline Rol: \texttt{CONSULTA} & \textbf{403} & \texttt{\{"title":\allowbreak{}"Sin permiso",\allowbreak{}"status":\allowbreak{}403\}}. \\
 \hline
-RES-03 & 19:20:08 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA) & Recuperado (\texttt{admin}) & 201 & Misma clave \texttt{8eaa0174-...} $\rightarrow$ Venta \texttt{ID 38}, \texttt{COMPLETADA}, \texttt{ENVIADA}. \\
+\textbf{SEC-10}\newline \texttt{12:42:49} & \texttt{POST /\allowbreak{}api/\allowbreak{}compradores}\newline Rol: \texttt{CONSULTA} & \textbf{403} & \texttt{SIN\_PERMISO}: «Se requiere OPERADOR o ADMIN». \\
 \hline
-RES-04 & 19:23:12 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P10) & Misma clave y JSON & 200 & Retorna el mismo \texttt{ID 38} (\texttt{f43ffc57-...}) sin duplicar venta ni evento. \\
+\textbf{SEC-11}\newline \texttt{12:42:51} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}\newline Rol: \texttt{CONSULTA} & \textbf{403} & \texttt{SIN\_PERMISO}: venta denegada sin evento (P13). \\
 \hline
-RES-05 & 19:23:13 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P11) & Misma clave, \$25,100 & 409 & \texttt{CLAVE\_REUTILIZADA} (\texttt{traceId: 0e7e6ccb-...}): requiere mismo cuerpo. \\
+\textbf{SEC-12}\newline \texttt{12:42:52} & \texttt{DELETE /\allowbreak{}api/\allowbreak{}vehiculos/\allowbreak{}44}\newline Rol: \texttt{OPERADOR} & \textbf{403} & Eliminación restringida solo a \texttt{ROLE\_ADMIN}. \\
 \hline
-RES-06 & 19:23:18 & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P12) & Veh. 32 ya \texttt{VENDIDO} & 409 & \texttt{VENTA\_RECHAZADA}; crea \texttt{ID 39} como \texttt{FALLIDA} / \texttt{notificacion: PENDIENTE}. \\
+\textbf{RES-01}\newline \texttt{19:12:40} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA)\newline FastAPI apagado & \textbf{504} & NGINX \texttt{504 Gateway Timeout} (\texttt{connect\_timeout 2s}); sin confirmación ficticia. \\
 \hline
-\end{tabularx}
-\end{table}
+\textbf{RES-02}\newline \texttt{19:17:30} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA)\newline MySQL apagado & \textbf{503} & \texttt{BD\_NO\_DISPONIBLE} (\texttt{traceId: 168c9705-...}); sin confirmación ficticia. \\
+\hline
+\textbf{RES-03}\newline \texttt{19:20:08} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (PWA)\newline Recuperado (\texttt{admin}) & \textbf{201} & Misma clave \texttt{8eaa0174-...} $\rightarrow$ Venta \texttt{ID 38}, \texttt{COMPLETADA}, \texttt{ENVIADA}. \\
+\hline
+\textbf{RES-04}\newline \texttt{19:23:12} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P10)\newline Misma clave y JSON & \textbf{200} & Retorna el mismo \texttt{ID 38} (\texttt{f43ffc57-...}) sin duplicar venta ni evento. \\
+\hline
+\textbf{RES-05}\newline \texttt{19:23:13} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P11)\newline Misma clave, \$25,100 & \textbf{409} & \texttt{CLAVE\_REUTILIZADA} (\texttt{traceId: 0e7e6ccb-...}): requiere mismo cuerpo. \\
+\hline
+\textbf{RES-06}\newline \texttt{19:23:18} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (P12)\newline Veh. 32 ya \texttt{VENDIDO} & \textbf{409} & \texttt{VENTA\_RECHAZADA}; crea \texttt{ID 39} como \texttt{FALLIDA} / \texttt{notificacion: PENDIENTE}. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{B. Balanceo 3:1 (100 GET), caída de Java B (\texttt{:8082}), continuidad por NGINX y recuperación stateless}
 
 \noindent Con \texttt{monitor-balancer-service} (\texttt{:8083}, PID \texttt{14988}) sondeando cada 5 segundos \texttt{/nginx-ping}, \texttt{8080/\allowbreak{}actuator/\allowbreak{}health} y \texttt{8082/\allowbreak{}actuator/\allowbreak{}health}, se midieron tres ventanas reales consecutivas reutilizando \textbf{exactamente el mismo JWT stateless} emitido a las \texttt{12:42:36} sin volver a iniciar sesión (Tabla \ref{tab:act11_balanceo_failover}):
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.2}
-\caption{Mediciones reales del balanceador NGINX y \texttt{monitor-balancer-service} en operación normal, caída y recuperación.}
-\label{tab:act11_balanceo_failover}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{2.8cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.9cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.2cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.6cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.4cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.9cm}|>{\centering\arraybackslash\hspace{0pt}}p{2.4cm}|X|}
+\caption{Mediciones reales del balanceador NGINX y \texttt{monitor-balancer-service} en operación normal, caída y recuperación.}\label{tab:act11_balanceo_failover}\\
 \hline
-\textbf{Escenario (Prueba)} & \textbf{Ventana (\texttt{desde})} & \textbf{Inst. A (:8080)} & \textbf{Inst. B (:8082)} & \textbf{Estado Monitor} & \textbf{Resultado Medido y Tiempos de Reacción} \\
+\textbf{Escenario y Ventana} & \textbf{Reparto A / B} & \textbf{Monitor} & \textbf{Resultado Medido y Tiempos de Reacción} \\
 \hline
-Normal: 100 GET (P23, P26) & 12:42:53 & 75 (75\%) & 25 (25\%) & \texttt{NORMAL} & \texttt{100/\allowbreak{}100 HTTP 200} en 2565.2 ms (promedio 17.21 ms; 13.15 ms sobre 177 pet. incl. sondeos JavaFX en \texttt{sinUpstream}); \texttt{/nginx-ping} = \texttt{200 UP}. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Mediciones reales del balanceador NGINX y \texttt{monitor-balancer-service} en operación normal, caída y recuperación.}\\[4pt]
 \hline
-Caída Java B (:8082) (P24) & 12:48:41 & 20 (100\%) & 0 (0\%) & \texttt{DEGRADADO} & Java B detenida a \texttt{12:\allowbreak{}47:\allowbreak{}09.\allowbreak{}385}; monitor alertó a \texttt{12:\allowbreak{}47:\allowbreak{}14.\allowbreak{}198} (\textbf{4.8 s}); \texttt{20/\allowbreak{}20 HTTP 200} por A con cero errores \texttt{5xx}. \\
+\textbf{Escenario y Ventana} & \textbf{Reparto A / B} & \textbf{Monitor} & \textbf{Resultado Medido y Tiempos de Reacción} \\
 \hline
-Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \texttt{NORMAL} & Java B reiniciada (PID 20688) a \texttt{12:\allowbreak{}53:\allowbreak{}38.\allowbreak{}838}; monitor recuperó a \texttt{12:\allowbreak{}53:\allowbreak{}39.\allowbreak{}375} (\textbf{537 ms}); \texttt{20/\allowbreak{}20 HTTP 200} usando el \textbf{mismo JWT} de las 12:42:36. \\
+\endhead
 \hline
-\end{tabularx}
-\end{table}
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+Normal: 100 GET (P23, P26)\newline \textit{Desde:} \texttt{12:42:53} & A (\texttt{:8080}): 75 (75\%)\newline B (\texttt{:8082}): 25 (25\%) & \texttt{NORMAL} & \texttt{100/\allowbreak{}100 HTTP 200} en 2565.2 ms (promedio 17.21 ms; 13.15 ms sobre 177 pet. incl. sondeos JavaFX en \texttt{sinUpstream}); \texttt{/nginx-ping} = \texttt{200 UP}. \\
+\hline
+Caída Java B (\texttt{:8082}) (P24)\newline \textit{Desde:} \texttt{12:48:41} & A (\texttt{:8080}): 20 (100\%)\newline B (\texttt{:8082}): 0 (0\%) & \texttt{DEGRADADO} & Java B detenida a \texttt{12:\allowbreak{}47:\allowbreak{}09.\allowbreak{}385}; monitor alertó a \texttt{12:\allowbreak{}47:\allowbreak{}14.\allowbreak{}198} (\textbf{4.8 s}); \texttt{20/\allowbreak{}20 HTTP 200} por A con cero errores \texttt{5xx}. \\
+\hline
+Recuperación B + JWT Stateless (P25)\newline \textit{Desde:} \texttt{12:54:46} & A (\texttt{:8080}): 16 (80\%)\newline B (\texttt{:8082}): 4 (20\%) & \texttt{NORMAL} & Java B reiniciada (PID 20688) a \texttt{12:\allowbreak{}53:\allowbreak{}38.\allowbreak{}838}; monitor recuperó a \texttt{12:\allowbreak{}53:\allowbreak{}39.\allowbreak{}375} (\textbf{537 ms}); \texttt{20/\allowbreak{}20 HTTP 200} usando el \textbf{mismo JWT} de las 12:42:36. \\
+\end{xltabular}}
 
 \noindent Es importante destacar la transparencia del análisis de \texttt{access.log}: en las capturas del navegador del monitor aparece un conteo adicional bajo \texttt{sinUpstream} (por ejemplo, 70 en la ventana de 3 minutos 20 s de las 12:42:54 a las 12:46:15 y 35 en la ventana de recuperación), correspondiente a los sondeos periódicos automáticos cada 3 segundos del cliente JavaFX hacia \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} (:8081), ruta fuera del upstream ponderado \texttt{vehiculos\_backend}. Aisladas las peticiones de vehículos, el reparto fue exactamente \textbf{75 a 25} (3:1 puro) en operación normal, \textbf{20 a 0} durante la caída de B y \textbf{16 a 4} tras su recuperación.
 
@@ -3110,13 +3294,27 @@ Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \textt
 \vspace{0.2cm}
 \noindent\textbf{A. Diagrama final actualizado de la arquitectura multicanal SOA}
 
-\noindent La Figura \ref{fig:act12_arquitectura_final} presenta la arquitectura final verificada en ejecución real, diferenciando explícitamente mediante codificación cromática cinco planos de comunicación: (1) solicitudes \textbf{REST / OAuth 2.0 / JWT} síncronas (azul marino) canalizadas por NGINX (\texttt{:8090}); (2) \textbf{persistencia relacional MySQL} (\texttt{:3306}, verde esmeralda) con dominios de tablas separados entre Java y Python; (3) \textbf{mensajería asíncrona durable AMQP} sobre RabbitMQ (\texttt{:5672}, naranja ámbar); (4) \textbf{notificaciones visibles en el cliente JavaFX} vía NGINX (\texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} cada 3 s, púrpura); y (5) \textbf{observabilidad independiente} (\texttt{monitor-balancer-service :\allowbreak{}8083}, gris punteado) operando fuera del flujo transaccional.
+\noindent Con el propósito de garantizar una lectura nítida y sin pérdida de detalle en cada capa tecnológica, la arquitectura final verificada en ejecución real se presenta de forma encadenada en tres vistas consecutivas que conservan el flujo continuo de extremo a extremo (Figuras \ref{fig:act12_arq_parte1}, \ref{fig:act12_arq_parte2} y \ref{fig:act12_arq_parte3}): (1) \textbf{Parte 1/3} abarca los cuatro clientes multicanal, el API Gateway NGINX (\texttt{:8090}) y la observabilidad independiente (\texttt{monitor-balancer-service :\allowbreak{}8083}); (2) \textbf{Parte 2/3} recibe dicho enrutamiento hacia los microservicios backend (Spring Boot A/B en balanceo 3:1 stateless, FastAPI \texttt{ventas-api} y \texttt{notificaciones-service}); y (3) \textbf{Parte 3/3} cierra el flujo en la persistencia relacional separada de MySQL (\texttt{:3306}), el broker durable RabbitMQ (\texttt{:5672}) y la leyenda cromática oficial de los cinco planos de comunicación.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.96\textwidth]{act12_diagrama_arquitectura_final.png}
-  \caption{Diagrama final actualizado de la arquitectura multicanal SOA (APE 04), diferenciando solicitudes REST/JWT, persistencia MySQL separada por dominio, mensajería durable RabbitMQ, notificaciones visibles en JavaFX y monitoreo independiente.}
-  \label{fig:act12_arquitectura_final}
+  \includegraphics[width=0.98\textwidth]{act12_arq_parte1_clientes_gateway.png}
+  \caption{Arquitectura final multicanal SOA (Parte 1/3): capa de clientes multicanal (Windows Forms, PWA \texttt{AutoUTA} v5, React y JavaFX), punto único de entrada NGINX (\texttt{:8090}) y observabilidad independiente (\texttt{monitor-balancer-service :\allowbreak{}8083}), continuando hacia la capa backend.}
+  \label{fig:act12_arq_parte1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{act12_arq_parte2_microservicios.png}
+  \caption{Arquitectura final multicanal SOA (Parte 2/3): continuación del flujo desde NGINX hacia los microservicios backend — Spring Boot Vehículos A (\texttt{:8080}) y B (\texttt{:8082}) con JWT stateless, FastAPI \texttt{ventas-api} (\texttt{:8002}) con orquestación en dos fases e idempotencia, y \texttt{notificaciones-service} (\texttt{:8081}) — enlazando hacia datos y RabbitMQ.}
+  \label{fig:act12_arq_parte2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{act12_arq_parte3_datos_rabbitmq_leyenda.png}
+  \caption{Arquitectura final multicanal SOA (Parte 3/3): cierre del flujo en la persistencia relacional separada por dominio en MySQL (\texttt{:3306}), la mensajería asíncrona durable AMQP en RabbitMQ (\texttt{:5672}, cola \texttt{notificaciones.\allowbreak{}ventas}) y la leyenda cromática de los cinco planos verificados.}
+  \label{fig:act12_arq_parte3}
 \end{figure}
 
 \vspace{0.2cm}
@@ -3124,137 +3322,158 @@ Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \textt
 
 \noindent La Tabla \ref{tab:act12_modificaciones_proyectos} documenta las adaptaciones, clases nuevas, endpoints añadidos y contratos consolidados en los siete proyectos base y los módulos de infraestructura:
 
-\begin{table}[H]
-\centering
-\scriptsize
-\renewcommand{\arraystretch}{1.18}
-\caption{Resumen consolidado de modificaciones, clases/endpoints nuevos y contratos en cada componente del sistema.}
-\label{tab:act12_modificaciones_proyectos}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.0cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{3.6cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.1cm}|X|}
+\caption{Resumen consolidado de modificaciones, clases/endpoints nuevos y contratos en cada componente del sistema.}\label{tab:act12_modificaciones_proyectos}\\
 \hline
 \textbf{Proyecto / Módulo} & \textbf{Archivos Clave / Nuevos} & \textbf{Modificaciones, Endpoints y Contratos Aplicados} \\
 \hline
-\texttt{venta-vehiculos-api\_security} (:8080 / :8082) & \texttt{SecurityConfig.\allowbreak{}java}, \texttt{JwtService.\allowbreak{}java}, \texttt{VehiculoController.\allowbreak{}java}, \texttt{ReservaController.\allowbreak{}java}, \texttt{application.\allowbreak{}properties.\allowbreak{}example} & Despliegue de 2 instancias equivalentes stateless (\texttt{weight=3} y \texttt{weight=1}); RBAC estricto (\texttt{401}/\texttt{403} RFC 7807); \texttt{/\allowbreak{}actuator/\allowbreak{}health} público para monitor; soporte de reservas 2 fases y plantilla sin secretos. \\
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Resumen consolidado de modificaciones, clases/endpoints nuevos y contratos en cada componente del sistema.}\\[4pt]
 \hline
-\texttt{ventas-api} (:8002) & \texttt{routers/\allowbreak{}ventas.\allowbreak{}py}, \texttt{services/\allowbreak{}venta\_service.\allowbreak{}py}, \texttt{clients/\allowbreak{}rabbitmq\_publisher.\allowbreak{}py}, \texttt{worker.py}, \texttt{.\allowbreak{}env.\allowbreak{}example} & Se incorporaron \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} y \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} con aislamiento RBAC; idempotencia por \texttt{Idempotency-Key} + SHA-256; publicador AMQP desacoplado (\texttt{durable=\allowbreak{}True}, \texttt{delivery\_mode=\allowbreak{}2}) solo para \texttt{COMPLETADA}; conciliador Outbox \texttt{worker.py}. \\
+\textbf{Proyecto / Módulo} & \textbf{Archivos Clave / Nuevos} & \textbf{Modificaciones, Endpoints y Contratos Aplicados} \\
 \hline
-\texttt{notificaciones-service} (:8081) & \texttt{VentasRabbitListener.\allowbreak{}java}, \texttt{NotificacionService.\allowbreak{}java}, \texttt{NotificacionController.\allowbreak{}java}, \texttt{NotificacionKeyFilter.\allowbreak{}java} & Listener real \texttt{@RabbitListener} en \texttt{notificaciones.\allowbreak{}ventas}; deduplicación concurrente por \texttt{eventoId} (\texttt{ConcurrentHashMap}); historial \texttt{CopyOnWriteArrayList}; exposición de \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} sin exponer clave interna en clientes. \\
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
+\texttt{venta-vehiculos-api\_security} (\texttt{:8080}/\texttt{:8082}) & \texttt{SecurityConfig.\allowbreak{}java}, \texttt{JwtService.\allowbreak{}java}, \texttt{VehiculoController.\allowbreak{}java}, \texttt{ReservaController.\allowbreak{}java}, \texttt{application.\allowbreak{}properties.\allowbreak{}example} & Despliegue de 2 instancias equivalentes stateless (\texttt{weight=3} y \texttt{weight=1}); RBAC estricto (\texttt{401}/\texttt{403} RFC 7807); \texttt{/\allowbreak{}actuator/\allowbreak{}health} público para monitor; soporte de reservas 2 fases y plantilla sin secretos. \\
+\hline
+\texttt{ventas-api} (\texttt{:8002}) & \texttt{routers/\allowbreak{}ventas.\allowbreak{}py}, \texttt{services/\allowbreak{}venta\_service.\allowbreak{}py}, \texttt{clients/\allowbreak{}rabbitmq\_publisher.\allowbreak{}py}, \texttt{worker.py}, \texttt{.\allowbreak{}env.\allowbreak{}example} & Se incorporaron \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} y \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} con aislamiento RBAC; idempotencia por \texttt{Idempotency-Key} + SHA-256; publicador AMQP desacoplado (\texttt{durable=\allowbreak{}True}, \texttt{delivery\_mode=\allowbreak{}2}) solo para \texttt{COMPLETADA}; conciliador Outbox \texttt{worker.py}. \\
+\hline
+\texttt{notificaciones-service} (\texttt{:8081}) & \texttt{VentasRabbitListener.\allowbreak{}java}, \texttt{NotificacionService.\allowbreak{}java}, \texttt{NotificacionController.\allowbreak{}java}, \texttt{NotificacionKeyFilter.\allowbreak{}java} & Listener real \texttt{@RabbitListener} en \texttt{notificaciones.\allowbreak{}ventas}; deduplicación concurrente por \texttt{eventoId} (\texttt{ConcurrentHashMap}); historial \texttt{CopyOnWriteArrayList}; exposición de \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} sin exponer clave interna en clientes. \\
 \hline
 \texttt{ConsultaVehiculosForms} (.NET 8) & \texttt{Form1.cs}, \texttt{VehiculoApiClient.\allowbreak{}cs}, \texttt{VentaApiClient.\allowbreak{}cs}, DTOs & Integración contra NGINX (\texttt{:8090}); 3 pestañas: alta/listado de vehículos, alta/listado de compradores y consulta de ventas con detalle individual; prohibición expresa de \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}. \\
 \hline
-\texttt{AplicacionMovilPWA} (:5173) & \texttt{server.mjs}, \texttt{public/\allowbreak{}api.\allowbreak{}js}, \texttt{public/\allowbreak{}main.\allowbreak{}js}, \texttt{public/\allowbreak{}sw.\allowbreak{}js}, \texttt{public/\allowbreak{}index.\allowbreak{}html}, \texttt{public/\allowbreak{}styles.\allowbreak{}css}, \texttt{icons/\allowbreak{}hero-auto-uta.\allowbreak{}png} & Login OAuth 2.0 real (\texttt{idapli=92}), JWT solo en memoria; filtro hop-by-hop en proxy Node; único canal con \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} e \texttt{Idempotency-Key}; bloqueo UI de vendidos; rediseño visual post-pruebas \textit{AutoUTA} v5 Minimalista Claro con pantalla de login separada, vistas por pestañas y comprobante visual de venta; Service Worker \texttt{v5}; 7/7 pruebas unitarias superadas. \\
+\texttt{AplicacionMovilPWA} (\texttt{:5173}) & \texttt{server.mjs}, \texttt{public/\allowbreak{}api.\allowbreak{}js}, \texttt{public/\allowbreak{}main.\allowbreak{}js}, \texttt{public/\allowbreak{}sw.\allowbreak{}js}, \texttt{public/\allowbreak{}index.\allowbreak{}html}, \texttt{public/\allowbreak{}styles.\allowbreak{}css}, \texttt{icons/\allowbreak{}hero-auto-uta.\allowbreak{}png} & Login OAuth 2.0 real (\texttt{idapli=92}), JWT solo en memoria; filtro hop-by-hop en proxy Node; único canal con \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} e \texttt{Idempotency-Key}; bloqueo UI de vendidos; rediseño visual post-pruebas \textit{AutoUTA} v5 Minimalista Claro con pantalla de login separada, vistas por pestañas y comprobante visual de venta; Service Worker \texttt{v5}; 7/7 pruebas unitarias superadas. \\
 \hline
-\texttt{react-fetch-vehiculos} (:5174) & \texttt{vite.\allowbreak{}config.\allowbreak{}js}, \texttt{src/\allowbreak{}api/\allowbreak{}vehiculosApi.\allowbreak{}js}, \texttt{src/\allowbreak{}api/\allowbreak{}ventasApi.\allowbreak{}js}, \texttt{src/App.jsx}, \texttt{src/App.css} & Puerto dedicado \texttt{5174} (sin conflicto con PWA); proxy Vite hacia NGINX; consulta y filtro por marca, detalle VIN, estado vacío y tablero de métricas reales de ventas; sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}; 0 errores en \texttt{oxlint} y \texttt{vite build}. \\
+\texttt{react-fetch-vehiculos} (\texttt{:5174}) & \texttt{vite.\allowbreak{}config.\allowbreak{}js}, \texttt{src/\allowbreak{}api/\allowbreak{}vehiculosApi.\allowbreak{}js}, \texttt{src/\allowbreak{}api/\allowbreak{}ventasApi.\allowbreak{}js}, \texttt{src/App.jsx}, \texttt{src/App.css} & Puerto dedicado \texttt{5174} (sin conflicto con PWA); proxy Vite hacia NGINX; consulta y filtro por marca, detalle VIN, estado vacío y tablero de métricas reales de ventas; sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}; 0 errores en \texttt{oxlint} y \texttt{vite build}. \\
 \hline
 \texttt{consultarvehiculojavafx} (JavaFX 21) & \texttt{VehiculosApp.\allowbreak{}java}, \texttt{VehiculosApiClient.\allowbreak{}java}, \texttt{NotificacionVentaDto.\allowbreak{}java} & Pestaña en vivo de notificaciones con sondeo \texttt{Timeline} cada 3 s; registro \texttt{ResultadoNotificaciones} para diferenciar 3 estados reales (verde conectado, azul vacío \texttt{200 []}, rojo fallo \texttt{502/504}); alias \texttt{@JsonAlias} para \texttt{fechaRegistro}. \\
 \hline
-NGINX (:8090), RabbitMQ (:5672), Monitor (:8083), MySQL (:3306) & \texttt{nginx/\allowbreak{}nginx.\allowbreak{}conf}, \texttt{rabbitmq/\allowbreak{}definitions.\allowbreak{}json}, \texttt{monitor-balancer-service}, \texttt{database/\allowbreak{}schema\_base.\allowbreak{}sql} & Log NGINX seguro con \texttt{\$uri} (sin query strings), upstream 3:1 con \texttt{proxy\_next\_upstream} y \texttt{/nginx-ping}; cola durable reproducible en \texttt{definitions.\allowbreak{}json}; monitor independiente con 5 endpoints de salud/ventanas; DDL base reproducible. \\
-\hline
-\end{tabularx}
-\end{table}
+NGINX (\texttt{:8090}), RabbitMQ (\texttt{:5672}), Monitor (\texttt{:8083}), MySQL (\texttt{:3306}) & \texttt{nginx/\allowbreak{}nginx.\allowbreak{}conf}, \texttt{rabbitmq/\allowbreak{}definitions.\allowbreak{}json}, \texttt{monitor-balancer-service}, \texttt{database/\allowbreak{}schema\_base.\allowbreak{}sql} & Log NGINX seguro con \texttt{\$uri} (sin query strings), upstream 3:1 con \texttt{proxy\_next\_upstream} y \texttt{/nginx-ping}; cola durable reproducible en \texttt{definitions.\allowbreak{}json}; monitor independiente con 5 endpoints de salud/ventanas; DDL base reproducible. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{C. Matriz consolidada de pruebas obligatorias (\texttt{P01}--\texttt{P28})}
 
 \noindent En las Tablas \ref{tab:act12_pruebas_a}, \ref{tab:act12_pruebas_b} y \ref{tab:act12_pruebas_c} se consolidan las 28 pruebas exigidas por la guía con precondiciones, acciones, roles (sin revelar ningún JWT), resultados esperados, resultados reales medidos, referencias a evidencias y su interpretación técnica:
 
-\begin{table}[H]
-\centering
-\scriptsize
-\renewcommand{\arraystretch}{1.14}
-\caption{Matriz consolidada de pruebas obligatorias — Parte A: Clientes y operaciones comerciales (\texttt{P01}--\texttt{P13}).}
-\label{tab:act12_pruebas_a}
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{0.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.35cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{1.55cm}|X|}
+{\renewcommand{\arraystretch}{1.16}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|X|}
+\caption{Matriz consolidada de pruebas obligatorias — Parte A: Clientes y operaciones comerciales (\texttt{P01}--\texttt{P13}).}\label{tab:act12_pruebas_a}\\
 \hline
-\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P01 & Infraestructura iniciada en orden & Arranque MySQL, RMQ, NGINX, A/B, FastAPI, Notif. y 4 clientes & N/A & Todos los servicios responden en sus puertos y \texttt{/nginx-ping} = \texttt{200 UP}. & Sec. 1.7.10 (Figs. \ref{fig:act10_srv_backend_gw}--\ref{fig:act10_srv_escritorio}) & Topología multicanal íntegra y estable sin conflictos de puerto. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz consolidada de pruebas obligatorias — Parte A: Clientes y operaciones comerciales (\texttt{P01}--\texttt{P13}).}\\[4pt]
 \hline
-P02 & WinForms con JWT válido & \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} (Honda CR-V \texttt{PBC-2026}) & \texttt{ADMIN} & \texttt{HTTP 201 Created}, \texttt{ID 44} (y \texttt{ID 43} en Act 5) en API y MySQL. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo} & Alta administrativa validada en Spring Boot y persistida en MySQL. \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P03 & Catálogo en MySQL & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} desde WinForms & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 32 vehículos coherentes con Spring Boot. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo} & Sincronización directa sin listas locales ni datos ficticios. \\
+\endhead
 \hline
-P04 & WinForms pestaña 2 & \texttt{POST /\allowbreak{}api/\allowbreak{}compradores} (Carlos Lopez \texttt{1805556677}) & \texttt{ADMIN} & \texttt{HTTP 201 Created}, \texttt{ID 9} (y \texttt{ID 8} en Act 5) en FastAPI/MySQL. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_comprador} & Registro de comprador validado por Pydantic y persistido en Python. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-P05 & Compradores registrados & \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} en WinForms & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 6 compradores de \texttt{admin} (9 globales con \texttt{operador}). & Fig. \ref{fig:act10_p27_winforms_comprador} & Endpoint incorporado respeta propiedad RBAC por usuario. \\
+\endfoot
 \hline
-P06 & Ventas en MySQL & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} en WinForms pestaña 3 & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 28 ventas listadas; sin botón ni \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_coherencia_winforms} & Separación de responsabilidades administrativa cumplida. \\
+\endlastfoot
+P01 & \textbf{Precond.:} Infraestructura iniciada en orden.\newline \textbf{Acción:} Arranque MySQL, RMQ, NGINX, A/B, FastAPI, Notif. y 4 clientes.\newline \textbf{Rol:} N/A. & Todos los servicios responden en sus puertos y \texttt{/nginx-ping} = \texttt{200 UP}.\newline \textbf{Evid.:} Sec. 1.7.10 (Figs. \ref{fig:act10_srv_backend_gw}--\ref{fig:act10_srv_escritorio}). & Topología multicanal íntegra y estable sin conflictos de puerto. \\
 \hline
-P07 & PWA en \texttt{:5173} & Login en PWA (\texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, \texttt{idapli=92}) & \texttt{ADMIN} / \texttt{OPERADOR} & \texttt{HTTP 200 OK}, JWT en memoria volátil oculto, catálogo cargado. & Sec. 1.7.6; Fig. \ref{fig:act10_p27_pwa_auth_seleccion} & Autenticación móvil OAuth 2.0 real vía NGINX sin guardar en disco. \\
+P02 & \textbf{Precond.:} WinForms con JWT válido.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}vehiculos} (Honda CR-V \texttt{PBC-2026}).\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 201 Created}, \texttt{ID 44} (y \texttt{ID 43} en Act 5) en API y MySQL.\newline \textbf{Evid.:} Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo}. & Alta administrativa validada en Spring Boot y persistida en MySQL. \\
 \hline
-P08 & Credencial errónea / JWT vencido o alterado & \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, \texttt{GET /\allowbreak{}vehiculos}, \texttt{GET /ventas} & Inválido / Vencido & \texttt{HTTP 401} en todos los casos (\texttt{SEC-01} a \texttt{SEC-07}); ninguna venta creada. & Tabla \ref{tab:act11_matriz_seguridad_errores}; Fig. \ref{fig:act7_vite_error401} & Filtros de autenticación activos sin bypass ni fallos silenciosos. \\
+P03 & \textbf{Precond.:} Catálogo en MySQL.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} desde WinForms.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 200 OK}, 32 vehículos coherentes con Spring Boot.\newline \textbf{Evid.:} Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo}. & Sincronización directa sin listas locales ni datos ficticios. \\
 \hline
-P09 & Vehículo \texttt{DISPONIBLE} + comprador en PWA & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} con \texttt{Idempotency-Key} & \texttt{ADMIN} / \texttt{OPERADOR} & \texttt{HTTP 201 Created} (Ventas 33, 37 y 38: \texttt{COMPLETADA}, \texttt{ENVIADA}). & Sec. 1.7.6; Figs. \ref{fig:act10_p27_pwa_venta37}, \ref{fig:act11_recuperacion_venta38_bloqueo} & Transacción distribuida 2 fases confirmada y vehículo pasa a \texttt{VENDIDO}. \\
+P04 & \textbf{Precond.:} WinForms pestaña 2.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}compradores} (Carlos Lopez \texttt{1805556677}).\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 201 Created}, \texttt{ID 9} (y \texttt{ID 8} en Act 5) en FastAPI/MySQL.\newline \textbf{Evid.:} Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_comprador}. & Registro de comprador validado por Pydantic y persistido en Python. \\
 \hline
-P10 & Venta 38 creada con clave \texttt{8eaa0174-...} & Reenvío \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} misma clave y JSON & \texttt{ADMIN} & \texttt{HTTP 200 OK} retornando el mismo \texttt{id: 38} y \texttt{operacionId: f43ffc57-...}. & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-04}) & Idempotencia verificada: cero ventas duplicadas ni doble evento. \\
+P05 & \textbf{Precond.:} Compradores registrados.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} en WinForms.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 200 OK}, 6 compradores de \texttt{admin} (9 globales con \texttt{operador}).\newline \textbf{Evid.:} Fig. \ref{fig:act10_p27_winforms_comprador}. & Endpoint incorporado respeta propiedad RBAC por usuario. \\
 \hline
-P11 & Misma clave \texttt{8eaa0174-...} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} cambiando precio a \$25,100 & \texttt{ADMIN} & \texttt{HTTP 409 Conflict} (\texttt{CLAVE\_REUTILIZADA}, \texttt{traceId: 0e7e6ccb-...}). & Sec. 1.7.6; Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-05}) & Huella SHA-256 bloquea reutilización maliciosa o errónea de clave. \\
+P06 & \textbf{Precond.:} Ventas en MySQL.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} en WinForms pestaña 3.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 200 OK}, 28 ventas listadas; sin botón ni \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}.\newline \textbf{Evid.:} Sec. 1.7.5; Fig. \ref{fig:act10_p27_coherencia_winforms}. & Separación de responsabilidades administrativa cumplida. \\
 \hline
-P12 & Vehículo \texttt{ID 32} ya \texttt{VENDIDO} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} con clave nueva & \texttt{ADMIN} & \texttt{HTTP 409} (\texttt{VENTA\_RECHAZADA}); \texttt{ID 39} queda \texttt{FALLIDA} sin evento. & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-06}) & Integridad de inventario protegida contra doble venta. \\
+P07 & \textbf{Precond.:} PWA en \texttt{:5173}.\newline \textbf{Acción:} Login en PWA (\texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, \texttt{idapli=92}).\newline \textbf{Rol:} \texttt{ADMIN} / \texttt{OPERADOR}. & \texttt{HTTP 200 OK}, JWT en memoria volátil oculto, catálogo cargado.\newline \textbf{Evid.:} Sec. 1.7.6; Fig. \ref{fig:act10_p27_pwa_auth_seleccion}. & Autenticación móvil OAuth 2.0 real vía NGINX sin guardar en disco. \\
 \hline
-P13 & Sesión con rol de solo lectura & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}, \texttt{/vehiculos}, \texttt{/\allowbreak{}compradores} & \texttt{CONSULTA} & \texttt{HTTP 403 Forbidden} (\texttt{SIN\_PERMISO}: requiere \texttt{OPERADOR/\allowbreak{}ADMIN}). & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{SEC-09..12}) & RBAC aplicado tanto en Spring Boot como en FastAPI. \\
+P08 & \textbf{Precond.:} Credencial errónea / JWT vencido o alterado.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}oauth/\allowbreak{}token}, \texttt{GET /\allowbreak{}vehiculos}, \texttt{GET /ventas}.\newline \textbf{Rol:} Inválido / Vencido. & \texttt{HTTP 401} en todos los casos (\texttt{SEC-01} a \texttt{SEC-07}); ninguna venta creada.\newline \textbf{Evid.:} Tabla \ref{tab:act11_matriz_seguridad_errores}; Fig. \ref{fig:act7_vite_error401}. & Filtros de autenticación activos sin bypass ni fallos silenciosos. \\
 \hline
-\end{tabularx}
-\end{table}
+P09 & \textbf{Precond.:} Vehículo \texttt{DISPONIBLE} + comprador en PWA.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} con \texttt{Idempotency-Key}.\newline \textbf{Rol:} \texttt{ADMIN} / \texttt{OPERADOR}. & \texttt{HTTP 201 Created} (Ventas 33, 37 y 38: \texttt{COMPLETADA}, \texttt{ENVIADA}).\newline \textbf{Evid.:} Sec. 1.7.6; Figs. \ref{fig:act10_p27_pwa_venta37}, \ref{fig:act11_recuperacion_venta38_bloqueo}. & Transacción distribuida 2 fases confirmada y vehículo pasa a \texttt{VENDIDO}. \\
+\hline
+P10 & \textbf{Precond.:} Venta 38 creada con clave \texttt{8eaa0174-...}.\newline \textbf{Acción:} Reenvío \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} misma clave y JSON.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 200 OK} retornando el mismo \texttt{id: 38} y \texttt{operacionId: f43ffc57-...}.\newline \textbf{Evid.:} Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-04}). & Idempotencia verificada: cero ventas duplicadas ni doble evento. \\
+\hline
+P11 & \textbf{Precond.:} Misma clave \texttt{8eaa0174-...}.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} cambiando precio a \$25,100.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 409 Conflict} (\texttt{CLAVE\_REUTILIZADA}, \texttt{traceId: 0e7e6ccb-...}).\newline \textbf{Evid.:} Sec. 1.7.6; Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-05}). & Huella SHA-256 bloquea reutilización maliciosa o errónea de clave. \\
+\hline
+P12 & \textbf{Precond.:} Vehículo \texttt{ID 32} ya \texttt{VENDIDO}.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} con clave nueva.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 409} (\texttt{VENTA\_RECHAZADA}); \texttt{ID 39} queda \texttt{FALLIDA} sin evento.\newline \textbf{Evid.:} Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-06}). & Integridad de inventario protegida contra doble venta. \\
+\hline
+P13 & \textbf{Precond.:} Sesión con rol de solo lectura.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}, \texttt{/vehiculos}, \texttt{/\allowbreak{}compradores}.\newline \textbf{Rol:} \texttt{CONSULTA}. & \texttt{HTTP 403 Forbidden} (\texttt{SIN\_PERMISO}: requiere \texttt{OPERADOR/\allowbreak{}ADMIN}).\newline \textbf{Evid.:} Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{SEC-09..12}). & RBAC aplicado tanto en Spring Boot como en FastAPI. \\
+\end{xltabular}}
 
-\begin{table}[H]
-\centering
-\scriptsize
-\renewcommand{\arraystretch}{1.15}
-\caption{Matriz consolidada de pruebas obligatorias — Parte B: Cliente React y notificaciones (\texttt{P14}--\texttt{P22}).}
-\label{tab:act12_pruebas_b}
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{0.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.35cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{1.55cm}|X|}
+{\renewcommand{\arraystretch}{1.16}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|X|}
+\caption{Matriz consolidada de pruebas obligatorias — Parte B: Cliente React y notificaciones (\texttt{P14}--\texttt{P22}).}\label{tab:act12_pruebas_b}\\
 \hline
-\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P14 & React en \texttt{:5174} con JWT & \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} y filtro \texttt{ferrari} & \texttt{ADMIN} & \texttt{HTTP 200 OK} (31/32 filas reales) y aviso claro «0 visibles» en búsqueda vacía. & Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio} & Consulta web real vía proxy Vite $\rightarrow$ NGINX sin errores de render. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz consolidada de pruebas obligatorias — Parte B: Cliente React y notificaciones (\texttt{P14}--\texttt{P22}).}\\[4pt]
 \hline
-P15 & Catálogo cargado en React & Filtrar \texttt{Toyota} / \texttt{Honda} y seleccionar fila & \texttt{ADMIN} & 5 \texttt{Toyota} coincidentes (incl. ID 43); detalle exacto de VIN/placa para IDs 14 y 44. & Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio}, \ref{fig:act10_p27_react_javafx_previo} & Coincidencia exacta entre tabla filtrada y ficha de detalle. \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P16 & Pestaña Ventas en React & \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} y selección de fila & \texttt{ADMIN} & 25+ ventas, métricas reales y detalle de \texttt{\#3} y \texttt{\#37}; sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}. & Figs. \ref{fig:act7_ventas_metricas}, \ref{fig:act7_ventas_detalle}, \ref{fig:act10_p27_coherencia_react_java} & Portal de auditoría estricto de solo lectura confirmado en código y red. \\
+\endhead
 \hline
-P17 & RabbitMQ activo (\texttt{:5672}) & Venta confirmada (IDs 35, 36, 37, 38) & \texttt{ADMIN} & 1 único evento JSON persistente (\texttt{delivery\_mode=\allowbreak{}2}, 223 B) sin PII/JWT. & Figs. \ref{fig:act8_payload_persistente}, \ref{fig:act10_p27_cadena_rmq_javafx} & Publicación desacoplada y auditable solo tras confirmar venta. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-P18 & Venta rechazada (ID 39) & Intento de venta sobre vehículo vendido & \texttt{ADMIN} & \texttt{HTTP 409}; registro queda \texttt{FALLIDA} con \texttt{notificacion=\allowbreak{}PENDIENTE}; 0 eventos. & Tabla \ref{tab:act11_matriz_seguridad_errores}; Sec. 1.7.8 & La guardia \texttt{estado != COMPLETADA} evita notificaciones falsas. \\
+\endfoot
 \hline
-P19 & \texttt{notificaciones-service} detenido & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (Venta 35) & \texttt{ADMIN} & Venta \texttt{201 Created}; cola durable \texttt{notificaciones.\allowbreak{}ventas} registra \texttt{Consumers=\allowbreak{}0, Ready=\allowbreak{}1}. & Figs. \ref{fig:act8_rmq_overview_detenido}, \ref{fig:act8_venta35_ready1} & Persistencia en disco garantiza cero pérdida con consumidor caído. \\
+\endlastfoot
+P14 & \textbf{Precond.:} React en \texttt{:5174} con JWT.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} y filtro \texttt{ferrari}.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 200 OK} (31/32 filas reales) y aviso claro «0 visibles» en búsqueda vacía.\newline \textbf{Evid.:} Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio}. & Consulta web real vía proxy Vite $\rightarrow$ NGINX sin errores de render. \\
 \hline
-P20 & Mensaje retenido en cola & Reinicio de \texttt{notificaciones-service} sin repetir POST & Sistema & Listener consume \texttt{ventaId=35} automáticamente; cola pasa a \texttt{Consumers=\allowbreak{}1, Ready=\allowbreak{}0}. & Fig. \ref{fig:act8_reinicio_consumidor_ready0} & Entrega diferida fiable sin alterar ni duplicar ventas en MySQL. \\
+P15 & \textbf{Precond.:} Catálogo cargado en React.\newline \textbf{Acción:} Filtrar \texttt{Toyota} / \texttt{Honda} y seleccionar fila.\newline \textbf{Rol:} \texttt{ADMIN}. & 5 \texttt{Toyota} coincidentes (incl. ID 43); detalle exacto de VIN/placa para IDs 14 y 44.\newline \textbf{Evid.:} Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio}, \ref{fig:act10_p27_react_javafx_previo}. & Coincidencia exacta entre tabla filtrada y ficha de detalle. \\
 \hline
-P21 & JavaFX en pestaña En Vivo & Emisión de Ventas 36 y 37 sin refresco manual & \texttt{ADMIN} & Sondeo 3 s pasa de azul (vacío) a verde mostrando \texttt{ID 36} y \texttt{ID 37} automáticamente. & Figs. \ref{fig:act9_javafx_despues_auto}, \ref{fig:act10_p27_cadena_rmq_javafx} & Desacoplamiento completo: JavaFX solo consume \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}. \\
+P16 & \textbf{Precond.:} Pestaña Ventas en React.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} y selección de fila.\newline \textbf{Rol:} \texttt{ADMIN}. & 25+ ventas, métricas reales y detalle de \texttt{\#3} y \texttt{\#37}; sin \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}.\newline \textbf{Evid.:} Figs. \ref{fig:act7_ventas_metricas}, \ref{fig:act7_ventas_detalle}, \ref{fig:act10_p27_coherencia_react_java}. & Portal de auditoría estricto de solo lectura confirmado en código y red. \\
 \hline
-P22 & Evento \texttt{3b913705-...} ya procesado & Reenvío del mismo \texttt{eventoId} a RabbitMQ & Sistema & Log \texttt{WARN: EVENTO DUPLICADO DESCARTADO}; historial permanece en 1 fila. & Fig. \ref{fig:act11_monitor_normal_p22} (abajo) & Idempotencia AMQP efectiva ante entregas «al menos una vez». \\
+P17 & \textbf{Precond.:} RabbitMQ activo (\texttt{:5672}).\newline \textbf{Acción:} Venta confirmada (IDs 35, 36, 37, 38).\newline \textbf{Rol:} \texttt{ADMIN}. & 1 único evento JSON persistente (\texttt{delivery\_mode=\allowbreak{}2}, 223 B) sin PII/JWT.\newline \textbf{Evid.:} Figs. \ref{fig:act8_payload_persistente}, \ref{fig:act10_p27_cadena_rmq_javafx}. & Publicación desacoplada y auditable solo tras confirmar venta. \\
 \hline
-\end{tabularx}
-\end{table}
+P18 & \textbf{Precond.:} Venta rechazada (ID 39).\newline \textbf{Acción:} Intento de venta sobre vehículo vendido.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{HTTP 409}; registro queda \texttt{FALLIDA} con \texttt{notificacion=\allowbreak{}PENDIENTE}; 0 eventos.\newline \textbf{Evid.:} Tabla \ref{tab:act11_matriz_seguridad_errores}; Sec. 1.7.8. & La guardia \texttt{estado != COMPLETADA} evita notificaciones falsas. \\
+\hline
+P19 & \textbf{Precond.:} \texttt{notificaciones-service} detenido.\newline \textbf{Acción:} \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} (Venta 35).\newline \textbf{Rol:} \texttt{ADMIN}. & Venta \texttt{201 Created}; cola durable \texttt{notificaciones.\allowbreak{}ventas} registra \texttt{Consumers=\allowbreak{}0, Ready=\allowbreak{}1}.\newline \textbf{Evid.:} Figs. \ref{fig:act8_rmq_overview_detenido}, \ref{fig:act8_venta35_ready1}. & Persistencia en disco garantiza cero pérdida con consumidor caído. \\
+\hline
+P20 & \textbf{Precond.:} Mensaje retenido en cola.\newline \textbf{Acción:} Reinicio de \texttt{notificaciones-service} sin repetir POST.\newline \textbf{Rol:} Sistema. & Listener consume \texttt{ventaId=35} automáticamente; cola pasa a \texttt{Consumers=\allowbreak{}1, Ready=\allowbreak{}0}.\newline \textbf{Evid.:} Fig. \ref{fig:act8_reinicio_consumidor_ready0}. & Entrega diferida fiable sin alterar ni duplicar ventas en MySQL. \\
+\hline
+P21 & \textbf{Precond.:} JavaFX en pestaña En Vivo.\newline \textbf{Acción:} Emisión de Ventas 36 y 37 sin refresco manual.\newline \textbf{Rol:} \texttt{ADMIN}. & Sondeo 3 s pasa de azul (vacío) a verde mostrando \texttt{ID 36} y \texttt{ID 37} automáticamente.\newline \textbf{Evid.:} Figs. \ref{fig:act9_javafx_despues_auto}, \ref{fig:act10_p27_cadena_rmq_javafx}. & Desacoplamiento completo: JavaFX solo consume \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones}. \\
+\hline
+P22 & \textbf{Precond.:} Evento \texttt{3b913705-...} ya procesado.\newline \textbf{Acción:} Reenvío del mismo \texttt{eventoId} a RabbitMQ.\newline \textbf{Rol:} Sistema. & Log \texttt{WARN: EVENTO DUPLICADO DESCARTADO}; historial permanece en 1 fila.\newline \textbf{Evid.:} Fig. \ref{fig:act11_monitor_normal_p22} (abajo). & Idempotencia AMQP efectiva ante entregas «al menos una vez». \\
+\end{xltabular}}
 
-\begin{table}[H]
-\centering
-\scriptsize
-\renewcommand{\arraystretch}{1.16}
-\caption{Matriz consolidada de pruebas obligatorias — Parte C: Infraestructura, recuperación e integración (\texttt{P23}--\texttt{P28}).}
-\label{tab:act12_pruebas_c}
-\setlength{\tabcolsep}{3pt}
-\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash\hspace{0pt}}p{0.6cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.1cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.35cm}|>{\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{2.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{1.55cm}|X|}
+{\renewcommand{\arraystretch}{1.16}
+\begin{xltabular}{\textwidth}{|>{\bfseries\centering\arraybackslash\hspace{0pt}}p{1.15cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{4.55cm}|X|}
+\caption{Matriz consolidada de pruebas obligatorias — Parte C: Infraestructura, recuperación e integración (\texttt{P23}--\texttt{P28}).}\label{tab:act12_pruebas_c}\\
 \hline
-\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P23 & NGINX + A (:8080) + B (:8082) + Monitor & Ráfaga de 100 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} & \texttt{ADMIN} & \texttt{100/\allowbreak{}100 HTTP 200} en 2565 ms: \textbf{75} en A (75\%) y \textbf{25} en B (25\%) (promedio 17.21 ms). & Tabla \ref{tab:act11_balanceo_failover}; Fig. \ref{fig:act11_balanceo_estadisticas_100get} & Reparto ponderado 3:1 exacto verificado en \texttt{access.log} real. \\
+\endfirsthead
+\multicolumn{4}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Matriz consolidada de pruebas obligatorias — Parte C: Infraestructura, recuperación e integración (\texttt{P23}--\texttt{P28}).}\\[4pt]
 \hline
-P24 & Instancia Java B (:8082) detenida & 20 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} vía NGINX & \texttt{ADMIN} & \texttt{20/\allowbreak{}20 HTTP 200} atendidos 100\% por A (20/0); monitor alerta \texttt{DEGRADADO} en 4.8 s. & Figs. \ref{fig:act11_caida_java_b_terminal}, \ref{fig:act11_monitor_degradado_api} & Continuidad total al cliente sin errores \texttt{5xx} gracias a \texttt{proxy\_next\_upstream}. \\
+\textbf{ID} & \textbf{Precondición, Acción/Ruta y Rol} & \textbf{Resultado Real y Evidencia} & \textbf{Interpretación} \\
 \hline
-P25 & Java B reiniciada (PID 20688) & 20 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} con el \textbf{mismo JWT} & \texttt{ADMIN} & Monitor recupera en 537 ms; \texttt{20/\allowbreak{}20 HTTP 200} repartidos 16 en A y 4 en B sin relogin. & Figs. \ref{fig:act11_recuperacion_java_b}, \ref{fig:act11_monitor_recuperado_alertas} & Autenticación JWT 100\% stateless validada entre instancias independientes. \\
+\endhead
 \hline
-P26 & Monitor (:8083) y NGINX activos & \texttt{GET /\allowbreak{}nginx-ping} y 5 endpoints \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}*} & Público / Monitor & \texttt{/nginx-ping} = \texttt{200 UP} directo; 4 alertas reales con timestamps exactos. & Figs. \ref{fig:act11_monitor_normal_p22}, \ref{fig:act11_monitor_recuperado_alertas} & Observabilidad desacoplada del tráfico de negocio y log seguro \texttt{\$uri}. \\
+\multicolumn{4}{|r|}{\textit{Continúa en la siguiente página...}} \\
 \hline
-P27 & Todo el sistema encendido simultáneamente & WinForms (ID 44, ID 9) $\rightarrow$ PWA (Venta 37) $\rightarrow$ RMQ $\rightarrow$ JavaFX + React & \texttt{ADMIN} & Identificadores idénticos (\texttt{ventaId=37}, \texttt{vehiculoId=\allowbreak{}44}, \texttt{compradorId=\allowbreak{}9}, \texttt{operacionId=\allowbreak{}938cf622-...}) en los 4 clientes. & Tabla \ref{tab:act10_trazabilidad_p27}; Figs. \ref{fig:act10_p27_winforms_vehiculo}--\ref{fig:act10_p27_cadena_rmq_javafx} & Integración extremo a extremo verificada sin divergencias de estado. \\
+\endfoot
 \hline
-P28 & Auditoría de repo, ZIP y fallos reales & Detener FastAPI (:8002), MySQL (:3306), Notif. (:8081) y revisar entrega & Todos & Errores reales \texttt{504}/\texttt{503} sin ventas ficticias; JWT enmascarado; ZIP sin secretos ni dependencias. & Figs. \ref{fig:act9_javafx_fallo_504}, \ref{fig:act11_fastapi_apagado_504}, \ref{fig:act11_fastapi_reinicio_503} & Honestidad técnica y protección de credenciales cumplidas íntegramente. \\
+\endlastfoot
+P23 & \textbf{Precond.:} NGINX + A (\texttt{:8080}) + B (\texttt{:8082}) + Monitor.\newline \textbf{Acción:} Ráfaga de 100 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos}.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{100/\allowbreak{}100 HTTP 200} en 2565 ms: \textbf{75} en A (75\%) y \textbf{25} en B (25\%) (promedio 17.21 ms).\newline \textbf{Evid.:} Tabla \ref{tab:act11_balanceo_failover}; Fig. \ref{fig:act11_balanceo_estadisticas_100get}. & Reparto ponderado 3:1 exacto verificado en \texttt{access.log} real. \\
 \hline
-\end{tabularx}
-\end{table}
+P24 & \textbf{Precond.:} Instancia Java B (\texttt{:8082}) detenida.\newline \textbf{Acción:} 20 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} vía NGINX.\newline \textbf{Rol:} \texttt{ADMIN}. & \texttt{20/\allowbreak{}20 HTTP 200} atendidos 100\% por A (20/0); monitor alerta \texttt{DEGRADADO} en 4.8 s.\newline \textbf{Evid.:} Figs. \ref{fig:act11_caida_java_b_terminal}, \ref{fig:act11_monitor_degradado_api}. & Continuidad total al cliente sin errores \texttt{5xx} gracias a \texttt{proxy\_next\_upstream}. \\
+\hline
+P25 & \textbf{Precond.:} Java B reiniciada (PID 20688).\newline \textbf{Acción:} 20 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} con el \textbf{mismo JWT}.\newline \textbf{Rol:} \texttt{ADMIN}. & Monitor recupera en 537 ms; \texttt{20/\allowbreak{}20 HTTP 200} repartidos 16 en A y 4 en B sin relogin.\newline \textbf{Evid.:} Figs. \ref{fig:act11_recuperacion_java_b}, \ref{fig:act11_monitor_recuperado_alertas}. & Autenticación JWT 100\% stateless validada entre instancias independientes. \\
+\hline
+P26 & \textbf{Precond.:} Monitor (\texttt{:8083}) y NGINX activos.\newline \textbf{Acción:} \texttt{GET /\allowbreak{}nginx-ping} y 5 endpoints \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}*}.\newline \textbf{Rol:} Público / Monitor. & \texttt{/nginx-ping} = \texttt{200 UP} directo; 4 alertas reales con timestamps exactos.\newline \textbf{Evid.:} Figs. \ref{fig:act11_monitor_normal_p22}, \ref{fig:act11_monitor_recuperado_alertas}. & Observabilidad desacoplada del tráfico de negocio y log seguro \texttt{\$uri}. \\
+\hline
+P27 & \textbf{Precond.:} Todo el sistema encendido simultáneamente.\newline \textbf{Acción:} WinForms (ID 44, ID 9) $\rightarrow$ PWA (Venta 37) $\rightarrow$ RMQ $\rightarrow$ JavaFX + React.\newline \textbf{Rol:} \texttt{ADMIN}. & Identificadores idénticos (\texttt{ventaId=37}, \texttt{vehiculoId=\allowbreak{}44}, \texttt{compradorId=\allowbreak{}9}, \texttt{operacionId=\allowbreak{}938cf622-...}) en los 4 clientes.\newline \textbf{Evid.:} Tabla \ref{tab:act10_trazabilidad_p27}; Figs. \ref{fig:act10_p27_winforms_vehiculo}--\ref{fig:act10_p27_cadena_rmq_javafx}. & Integración extremo a extremo verificada sin divergencias de estado. \\
+\hline
+P28 & \textbf{Precond.:} Auditoría de repo, ZIP y fallos reales.\newline \textbf{Acción:} Detener FastAPI (\texttt{:8002}), MySQL (\texttt{:3306}), Notif. (\texttt{:8081}) y revisar entrega.\newline \textbf{Rol:} Todos. & Errores reales \texttt{504}/\texttt{503} sin ventas ficticias; JWT enmascarado; ZIP sin secretos ni dependencias.\newline \textbf{Evid.:} Figs. \ref{fig:act9_javafx_fallo_504}, \ref{fig:act11_fastapi_apagado_504}, \ref{fig:act11_fastapi_reinicio_503}. & Honestidad técnica y protección de credenciales cumplidas íntegramente. \\
+\end{xltabular}}
 
 \vspace{0.2cm}
 \noindent\textbf{D. Decisiones técnicas clave y limitaciones identificadas}
@@ -3335,30 +3554,36 @@ P28 & Auditoría de repo, ZIP y fallos reales & Detener FastAPI (:8002), MySQL (
 \vspace{0.1cm}
 \noindent Las cifras de la Tabla \ref{tab:resultados_finales_consolidados} provienen directamente de las consultas a MySQL, los registros de \texttt{access.log} procesados por \texttt{monitor-balancer-service}, la consola de RabbitMQ y las respuestas HTTP reales capturadas durante la práctica, sin redondeos artificiales:
 
-\begin{table}[H]
-\centering
-\footnotesize
-\renewcommand{\arraystretch}{1.22}
-\caption{Resultados cuantificables finales consolidados de la práctica APE 04.}
-\label{tab:resultados_finales_consolidados}
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{4.8cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{5.2cm}|X|}
+{\renewcommand{\arraystretch}{1.18}
+\begin{xltabular}{\textwidth}{|>{\raggedright\arraybackslash\hspace{0pt}}p{3.9cm}|>{\raggedright\arraybackslash\hspace{0pt}}p{5.5cm}|X|}
+\caption{Resultados cuantificables finales consolidados de la práctica APE 04.}\label{tab:resultados_finales_consolidados}\\
 \hline
 \textbf{Indicador} & \textbf{Valor Medido Real} & \textbf{Evidencia Verificable} \\
 \hline
+\endfirsthead
+\multicolumn{3}{@{}p{\textwidth}@{}}{\textbf{Tabla \thetable\ \textit{(continuación)}:} Resultados cuantificables finales consolidados de la práctica APE 04.}\\[4pt]
+\hline
+\textbf{Indicador} & \textbf{Valor Medido Real} & \textbf{Evidencia Verificable} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{|r|}{\textit{Continúa en la siguiente página...}} \\
+\hline
+\endfoot
+\hline
+\endlastfoot
 Vehículos y compradores creados / listados & \textbf{32 vehículos} totales (altas reales IDs 43 y 44 en WinForms; 19 \texttt{VENDIDO}, 12 \texttt{DISPONIBLE}, 1 \texttt{RESERVADO}). \textbf{9 compradores} totales (6 de \texttt{admin}, 3 de \texttt{operador}; altas reales IDs 8 y 9). & Respuestas \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} y \texttt{GET /\allowbreak{}api/\allowbreak{}compradores}; Figs. \ref{fig:act10_p27_winforms_vehiculo}, \ref{fig:act10_p27_winforms_comprador}. \\
 \hline
 Ventas confirmadas / rechazadas / reintentadas & \textbf{39 ventas} totales en MySQL (\texttt{IDs 1--39}): \textbf{18 \texttt{COMPLETADA}} (todas \texttt{ENVIADA}), \textbf{7 \texttt{FALLIDA}}, \textbf{10 \texttt{EN\_REVISION}}, \textbf{4 \texttt{PENDIENTE}}. Reintento idéntico \texttt{P10} = \texttt{200 OK} (mismo ID 38); conflictos \texttt{P11/P12} = \texttt{409}. & FastAPI (\texttt{:8002}), MySQL, Tabla \ref{tab:act11_matriz_seguridad_errores}, Figs. \ref{fig:act10_p27_pwa_venta37}, \ref{fig:act11_recuperacion_venta38_bloqueo}. \\
 \hline
 Mensajes emitidos / pendientes / consumidos & 18 ventas confirmadas con \texttt{notificacion=\allowbreak{}ENVIADA}; 21 no confirmadas en \texttt{PENDIENTE} (0 eventos falsos). Prueba \texttt{P19/P20} (Venta 35): \texttt{Ready=1} con \texttt{Consumers=0} $\rightarrow$ \texttt{Ready=0} con \texttt{Consumers=1}. Prueba \texttt{P22}: 1 duplicado descartado. & RabbitMQ 3.13 (\texttt{notificaciones.\allowbreak{}ventas}) y \texttt{VentasRabbitListener}; Figs. \ref{fig:act8_venta35_ready1}--\ref{fig:act8_reinicio_consumidor_ready0}, \ref{fig:act11_monitor_normal_p22}. \\
 \hline
-NGINX: A / B / total de GET & Ráfaga \texttt{P23} (100 GET vehículos, \texttt{2565.2 ms}): \textbf{A (:8080) = 75 (75\%)} / \textbf{B (:8082) = 25 (25\%)}, promedio \texttt{17.21 ms} (\texttt{13.15 ms} sobre 177 pet. incluyendo sondeos JavaFX en \texttt{sinUpstream}), \texttt{0} errores \texttt{4xx/5xx}. & \texttt{access.log} y \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}balanceo}, \texttt{/\allowbreak{}estadisticas}; Fig. \ref{fig:act11_balanceo_estadisticas_100get}. \\
+NGINX: A / B / total de GET & Ráfaga \texttt{P23} (100 GET vehículos, \texttt{2565.2 ms}): \textbf{A (\texttt{:8080}) = 75 (75\%)} / \textbf{B (\texttt{:8082}) = 25 (25\%)}, promedio \texttt{17.21 ms} (\texttt{13.15 ms} sobre 177 pet. incluyendo sondeos JavaFX en \texttt{sinUpstream}), \texttt{0} errores \texttt{4xx/5xx}. & \texttt{access.log} y \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}balanceo}, \texttt{/\allowbreak{}estadisticas}; Fig. \ref{fig:act11_balanceo_estadisticas_100get}. \\
 \hline
 Notificaciones presentadas en JavaFX & Recepción automática sin refresco manual (< 3 s) para \textbf{Venta 36} (Act 9, \texttt{107 ms} en listener) y \textbf{Venta 37} (Act 10, \texttt{113 ms} en listener); diferenciación visual de vacío azul (\texttt{200 []}) vs. fallo rojo (\texttt{504}). & \texttt{GET /\allowbreak{}api/\allowbreak{}notificaciones} vía NGINX y pantalla JavaFX; Figs. \ref{fig:act9_javafx_despues_auto}, \ref{fig:act9_javafx_fallo_504}, \ref{fig:act10_p27_cadena_rmq_javafx}. \\
 \hline
 Continuidad ante falla y recuperación & Caída Java B (\texttt{12:47:09}) detectada en \textbf{4.8 s}; \textbf{20/20 \texttt{HTTP 200}} por A (20/0). Reinicio B (\texttt{12:53:38}) recuperado en \textbf{537 ms}; \textbf{20/20 \texttt{HTTP 200}} (16/4) con el \textbf{mismo JWT stateless}. Caída FastAPI = \texttt{504}, MySQL = \texttt{503}, Notif. = \texttt{504} (0 confirmaciones ficticias). & Alertas \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}alertas}, logs y PWA; Tabla \ref{tab:act11_balanceo_failover}, Figs. \ref{fig:act11_caida_java_b_terminal}--\ref{fig:act11_recuperacion_venta38_bloqueo}. \\
-\hline
-\end{tabularx}
-\end{table}
+\end{xltabular}}
 
 \vspace{0.3cm}
 
