@@ -7,13 +7,13 @@
 \usepackage{microtype}
 \usepackage{geometry}
 \geometry{
-  top=4.2cm,
-  bottom=2.5cm,
+  top=4.0cm,
+  bottom=2.0cm,
   left=3.0cm,
   right=3.0cm,
-  headheight=95pt,
-  headsep=15pt,
-  footskip=1.0cm
+  headheight=90pt,
+  headsep=10pt,
+  footskip=0.8cm
 }
 
 \usepackage{graphicx}
@@ -23,6 +23,14 @@
 \usepackage{xltabular}
 \usepackage{array}
 \usepackage{float}
+\makeatletter
+\newcommand{\FloatBarrier}{%
+  \par
+  \ifx\@deferlist\@empty\else
+    \clearpage
+  \fi
+}
+\makeatother
 \usepackage{amssymb}
 \usepackage{xcolor}
 \usepackage{xurl}
@@ -33,6 +41,19 @@
 \DeclareCaptionFont{timesnineit}{\rmfamily\itshape\fontsize{9}{11}\selectfont}
 \captionsetup[figure]{font=timesnineit, labelfont=timesnineit, justification=justified, singlelinecheck=false}
 \captionsetup[table]{font={rm,normalsize}, labelfont={rm,normalsize,bf}, justification=justified, singlelinecheck=false}
+\captionsetup[figure]{skip=5pt}
+
+% Optimizacion de flotantes para eliminar espacios en blanco extensos entre hojas
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.92}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.68}
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{4}
+\setcounter{totalnumber}{6}
+\setlength{\textfloatsep}{7pt plus 2pt minus 2pt}
+\setlength{\floatsep}{5pt plus 2pt minus 1pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
 
 % Control estricto de margenes y tablas multipagina (xltabular) en Times New Roman 11pt
 \setlength{\emergencystretch}{3em}
@@ -166,7 +187,7 @@
 
 \noindent La arquitectura de referencia define el resultado funcional esperado. Cada estudiante podrá adaptar los proyectos base y su configuración para implementar los cuatro clientes, NGINX, los servicios REST, RabbitMQ y la persistencia.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.96\textwidth]{image1.png}
 \end{figure}
@@ -722,6 +743,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \vspace{0.3cm}
 
+\FloatBarrier
 \noindent\textbf{1.7.1 Actividad 1. Diagnóstico inicial y definición de contratos}
 
 \vspace{0.2cm}
@@ -745,11 +767,11 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent Para garantizar un desarrollo modular y reproducible, se verificó la organización de los proyectos dentro del espacio de trabajo y en el control de versiones remoto. Como se observa en la Figura \ref{fig:act1_git_repo}, el repositorio privado en GitHub aloja de manera estructurada los siete proyectos base junto con los componentes de infraestructura y documentación, asegurando el desacoplamiento estricto de dependencias y código fuente.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.95\textwidth]{act1_git_repo1.png}
+  \includegraphics[width=0.86\textwidth]{act1_git_repo1.png}
   \vspace{0.15cm}
-  \includegraphics[width=0.95\textwidth]{act1_git_repo2.png}
+  \includegraphics[width=0.86\textwidth]{act1_git_repo2.png}
   \caption{Estructura integral del repositorio privado SOA\_APE04 en GitHub evidenciando la organización modular de los proyectos base y componentes desacoplados.}
   \label{fig:act1_git_repo}
 \end{figure}
@@ -769,14 +791,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent En la Figura \ref{fig:act1_mysql_conexion} se evidencia la verificación de conectividad y estado operativo del motor MySQL administrado mediante XAMPP sobre el puerto estándar 3306. Complementariamente, en la Figura \ref{fig:act1_mysql_phpmyadmin} se muestra la inspección directa en phpMyAdmin, confirmando la existencia de las tablas del esquema relacional \texttt{venta\_vehiculos} y sus registros persistidos.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\textwidth]{act1_mysql_conexion.png}
   \caption{Verificación de operatividad del motor MySQL en XAMPP (puerto 3306).}
   \label{fig:act1_mysql_conexion}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.95\textwidth]{act1_mysql_phpmyadmin.jpg}
   \caption{Inspección relacional en phpMyAdmin de las tablas de la base de datos \texttt{venta\_vehiculos}.}
@@ -847,14 +869,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
   \item \textbf{Microservicio de Vehículos (Spring Boot):} En la Figura \ref{fig:act1_java_terminal_8080} se evidencia la ejecución del servicio en la terminal de Visual Studio Code mediante el comando \texttt{.\textbackslash mvnw.\allowbreak{}cmd spring-boot:\allowbreak{}run}, confirmando el inicio de Tomcat sobre el puerto 8080. En la Figura \ref{fig:act1_postman_login_vehiculos} se aprecia la autenticación exitosa en el endpoint \texttt{POST /\allowbreak{}oauth/\allowbreak{}token} enviando las credenciales de cliente Basic y los parámetros de formulario del usuario (\texttt{admin} / \texttt{admin123}), obteniendo una respuesta HTTP 200 OK con el token JWT portador (\texttt{access\_token}) y el token de refresco.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{act1_java_terminal_8080.png}
     \caption{Ejecución de la API de vehículos Spring Boot en terminal mediante \texttt{mvnw.\allowbreak{}cmd spring-boot:\allowbreak{}run} levantada en puerto 8080.}
     \label{fig:act1_java_terminal_8080}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{act1_postman_login_vehiculos.png}
     \caption{Prueba en Postman de obtención de token JWT (\texttt{POST /\allowbreak{}oauth/\allowbreak{}token}) con respuesta HTTP 200 OK.}
@@ -863,14 +885,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{Microservicio de Compradores y Ventas (FastAPI):} En la Figura \ref{fig:act1_fastapi_terminal_8002} se documenta el levantamiento del microservicio Python con el servidor ASGI Uvicorn escuchando activamente en \texttt{http:\allowbreak{}/\allowbreak{}/\allowbreak{}127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}8002}. En la Figura \ref{fig:act1_fastapi_compradores_ventas} se observa la petición \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} en Postman, retornando código HTTP 200 OK y el arreglo JSON con los registros reales de clientes persistidos en MySQL.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{act1_fastapi_terminal_8002.png}
     \caption{Ejecución del microservicio Python FastAPI en terminal con Uvicorn en el puerto 8002.}
     \label{fig:act1_fastapi_terminal_8002}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.88\textwidth]{act1_fastapi_compradores_ventas.png}
     \caption{Prueba en Postman de consulta de compradores (\texttt{GET /\allowbreak{}api/\allowbreak{}compradores}) con respuesta HTTP 200 OK y datos reales de la base de datos.}
@@ -879,6 +901,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \end{enumerate}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.2 Actividad 2. Preparación de proyectos, configuración y control de versiones}
 
 \vspace{0.2cm}
@@ -892,14 +915,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \begin{enumerate}[leftmargin=*,itemsep=4pt,topsep=2pt]
   \item \textbf{\texttt{AplicacionMovilPWA} (PWA Móvil):} En las Figuras \ref{fig:act2_readme_pwa_1} y \ref{fig:act2_readme_pwa_2} se documenta el archivo \texttt{README.md} de la aplicación móvil PWA, detallando requisitos de Node.js v20+, gestor npm, configuración de proxy NGINX, comandos de pruebas unitarias (\texttt{npm test}), empaquetado de producción y modo de ejecución independiente en puerto 5174.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_pwa_1.png}
     \caption{Documentación técnica de \texttt{AplicacionMovilPWA}: Requisitos previos y configuración.}
     \label{fig:act2_readme_pwa_1}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_pwa_2.png}
     \caption{Documentación técnica de \texttt{AplicacionMovilPWA}: Compilación, pruebas unitarias y ejecución.}
@@ -908,7 +931,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{ConsultaVehiculosForms} (Cliente Windows Forms):} En la Figura \ref{fig:act2_readme_forms} se evidencia la documentación técnica del cliente administrativo de escritorio desarrollado en C\# y .NET SDK 8, describiendo su arquitectura x64, dependencias con NGINX (puerto 8090), MySQL en XAMPP y los endpoints consumidos de vehículos y ventas.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_forms.png}
     \caption{Documentación técnica de \texttt{ConsultaVehiculosForms}: Requisitos de .NET 8 y servicios requeridos.}
@@ -917,7 +940,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{escritorioFx} (Cliente JavaFX):} En la Figura \ref{fig:act2_readme_javafx} se expone el \texttt{README.md} del cliente de escritorio JavaFX para monitoreo reactivo de ventas en tiempo real, especificando compatibilidad con OpenJDK 17+/25, Apache Maven 3.9, OpenJFX 21 y la integración asíncrona hacia el servicio de notificaciones (puerto 8081).
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_javafx.png}
     \caption{Documentación técnica de \texttt{escritorioFx}: Requisitos de OpenJDK, Maven y OpenJFX.}
@@ -926,7 +949,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{notificaciones-service} (Consumidor RabbitMQ Spring Boot):} En la Figura \ref{fig:act2_readme_notificaciones} se presenta la documentación técnica del microservicio de notificaciones, detallando el puerto de escucha 8081, la conexión AMQP con RabbitMQ en el puerto 5672, la suscripción a la cola durable \texttt{notificaciones.\allowbreak{}ventas} y la lógica de desduplicación.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_notificaciones.png}
     \caption{Documentación técnica de \texttt{notificaciones-service}: Requisitos Java, puertos y broker RabbitMQ.}
@@ -935,7 +958,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{reactweb} (Plataforma Web React):} En la Figura \ref{fig:act2_readme_react} se documenta la plataforma web de consulta y auditoría comercial desarrollada en React 19 y Vite, indicando requisitos de Node.js v20+, resolución de dependencias npm, enrutamiento por proxy hacia NGINX (8090) y visualización de catálogos y métricas.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_react.png}
     \caption{Documentación técnica de \texttt{reactweb}: Requisitos previos, Node.js y conexión con NGINX.}
@@ -944,7 +967,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{venta-vehiculos-api\_security} (Microservicio Vehículos Java):} En la Figura \ref{fig:act2_readme_vehiculos_java} se expone el \texttt{README.md} del microservicio central de catálogo y seguridad OAuth 2.0 en Spring Boot, describiendo la configuración JPA con MySQL en XAMPP (puerto 3306), el endpoint Actuator \texttt{/\allowbreak{}actuator/\allowbreak{}health} y la topología de balanceo ponderado 3:1.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_vehiculos_java.png}
     \caption{Documentación técnica de \texttt{venta-vehiculos-api\_security}: Requisitos Java, base de datos y Actuator.}
@@ -953,7 +976,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
   \item \textbf{\texttt{ventas-api} (Microservicio Ventas FastAPI):} En la Figura \ref{fig:act2_readme_ventas_fastapi} se evidencia la documentación del microservicio Python FastAPI de gestión comercial, detallando la versión de Python 3.12+, entorno virtual \texttt{.venv}, persistencia relacional con SQLAlchemy en MySQL, garantía de idempotencia y publicador asíncrono RabbitMQ.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_readme_ventas_fastapi.png}
     \caption{Documentación técnica de \texttt{ventas-api}: Requisitos de Python, MySQL, broker AMQP y Gateway.}
@@ -1043,7 +1066,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \begin{itemize}[leftmargin=*,itemsep=4pt,topsep=2pt]
   \item \textbf{Servicios Java (Spring Boot y JavaFX):} En la Figura \ref{fig:act2_compilacion_java} se documenta el levantamiento y compilación del servicio de vehículos en la terminal mediante \texttt{.\textbackslash mvnw.\allowbreak{}cmd spring-boot:\allowbreak{}run}, alcanzando estado operativo sobre Tomcat en el puerto 8080 sin discrepancias de dependencias.
   
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_compilacion_java.png}
     \caption{Ejecución y compilación exitosa del microservicio de vehículos Java en terminal (\texttt{Tomcat started on port 8080}).}
@@ -1057,21 +1080,21 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
     \item En la Figura \ref{fig:act2_compilacion_dotnet_form} se documenta la aplicación Windows Forms ejecutándose en primer plano, mostrando sus pestañas de gestión (\textit{1. Vehículos}, \textit{2. Compradores} y \textit{3. Ventas - Consulta Exclusiva}).
   \end{enumerate}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet_build.png}
     \caption{Compilación exitosa por consola con \texttt{dotnet build} en Developer PowerShell.}
     \label{fig:act2_compilacion_dotnet_build}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_compilacion_dotnet_vs.png}
     \caption{Entorno de desarrollo y depuración de la solución Windows Forms en Visual Studio 2026.}
     \label{fig:act2_compilacion_dotnet_vs}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.88\textwidth]{act2_compilacion_dotnet_form.png}
     \caption{Ventana operativa del cliente administrativo Windows Forms (.NET 8).}
@@ -1084,14 +1107,14 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
     \item En la Figura \ref{fig:act2_compilacion_node_browser} se documenta la interfaz de usuario del \textit{Portal Web de Consulta y Auditoría} renderizada en el navegador en \texttt{localhost:\allowbreak{}5173}, lista para interactuar con NGINX.
   \end{enumerate}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.92\textwidth]{act2_compilacion_node_terminal.png}
     \caption{Resolución de paquetes (\texttt{npm install}) y servidor Vite activo (\texttt{npm run dev}) en terminal.}
     \label{fig:act2_compilacion_node_terminal}
   \end{figure}
 
-  \begin{figure}[H]
+  \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.88\textwidth]{act2_compilacion_node_browser.png}
     \caption{Portal Web React de Consulta y Auditoría en ejecución en el navegador web sobre el puerto 5173.}
@@ -1104,7 +1127,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent Se auditó el archivo \texttt{.gitignore} en la raíz del repositorio, comprobando la exclusión obligatoria de directorios pesados y temporales: \texttt{node\_modules}, \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{.venv}, archivos de depuración y cachés del sistema operativo. En la Figura \ref{fig:act2_git_status_limpio} se documenta la ejecución de \texttt{git status} en Git Bash sobre la rama \texttt{main}, confirmando que el árbol de trabajo se encuentra 100\% limpio (\texttt{nothing to commit, working tree clean}) y libre de secretos o binarios compilados.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\textwidth]{act2_git_status_limpio.png}
   \caption{Estado del control de versiones en Git Bash (\texttt{git status}) evidenciando árbol de trabajo limpio sin artefactos sensibles ni binarios.}
@@ -1112,6 +1135,7 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.3 Actividad 3. Vehículos, JWT, NGINX y disponibilidad}
 
 \vspace{0.2cm}
@@ -1122,19 +1146,19 @@ Conclusiones y referencias & Conclusiones relacionadas con objetivos, recomendac
 
 \noindent La configuración de NGINX en el puerto 8090 centraliza el acceso REST de los clientes multicanal. En las Figuras \ref{fig:act3_nginx_conf} y \ref{fig:act3_nginx_conf_proxies} se documentan las capturas del archivo \texttt{nginx.conf} en el entorno de desarrollo, abarcando la definición del upstream con ponderación 3:1, las directivas de tolerancia pasiva a fallos, el enrutamiento hacia FastAPI y Notificaciones, y el formato de auditoría seguro.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\textwidth]{act3_nginx_conf_upstream.png}
   \caption{Configuración técnica de \texttt{nginx.conf}: definición de \texttt{upstream vehiculos\_backend} con ponderación 3:1 (puertos 8080 y 8082), parámetros de desconexión pasiva y formato de auditoría seguro \texttt{monitor\_format}.}
   \label{fig:act3_nginx_conf}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act3_nginx_conf_proxies.png}
+  \includegraphics[width=0.79\textwidth]{act3_nginx_conf_proxies.png}
   
-  \vspace{0.25cm}
-  \includegraphics[width=0.88\textwidth]{act3_nginx_conf_failover.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act3_nginx_conf_failover.png}
   \caption{Enrutamiento multicanal en \texttt{nginx.conf}: proxies directos a FastAPI en 8002 y endpoint local \texttt{/nginx-ping} (arriba), y directivas de tolerancia a fallos \texttt{proxy\_next\_upstream} y Actuator (abajo).}
   \label{fig:act3_nginx_conf_proxies}
 \end{figure}
@@ -1204,12 +1228,12 @@ location /api/notificaciones {
 \end{lstlisting}
   \textbf{Explicación técnica:} Cumpliendo la directiva estricta de la guía, las rutas de FastAPI (\texttt{/\allowbreak{}api/\allowbreak{}compradores} y \texttt{/api/ventas}) se canalizan directamente hacia el puerto 8002, y Notificaciones hacia el puerto 8081. No se aplica el balanceo de vehículos a estos servicios independientes, asegurando que la arquitectura respete las fronteras funcionales de cada microservicio. Se propaga adicionalmente el encabezado \texttt{Idempotency-Key} para garantizar la idempotencia de transacciones en FastAPI. En la Figura \ref{fig:act3_postman_proxies_8090} se comprueba el funcionamiento real en Postman de ambos enrutamientos a través del puerto unificado 8090.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act3_postman_oauth_8090.png}
+  \includegraphics[width=0.79\textwidth]{act3_postman_oauth_8090.png}
   
-  \vspace{0.25cm}
-  \includegraphics[width=0.88\textwidth]{act3_postman_fastapi_compradores_8090.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act3_postman_fastapi_compradores_8090.png}
   \caption{Comprobación en Postman del enrutamiento Gateway NGINX sobre el puerto 8090: obtención de token JWT desde el clúster de vehículos (arriba) y consumo desacoplado de compradores atendido por FastAPI en el puerto 8002 sin pasar por el balanceo de vehículos (abajo).}
   \label{fig:act3_postman_proxies_8090}
 \end{figure}
@@ -1229,19 +1253,19 @@ access_log logs/access.log monitor_format;
 
 \noindent Previo a la puesta en marcha del servicio, se ejecutó la validación de integridad sintáctica mediante el comando \texttt{nginx -t}, confirmando que el archivo de configuración es válido y superó las pruebas del motor NGINX. Asimismo, se comprobó el endpoint de diagnóstico local \texttt{GET /\allowbreak{}nginx-ping}, el cual retorna una respuesta inmediata HTTP 200 OK en formato JSON (\texttt{\{"status":\allowbreak{}"UP",\allowbreak{}"mensaje":\allowbreak{}"NGINX funcionando correctamente"\}}) directamente desde el servidor web, sin sobrecargar los upstreams backend. En la Figura \ref{fig:act3_nginx_test_ping} se evidencia dicha verificación sintáctica y de ping local.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act3_nginx_test.png}
+  \includegraphics[width=0.79\textwidth]{act3_nginx_test.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.88\textwidth]{act3_nginx_ping.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act3_nginx_ping.png}
   \caption{Comprobación de sintaxis de configuración con \texttt{nginx -t} (arriba) y respuesta HTTP 200 OK del endpoint local de diagnóstico \texttt{GET /\allowbreak{}nginx-ping} sobre el puerto 8090 (abajo).}
   \label{fig:act3_nginx_test_ping}
 \end{figure}
 
 \noindent Adicionalmente, se verificó el endpoint de supervisión de salud del clúster de vehículos a través del Gateway NGINX mediante \texttt{GET http:\allowbreak{}/\allowbreak{}/\allowbreak{}127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}8090/\allowbreak{}actuator/\allowbreak{}health}. Como se ilustra en la Figura \ref{fig:act3_browser_actuator_health_8090}, el balanceador enruta la solicitud hacia el upstream activo y reporta estado global \texttt{"status":\allowbreak{}"UP"}, detallando la disponibilidad de la base de datos MySQL (\texttt{isValid()}), espacio en disco suficiente y estado óptimo de las sondas de liveness y readiness para monitoreo continuo.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\textwidth]{act3_browser_actuator_health_8090.png}
   \caption{Respuesta del endpoint \texttt{GET /\allowbreak{}actuator/\allowbreak{}health} a través del Gateway NGINX (puerto 8090), demostrando el estado de salud \texttt{UP} del clúster y la conexión activa a MySQL.}
@@ -1253,12 +1277,12 @@ access_log logs/access.log monitor_format;
 
 \noindent Se levantaron en paralelo dos procesos independientes del microservicio de vehículos: la Instancia A operando en el puerto 8080 y la Instancia B operando en el puerto 8082. Ambas instancias comparten la misma persistencia en la base de datos MySQL \texttt{venta\_vehiculos} en XAMPP y la misma clave simétrica HMAC-SHA256 para validación de tokens JWT sin estado (\textit{stateless}). Ambas exponen el endpoint Actuator \texttt{/\allowbreak{}actuator/\allowbreak{}health} reportando estado \texttt{\{"status":\allowbreak{}"UP"\}}, lo cual permite la supervisión continua de su ciclo de vida. En la Figura \ref{fig:act3_instancias_ab} se muestra la ejecución simultánea de ambas instancias y sus diagnósticos de salud.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act3_instancia_a_8080.png}
+  \includegraphics[width=0.79\textwidth]{act3_instancia_a_8080.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.88\textwidth]{act3_instancia_b_8082.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act3_instancia_b_8082.png}
   \caption{Despliegue de las dos instancias Spring Boot de vehículos en el entorno local: Instancia A operando en el puerto 8080 (arriba) e Instancia B operando en el puerto 8082 (abajo).}
   \label{fig:act3_instancias_ab}
 \end{figure}
@@ -1297,9 +1321,9 @@ $token = $auth.access_token
 
 \noindent Como se evidencia en la Figura \ref{fig:act3_balanceo_100get}, la distribución real se ajusta con una fidelidad exacta a la ponderación 3:1 configurada, demostrando la correcta conmutación cíclica ponderada del servidor proxy sin saturación de ninguno de los nodos.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act3_balanceo_100get.png}
+  \includegraphics[width=0.78\textwidth]{act3_balanceo_100get.png}
   \caption{Resultados del registro de acceso y monitor demostrando la ejecución de 100 peticiones GET con código 200 OK y la distribución real entre las instancias A (75\%) y B (25\%).}
   \label{fig:act3_balanceo_100get}
 \end{figure}
@@ -1320,17 +1344,18 @@ $token = $auth.access_token
 \vspace{0.15cm}
 \noindent Como se documenta en la Figura \ref{fig:act3_tolerancia_fallos}, el cliente no experimentó ningún código de error HTTP 502 o 504 ni cortes en la sesión de usuario; todas las solicitudes continuaron respondiendo con código \texttt{HTTP 200 OK}. La Instancia A continuó atendiendo las consultas en la base de datos MySQL compartida, garantizando la alta disponibilidad del clúster sin degradación de servicio.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act3_failover_instancia_b_detenida.png}
+  \includegraphics[width=0.79\textwidth]{act3_failover_instancia_b_detenida.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.88\textwidth]{act3_failover_instancia_a_activa.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act3_failover_instancia_a_activa.png}
   \caption{Prueba de resiliencia y tolerancia a fallos: detención del proceso Spring Boot en la Instancia B (puerto 8082) mediante \texttt{GracefulShutdown} (arriba) e Instancia A (puerto 8080) atendiendo las consultas en MySQL de forma continua y transparente (abajo).}
   \label{fig:act3_tolerancia_fallos}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.4 Actividad 4. Servicio de compradores y ventas en Python FastAPI}
 
 \vspace{0.2cm}
@@ -1396,12 +1421,12 @@ def identidad(authorization: str | None = Header(default=None)):
   \item \textbf{Guardia de propiedad de recurso (\texttt{propietario(usuario, dueno)}):} Asegura que un vendedor común únicamente pueda consultar o asociar registros creados por su propio usuario, a menos que el solicitante disponga de privilegios de \texttt{ROLE\_ADMIN}.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act4_postman_oauth_token.png}
+  \includegraphics[width=0.83\textwidth]{act4_postman_oauth_token.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act4_java_instancia_b_auth.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act4_java_instancia_b_auth.png}
   \caption{Mecanismo de autenticación perimetral y emisión de credenciales para la gestión comercial: obtención de token portador JWT en Postman vía Gateway NGINX en el puerto 8090 (arriba) y ejecución del microservicio Java en la Instancia B puerto 8082 en Visual Studio Code validando credenciales de usuario con Hibernate en MySQL (abajo).}
   \label{fig:act4_auth_oauth_java}
 \end{figure}
@@ -1427,7 +1452,7 @@ def identidad(authorization: str | None = Header(default=None)):
   \end{itemize}
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\textwidth]{act4_postman_creacion_201.png}
   \caption{Verificación de creación transaccional de venta e integridad de precios en Postman: petición \texttt{POST /\allowbreak{}api/\allowbreak{}ventas} enviando \texttt{"precio": 5.\allowbreak{}0}, la cual es procesada por FastAPI validando el vehículo 15 en Java y asignando el valor legítimo de catálogo (\$18,900.00 USD) con estado final \texttt{COMPLETADA} y código \texttt{201 Created}.}
@@ -1468,12 +1493,12 @@ def identidad(authorization: str | None = Header(default=None)):
   \end{itemize}
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act4_postman_idempotencia_200.png}
+  \includegraphics[width=0.83\textwidth]{act4_postman_idempotencia_200.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act4_postman_conflicto_409.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act4_postman_conflicto_409.png}
   \caption{Comprobación de garantías de idempotencia en Postman: reintento idéntico con la misma clave retornando código \texttt{HTTP 200 OK} con los datos de la venta persistida sin duplicar registros (arriba) y detección de conflicto con código \texttt{HTTP 409 Conflict} (\texttt{CLAVE\_REUTILIZADA}) al reutilizar la misma clave con un cuerpo de solicitud alterado (abajo).}
   \label{fig:act4_idempotencia_conflicto}
 \end{figure}
@@ -1501,7 +1526,7 @@ def identidad(authorization: str | None = Header(default=None)):
   \item \textbf{Confirmación en base de datos:} Tras la confirmación del broker, el registro de la venta en MySQL actualiza su atributo \texttt{notificacion} de \texttt{PENDIENTE} a \texttt{ENVIADA}, garantizando trazabilidad contable completa. En la Figura \ref{fig:act4_mysql_ventas} se documenta la consulta directa en phpMyAdmin evidenciando las transacciones confirmadas y el descarte de operaciones rechazadas.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.95\textwidth]{act4_mysql_tabla_ventas.png}
   \caption{Auditoría y persistencia de operaciones en la base de datos MySQL (\texttt{phpMyAdmin}): verificación de los registros de la tabla \texttt{ventas}, constatando la inserción de la Venta ID 32 con estado \texttt{COMPLETADA}, asignación de \texttt{reserva\_id} y clave de idempotencia, y el registro de la Venta ID 31 en estado \texttt{FALLIDA} con reserva nula (\texttt{NULL}), confirmando que no se emiten notificaciones hacia RabbitMQ para operaciones rechazadas.}
@@ -1543,6 +1568,7 @@ ID 30\newline \textbf{201} & \texttt{POST /\allowbreak{}api/\allowbreak{}ventas}
 \end{xltabular}}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.5 Actividad 5. Cliente Windows Forms de administración (.NET 8 C\#)}
 
 \vspace{0.2cm}
@@ -1722,17 +1748,17 @@ public class VentaApiClient
 
 Dicho token fue ingresado en el encabezado de la aplicación Windows Forms. Al pulsar «Listar / Filtrar» sin filtros adicionales, se despachó la solicitud \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} hacia NGINX, el cual balanceó la carga hacia Spring Boot, poblando el control \texttt{dgcVehiculos} con la totalidad de los 30 vehículos existentes en la base de datos (Figura \ref{fig:act5_auth_catalogo}, abajo). Posteriormente, al ingresar el criterio \texttt{toyota} en el campo de marca, se ejecutó la petición con parámetro de consulta \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}toyota}, filtrando con éxito las 4 unidades correspondientes a dicha marca (Hilux y Corollas) con respuesta \texttt{HTTP 200 OK} (Figura \ref{fig:act5_filtro_toyota}).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act5_postman_token_admin.png}
+  \includegraphics[width=0.83\textwidth]{act5_postman_token_admin.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculos_catalogo.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_vehiculos_catalogo.png}
   \caption{Operación 1 (Parte A): Emisión y utilización del token JWT en Windows Forms. Arriba: Solicitud \texttt{POST /\allowbreak{}oauth/\allowbreak{}token} en Postman para el usuario \texttt{admin} con respuesta \texttt{HTTP 200 OK}. Abajo: Catálogo general de vehículos cargado exitosamente en Windows Forms mediante \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} a través del Gateway NGINX (:8090), recuperando 30 registros con estado \texttt{HTTP 200 OK}.}
   \label{fig:act5_auth_catalogo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculos_filtro_toyota.png}
   \caption{Operación 1 (Parte B): Filtrado dinámico de vehículos por parámetro de consulta en Windows Forms. Consulta \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos?\allowbreak{}marca=\allowbreak{}toyota} procesada mediante NGINX hacia Spring Boot, recuperando de forma precisa las 4 unidades de la marca Toyota con código \texttt{HTTP 200 OK}.}
@@ -1746,12 +1772,12 @@ Dicho token fue ingresado en el encabezado de la aplicación Windows Forms. Al p
 
 El microservicio en Spring Boot validó la unicidad de placa y chasis, persistió la entidad en MySQL y retornó el código \texttt{HTTP 201 Created}. La aplicación presentó un cuadro de diálogo informativo confirmando la creación con el identificador generado \texttt{ID: 43} (Figura \ref{fig:act5_alta_vehiculo_mysql}, arriba). Para verificar la coherencia con el motor relacional, se consultó directamente la tabla \texttt{vehiculo} en \texttt{phpMyAdmin}, corroborando la existencia física de la fila con clave primaria \texttt{id\_vehiculo: 43}, placa \texttt{PBA-8855}, precio \texttt{28500.00} y estado inicial \texttt{DISPONIBLE} (Figura \ref{fig:act5_alta_vehiculo_mysql}, abajo).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act5_winforms_vehiculo_alta_201.png}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_vehiculo_alta_201.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.95\textwidth]{act5_mysql_vehiculo_43.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.86\textwidth]{act5_mysql_vehiculo_43.png}
   \caption{Operación 2: Alta de vehículo en Windows Forms y verificación relacional en MySQL. Arriba: Formulario de captura y diálogo modal de confirmación con código \texttt{HTTP 201 Created} e identificador autogenerado \texttt{ID: 43}. Abajo: Consulta directa en phpMyAdmin de la base de datos \texttt{venta\_vehiculos}, tabla \texttt{vehiculo}, validando la persistencia exacta de los campos ingresados.}
   \label{fig:act5_alta_vehiculo_mysql}
 \end{figure}
@@ -1765,22 +1791,22 @@ El microservicio en Spring Boot validó la unicidad de placa y chasis, persisti�
   \item \textbf{Alta de comprador (Operación 4):} En el panel de registro se ingresaron los datos del cliente: Documento: \texttt{1809988776}, Nombre: \texttt{Cliente WinForms Elizabeth}, Correo: \texttt{elizabeth.\allowbreak{}forms@uta.\allowbreak{}edu.\allowbreak{}ec}. La invocación \texttt{POST /\allowbreak{}api/\allowbreak{}compradores} fue procesada por FastAPI, asignando la propiedad de la cuenta al usuario \texttt{admin} y retornando código \texttt{HTTP 201 Created} con el identificador generado \texttt{ID: 8} (Figura \ref{fig:act5_alta_comprador_mysql}, arriba). La verificación física en la tabla \texttt{compradores} de MySQL certifica la inserción inmediata del cliente con \texttt{id: 8} y \texttt{usuario: admin} (Figura \ref{fig:act5_alta_comprador_mysql}, abajo).
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act5_winforms_compradores_listar.png}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_compradores_listar.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act5_mysql_compradores_admin.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act5_mysql_compradores_admin.png}
   \caption{Operación 3: Listado de compradores en Windows Forms y segregación por usuario en MySQL. Arriba: Grilla \texttt{dgcCompradores} cargando los clientes asociados al usuario \texttt{admin} mediante \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} (HTTP 200 OK). Abajo: Tabla \texttt{compradores} en phpMyAdmin mostrando la existencia de registros correspondientes a distintos usuarios del sistema.}
   \label{fig:act5_compradores_listar_mysql}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act5_winforms_comprador_alta_201.png}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_comprador_alta_201.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act5_mysql_comprador_nuevo_8.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act5_mysql_comprador_nuevo_8.png}
   \caption{Operación 4: Alta de nuevo comprador en Windows Forms y confirmación en MySQL. Arriba: Notificación de creación exitosa con código \texttt{HTTP 201 Created} e identificador \texttt{ID: 8} para el comprador «Cliente WinForms Elizabeth». Abajo: Verificación en phpMyAdmin de la fila insertada en la tabla \texttt{compradores} con la clave foránea del usuario administrador autenticado.}
   \label{fig:act5_alta_comprador_mysql}
 \end{figure}
@@ -1795,17 +1821,17 @@ El microservicio en Spring Boot validó la unicidad de placa y chasis, persisti�
   \item \textbf{Confrontación con el motor relacional:} Al inspeccionar la tabla \texttt{ventas} en \texttt{phpMyAdmin} (Figura \ref{fig:act5_mysql_venta_30}), se confirma que la fila con clave primaria \texttt{id: 30} coincide con total precisión con los datos presentados en Windows Forms: \texttt{operacion\_id: 630e5e57...}, \texttt{usuario: admin}, \texttt{comprador\_id: 1}, \texttt{vehiculo\_id: 14}, clave de idempotencia \texttt{test-key-check-01}, y \texttt{reserva\_id: 952551a1-...}.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.92\textwidth]{act5_winforms_ventas_historico_32.png}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_ventas_historico_32.png}
   
-  \vspace{0.3cm}
-  \includegraphics[width=0.92\textwidth]{act5_winforms_ventas_detalle_30.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.83\textwidth]{act5_winforms_ventas_detalle_30.png}
   \caption{Operación 5: Consulta exclusiva y auditoría de ventas en Windows Forms. Arriba: Pestaña de ventas en modo consulta exclusiva sin controles de creación, listando 25 ventas con selección de la Venta 32 en color verde (\texttt{COMPLETADA} / \texttt{ENVIADA}). Abajo: Consulta puntual de la Venta 30 mediante \texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}30}, desplegando el panel de detalle lateral con UUID de operación y semaforización cromática.}
   \label{fig:act5_ventas_historico_detalle}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.95\textwidth]{act5_mysql_ventas_30.png}
   \caption{Verificación de coherencia transaccional en MySQL: tupla con clave primaria \texttt{id: 30} en la tabla \texttt{ventas} de phpMyAdmin, constatando la correspondencia exacta de identificadores, vehículos, usuarios y reservas con los valores reportados por la interfaz gráfica Windows Forms.}
@@ -1819,7 +1845,7 @@ El microservicio en Spring Boot validó la unicidad de placa y chasis, persisti�
 
 Al intentar ejecutar una consulta de catálogo o registrar un vehículo, el cliente \texttt{VehiculoApiClient} transmitió la petición sin cabecera de autorización hacia NGINX, la cual fue rechazada por el backend con el código estándar \texttt{HTTP 401 Unauthorized}. El cliente interceptó el código y la interfaz de usuario reaccionó de manera controlada y amigable: desplegó un cuadro de diálogo descriptivo \textit{«Error 401: No autorizado. El token no fue proporcionado, es inválido o ha expirado.»} y actualizó la etiqueta de estado inferior en color carmesí (\texttt{Color.\allowbreak{}Crimson}) (Figura \ref{fig:act5_error_401}), impidiendo cualquier bloqueo o caída inesperada de la aplicación y orientando claramente al operador.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\textwidth]{act5_winforms_error_401.png}
   \caption{Tratamiento visual de errores y seguridad de acceso en Windows Forms: cuadro de diálogo modal informando el rechazo con código \texttt{HTTP 401 Unauthorized} ante la ausencia o expiración del token JWT, acompañado por el cambio de color de la barra de estado a tono carmesí.}
@@ -1867,6 +1893,7 @@ Control de Seguridad & \texttt{GET}/\texttt{POST} Todos los endpoints\newline Ga
 \end{xltabular}}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.6 Actividad 6. PWA móvil con login y registro exclusivo de ventas}
 
 \vspace{0.2cm}
@@ -2071,15 +2098,15 @@ Instalación PWA & \texttt{GET /\allowbreak{}manifest.\allowbreak{}webmanifest}\
 
 \noindent Todas las pruebas se ejecutaron sobre el despliegue real de la arquitectura SOA: el microservicio de vehículos Spring Boot en el puerto \texttt{8082}, el servicio Python FastAPI (\texttt{ventas-api}) en el puerto \texttt{8002}, el broker RabbitMQ en \texttt{5672}, MySQL en \texttt{3306}, el Gateway inverso NGINX en \texttt{8090} y el servidor Node.js de la PWA (\texttt{node server.\allowbreak{}mjs}) en \texttt{5173} (Figura \ref{fig:act6_despliegue_servicios}).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act6_servicios_pwa_node.png}
+  \includegraphics[width=0.80\textwidth]{act6_servicios_pwa_node.png}
 
-  \vspace{0.2cm}
-  \includegraphics[width=0.86\textwidth]{act6_servicios_fastapi_8002.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.80\textwidth]{act6_servicios_fastapi_8002.png}
 
-  \vspace{0.2cm}
-  \includegraphics[width=0.86\textwidth]{act6_servicios_java_8082.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.80\textwidth]{act6_servicios_java_8082.png}
   \caption{Despliegue operativo para la Actividad 6: servidor Node.js de la PWA en el puerto 5173 con estructura de manifiesto, íconos y Service Worker (arriba), microservicio FastAPI en el puerto 8002 respondiendo \texttt{GET /\allowbreak{}api/\allowbreak{}compradores} con \texttt{200 OK} (medio) e instancia Spring Boot en el puerto 8082 ejecutando consultas Hibernate sobre usuarios y vehículos (abajo).}
   \label{fig:act6_despliegue_servicios}
 \end{figure}
@@ -2092,67 +2119,68 @@ Instalación PWA & \texttt{GET /\allowbreak{}manifest.\allowbreak{}webmanifest}\
   \item \textbf{Prueba 5 — Comportamiento adaptable a móvil e instalación PWA:} Se verificó el diseño responsivo mediante DevTools en dimensiones \texttt{iPhone SE (375 x 667)}, comprobando la adaptación ergonómica a una sola columna táctil (Figura \ref{fig:act6_pwa_movil_instalada}, arriba). Asimismo, se ejecutó la instalación real de la PWA sobre el origen seguro local (\texttt{localhost}), evidenciando la ventana autónoma en modo \texttt{standalone} y el ícono de acceso directo creado en el escritorio (Figura \ref{fig:act6_pwa_movil_instalada}, abajo).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act6_pwa_login_inicial.png}
+  \includegraphics[width=0.75\textwidth]{act6_pwa_login_inicial.png}
 
-  \vspace{0.25cm}
+  \vspace{0.12cm}
   \includegraphics[width=0.78\textwidth]{act6_pwa_login_admin.png}
   \caption{Autenticación OAuth 2.0 en la PWA Móvil: pantalla inicial limpia en \texttt{localhost:\allowbreak{}5173} sin contraseñas ni tokens incrustados (arriba) y sesión autenticada como \texttt{admin} obteniendo \texttt{HTTP 200} con 31 vehículos y 5 compradores cargados, conservando el JWT oculto en memoria volátil (abajo).}
   \label{fig:act6_login_oauth}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\textwidth]{act6_pwa_login_operador.png}
 
-  \vspace{0.25cm}
+  \vspace{0.12cm}
   \includegraphics[width=0.78\textwidth]{act6_pwa_selector_compradores.png}
   \caption{Sesión operativa y catálogo de clientes en la PWA: inicio de sesión exitoso como \texttt{operador} con \texttt{Scope: vehiculos} y expiración de 1800s sin exponer el token (arriba) y despliegue del selector de compradores autorizados para dicha cuenta (abajo).}
   \label{fig:act6_login_operador_selectores}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\textwidth]{act6_pwa_selector_vehiculos.png}
 
-  \vspace{0.25cm}
+  \vspace{0.12cm}
   \includegraphics[width=0.78\textwidth]{act6_pwa_formulario_venta.png}
   \caption{Selección de datos válidos en el canal exclusivo de ventas: desplegable vehicular inhabilitando unidades \texttt{[VENDIDO]} y seleccionando \texttt{[ID 17] Kia Rio [DISPONIBLE]} (arriba) y formulario completo con comprador ID 4, precio \$17,200 y clave \texttt{Idempotency-Key} UUID v4 (abajo).}
   \label{fig:act6_vehiculos_formulario}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\textwidth]{act6_pwa_venta_201.png}
 
-  \vspace{0.25cm}
+  \vspace{0.12cm}
   \includegraphics[width=0.78\textwidth]{act6_pwa_consulta_id_33.png}
   \caption{Confirmación transaccional y consulta de respaldo en la PWA: respuesta \texttt{HTTP 201} del Gateway NGINX registrando la Venta \texttt{ID: 33} con estado \texttt{COMPLETADA} y notificación \texttt{ENVIADA} (arriba) y verificación posterior mediante \texttt{GET /\allowbreak{}api/\allowbreak{}ventas/\allowbreak{}33} (abajo).}
   \label{fig:act6_venta_201_consulta}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act6_pwa_conflicto_409.png}
+  \includegraphics[width=0.72\textwidth]{act6_pwa_conflicto_409.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.94\textwidth]{act6_mysql_ventas_33_34.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth]{act6_mysql_ventas_33_34.png}
   \caption{Control de idempotencia y consistencia en MySQL: alerta \texttt{HTTP 409 Conflict} al reutilizar la clave con carga distinta en la PWA (arriba) y auditoría en \texttt{phpMyAdmin} de la tabla \texttt{ventas} confirmando las filas \texttt{ID: 33} (\texttt{vehiculo\_id: 17}) e \texttt{ID: 34} (\texttt{vehiculo\_id: 19}) emitidas por \texttt{operador} (abajo).}
   \label{fig:act6_conflicto_mysql}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.76\textwidth]{act6_pwa_vista_movil_iphone.png}
+  \includegraphics[width=0.68\textwidth,height=4.8cm,keepaspectratio]{act6_pwa_vista_movil_iphone.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.82\textwidth]{act6_pwa_instalada_standalone.jpg}
+  \vspace{0.12cm}
+  \includegraphics[width=0.68\textwidth,height=4.8cm,keepaspectratio]{act6_pwa_instalada_standalone.jpg}
   \caption{Capacidades PWA y comportamiento móvil: emulación adaptable en pantalla \texttt{iPhone SE (375 x 667)} (arriba) y verificación de la aplicación PWA instalada en modo autónomo (\texttt{standalone}) con su ícono de acceso directo en el escritorio (abajo).}
   \label{fig:act6_pwa_movil_instalada}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.7 Actividad 7. Cliente web React como plataforma de consulta}
 
 \vspace{0.2cm}
@@ -2339,67 +2367,68 @@ Registro de Ventas & \textit{Omitido por diseño}\newline Ninguno & N/A & Sin \t
   \item \textbf{Auditoría de red en DevTools (\textit{Network/Red}):} La inspección de red en el navegador confirmó el tráfico Fetch legítimo hacia el proxy local de Vite (\texttt{http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}5174/\allowbreak{}api/\allowbreak{}ventas} y \texttt{http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}5174/\allowbreak{}api/\allowbreak{}vehiculos}): ambas solicitudes devolvieron \texttt{200 OK} (\texttt{ventasApi.\allowbreak{}js:\allowbreak{}19} con \texttt{6.7 kB} y \texttt{vehiculosApi.\allowbreak{}js:\allowbreak{}30} con \texttt{5.6 kB} en \texttt{29 ms}), evidenciando en las cabeceras de respuesta el encabezado \texttt{Server: nginx/\allowbreak{}1.\allowbreak{}30.\allowbreak{}5}, \texttt{Content-Type: application/\allowbreak{}json} y \texttt{Cache-Control: no-cache, no-store}, comprobando el paso transparente por NGINX sin exponer claves internas en el cliente (Figura \ref{fig:act7_devtools_network}).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act7_vite_5174.png}
+  \includegraphics[width=0.70\textwidth]{act7_vite_5174.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.86\textwidth]{act7_error_401.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.70\textwidth]{act7_error_401.png}
   \caption{Arranque de React en Vite y control de error \texttt{HTTP 401}: consola ejecutando \texttt{npm run dev} sobre el puerto dedicado 5174 sin conflicto con la PWA (arriba) y manejo controlado del rechazo \texttt{HTTP 401} al intentar consultar sin credencial JWT (abajo).}
   \label{fig:act7_vite_error401}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act7_consulta_200_31.png}
+  \includegraphics[width=0.77\textwidth]{act7_consulta_200_31.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.86\textwidth]{act7_filtro_toyota.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.77\textwidth]{act7_filtro_toyota.png}
   \caption{Consulta autenticada y filtrado por marca en React: carga exitosa de los 31 vehículos con código \texttt{HTTP 200} y token oculto en memoria (arriba) y filtrado por marca \texttt{Toyota} desplegando 5 unidades coincidentes, incluido el vehículo ID 43 registrado en Windows Forms (abajo).}
   \label{fig:act7_consulta_filtro}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act7_detalle_vehiculo_14.png}
+  \includegraphics[width=0.72\textwidth]{act7_detalle_vehiculo_14.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.86\textwidth]{act7_filtro_vacio.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth]{act7_filtro_vacio.png}
   \caption{Detalle del vehículo seleccionado y estado de listado vacío: ficha técnica del vehículo ID 14 (Toyota Hilux, placa \texttt{EFG1122}, chasis VIN \texttt{MR0EX8CD5N0123456}) (arriba) y manejo de filtro sin coincidencias al buscar \texttt{ferrari} mostrando 0 visibles (abajo).}
   \label{fig:act7_detalle_vacio}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act7_ventas_estado_inicial.png}
+  \includegraphics[width=0.72\textwidth]{act7_ventas_estado_inicial.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.86\textwidth]{act7_ventas_metricas_reales.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth]{act7_ventas_metricas_reales.png}
   \caption{Supervisión de ventas de solo consulta (\texttt{GET /\allowbreak{}api/\allowbreak{}ventas}): estado inicial con aviso de aislamiento sin formularios de emisión (arriba) y tablero cargado con métricas reales de las 25 transacciones (\$304,400.00 facturados, 10 completadas y 15 observadas/fallidas) (abajo).}
   \label{fig:act7_ventas_metricas}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.90\textwidth]{act7_ventas_detalle_3.png}
   \caption{Auditoría individual en React: panel «Detalle de la Venta Auditada» para la venta \texttt{\#3} mostrando UUID de operación, identificador de vehículo y comprador, precio acordado (\$26,500.00 USD), estado \texttt{COMPLETADA} y confirmación de notificación RabbitMQ (\texttt{ENVIADA}).}
   \label{fig:act7_ventas_detalle}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act7_network_resumen.png}
+  \includegraphics[width=0.78\textwidth]{act7_network_resumen.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act7_network_headers_ventas.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.78\textwidth]{act7_network_headers_ventas.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act7_network_headers_vehiculos.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.78\textwidth]{act7_network_headers_vehiculos.png}
   \caption{Evidencia de la pestaña \textit{Network/Red} del navegador: tráfico Fetch con \texttt{ventas} (200, \texttt{ventasApi.\allowbreak{}js:\allowbreak{}19}) y \texttt{vehiculos} (200, \texttt{vehiculosApi.\allowbreak{}js:\allowbreak{}30}) (arriba), cabeceras de \texttt{GET /\allowbreak{}api/\allowbreak{}ventas} mostrando \texttt{Server: nginx/\allowbreak{}1.\allowbreak{}30.\allowbreak{}5} (medio) y cabeceras de \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} con \texttt{200 OK} y \texttt{Cache-Control: no-store} (abajo).}
   \label{fig:act7_devtools_network}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.8 Actividad 8. RabbitMQ y publicación de eventos después de la venta}
 
 \vspace{0.2cm}
@@ -2574,47 +2603,48 @@ RabbitMQ Caído & Falla de conexión \texttt{pika} (3 intentos) & Venta queda \t
   \item \textbf{Reinicio del consumidor y drenaje automático (\texttt{Consumers: 1 / Ready: 0}):} Al reiniciar \texttt{notificaciones-service}, el listener \texttt{VentasRabbitListener} se conectó a \texttt{amqp:\allowbreak{}/\allowbreak{}/\allowbreak{}guest@127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}5672/}, consumió automáticamente el mensaje retenido e imprimió \texttt{NUEVA NOTIFICACION DE VENTA REGISTRADA: ID=\allowbreak{}1, ventaId=\allowbreak{}35, operacionId=\allowbreak{}1e00b3f7-...} y \texttt{Evento de venta procesado y confirmado: ventaId=\allowbreak{}35}, sin duplicar la venta en MySQL. Al recargar la pestaña \textit{Queues}, la cola confirmó la transición a \textbf{\texttt{Consumers: 1}} y \textbf{\texttt{Ready: 0}} (Figura \ref{fig:act8_reinicio_consumidor_ready0}).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act8_rabbitmq_overview.png}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_rabbitmq_overview.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.84\textwidth]{act8_notificaciones_detenido.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_notificaciones_detenido.png}
   \caption{Preparación del escenario de resiliencia AMQP: panel \textit{Overview} de RabbitMQ 3.13.0 operativo en \texttt{localhost:\allowbreak{}15672} (arriba) y detención controlada (\texttt{Graceful shutdown complete}) del microservicio consumidor \texttt{notificaciones-service} en el puerto 8081 (abajo).}
   \label{fig:act8_rmq_overview_detenido}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.78\textwidth]{act8_postman_venta_35_201.png}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_postman_venta_35_201.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.88\textwidth]{act8_rabbitmq_antes_ready1_c0.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_rabbitmq_antes_ready1_c0.png}
   \caption{Emisión de venta con consumidor detenido: creación exitosa de la Venta \texttt{ID: 35} (\texttt{HTTP 201 Created}, \texttt{vehiculoId: 30}, \texttt{COMPLETADA}, \texttt{ENVIADA}) a través de NGINX (arriba) y retención del mensaje en la cola durable \texttt{notificaciones.\allowbreak{}ventas} (\texttt{D}) con \texttt{Consumers: 0} y \texttt{Ready: 1} (abajo).}
   \label{fig:act8_venta35_ready1}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.94\textwidth]{act8_rabbitmq_get_message_payload.png}
+  \includegraphics[width=0.76\textwidth,height=9.0cm,keepaspectratio]{act8_rabbitmq_get_message_payload.png}
   \caption{Inspección del mensaje persistente en RabbitMQ (\texttt{Nack message requeue true}): propiedades \texttt{delivery\_mode: 2} y \texttt{content\_type: application/\allowbreak{}json} junto al payload JSON limpio de 223 bytes para \texttt{ventaId: 35} (\texttt{eventoId: 48c4ebd2-...}), libre de contraseñas, JWT y datos personales innecesarios.}
   \label{fig:act8_payload_persistente}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act8_notificaciones_consumo_venta35.png}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_notificaciones_consumo_venta35.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act8_notificaciones_log_zoom.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_notificaciones_log_zoom.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.88\textwidth]{act8_rabbitmq_despues_venta35_ready0_c1.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act8_rabbitmq_despues_venta35_ready0_c1.png}
   \caption{Recuperación tras reiniciar el consumidor \texttt{notificaciones-service}: conexión a AMQP y consumo automático del evento pendiente de la Venta \texttt{ID: 35} (arriba), detalle de confirmación del listener \texttt{VentasRabbitListener} sin repetir la venta (medio) y estado final de la cola \texttt{notificaciones.\allowbreak{}ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (abajo).}
   \label{fig:act8_reinicio_consumidor_ready0}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.9 Actividad 9. Servicio de notificaciones y visualización JavaFX}
 
 \vspace{0.2cm}
@@ -2739,70 +2769,71 @@ Fallo de Servicio & Parada de \texttt{notificaciones-service} (\texttt{11:46:26}
   \item \textbf{Diferenciación entre pantalla vacía y fallo de servicio:} Finalmente, se detuvo \texttt{notificaciones-service} a las \texttt{11:46:26} (\texttt{Graceful shutdown complete}). En el siguiente ciclo de sondeo (\texttt{11:46:48}), JavaFX interceptó el fallo y cambió la barra a color \textbf{rojo} con la alerta \texttt{FALLO DE SERVICIO — HTTP 504 Gateway Timeout: tiempo de espera agotado hacia notificaciones-service.}, demostrando la distinción inequívoca frente a una pantalla vacía saludable en azul (Figura \ref{fig:act9_javafx_fallo_504}).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act9_srv_notificaciones_8081.png}
+  \includegraphics[width=0.80\textwidth,height=4.7cm,keepaspectratio]{act9_srv_notificaciones_8081.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act9_srv_ventas_8002.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.80\textwidth,height=4.7cm,keepaspectratio]{act9_srv_ventas_8002.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act9_srv_vehiculos_8082.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.80\textwidth,height=4.7cm,keepaspectratio]{act9_srv_vehiculos_8082.png}
   \caption{Despliegue de los microservicios backend para la Actividad 9: \texttt{notificaciones-service} en puerto 8081 conectado a AMQP 5672 (arriba), \texttt{ventas-api} FastAPI en puerto 8002 (medio) y \texttt{venta-vehiculos-api\_security} en puerto 8082 (abajo).}
   \label{fig:act9_servicios_backend}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act9_srv_javafx_run.png}
+  \includegraphics[width=0.74\textwidth,height=4.4cm,keepaspectratio]{act9_srv_javafx_run.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.84\textwidth]{act9_javafx_catalogo_31.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.74\textwidth,height=4.4cm,keepaspectratio]{act9_javafx_catalogo_31.png}
   \caption{Ejecución del cliente de escritorio JavaFX: arranque mediante \texttt{mvn javafx:\allowbreak{}run} en \texttt{escritorioFx/\allowbreak{}consultarvehiculojavafx} (arriba) y pestaña «Catálogo de Vehículos» listando los 31 automotores vía NGINX con código \texttt{HTTP 200} y token protegido (abajo).}
   \label{fig:act9_javafx_inicio_catalogo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act9_javafx_pantalla_vacia_200.png}
+  \includegraphics[width=0.72\textwidth,height=4.3cm,keepaspectratio]{act9_javafx_pantalla_vacia_200.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.76\textwidth]{act9_postman_venta_36_201.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.3cm,keepaspectratio]{act9_postman_venta_36_201.png}
   \caption{Estado inicial en JavaFX y emisión de venta nueva: pestaña de notificaciones \textbf{antes} de la venta mostrando barra azul \texttt{CONECTADO (HTTP 200)} con pantalla vacía saludable y sondeo cada 3s (arriba) y creación de la Venta \texttt{ID: 36} (\texttt{HTTP 201 Created}, \texttt{vehiculoId: 31}, \texttt{COMPLETADA}, \texttt{ENVIADA}) (abajo).}
   \label{fig:act9_javafx_antes_venta36}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.90\textwidth]{act9_notificaciones_log_venta36.png}
+  \includegraphics[width=0.72\textwidth,height=2.8cm,keepaspectratio]{act9_notificaciones_log_venta36.png}
 
-  \vspace{0.2cm}
-  \includegraphics[width=0.76\textwidth]{act9_navegador_get_notificaciones.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=2.8cm,keepaspectratio]{act9_navegador_get_notificaciones.png}
 
-  \vspace{0.2cm}
-  \includegraphics[width=0.86\textwidth]{act9_rabbitmq_queues_consumido.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=2.8cm,keepaspectratio]{act9_rabbitmq_queues_consumido.png}
   \caption{Procesamiento en consumidor e historial recuperable: trazas de \texttt{VentasRabbitListener} confirmando \texttt{ventaId=36} (arriba), respuesta JSON de \texttt{GET http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}8090/\allowbreak{}api/\allowbreak{}notificaciones} vía NGINX (medio) y estado de la cola \texttt{notificaciones.\allowbreak{}ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (abajo).}
   \label{fig:act9_consumidor_historial_rmq}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.94\textwidth]{act9_javafx_despues_venta_36.png}
+  \includegraphics[width=0.76\textwidth,height=4.4cm,keepaspectratio]{act9_javafx_despues_venta_36.png}
   \caption{Estado en JavaFX \textbf{después} de la venta sin refresco manual: aparición automática de la Venta \texttt{ID: 36} mediante el sondeo de 3 segundos con barra verde \texttt{CONECTADO (HTTP 200)}, mostrando \texttt{Evento ID}, \texttt{Operación ID}, mensaje, estado \texttt{PROCESADA} y fecha de registro.}
   \label{fig:act9_javafx_despues_auto}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act9_notificaciones_detenido_fallo.png}
+  \includegraphics[width=0.72\textwidth,height=3.2cm,keepaspectratio]{act9_notificaciones_detenido_fallo.png}
 
-  \vspace{0.25cm}
-  \includegraphics[width=0.90\textwidth]{act9_javafx_fallo_servicio_504.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=3.2cm,keepaspectratio]{act9_javafx_fallo_servicio_504.png}
   \caption{Diferenciación visual de fallo de servicio en JavaFX: detención controlada de \texttt{notificaciones-service} a las 11:46:26 (arriba) y alerta inmediata en rojo \texttt{FALLO DE SERVICIO — HTTP 504 Gateway Timeout} detectada automáticamente a las 11:46:48, distinguiéndose claramente de la pantalla vacía saludable en azul (abajo).}
   \label{fig:act9_javafx_fallo_504}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.10 Actividad 10. Integración y coherencia de datos entre clientes}
 
 \vspace{0.2cm}
@@ -2917,50 +2948,50 @@ JavaFX (Escritorio) & Sondeo 3 s (\texttt{GET /\allowbreak{}api/\allowbreak{}not
 
 \noindent Siguiendo el orden documentado, se levantaron en paralelo el Gateway NGINX (\texttt{:8090}), las dos instancias Spring Boot de vehículos (\texttt{:8080} PID \texttt{24040} y \texttt{:8082} PID \texttt{17740}, ambas recibiendo peticiones SQL balanceadas en Hibernate), el microservicio FastAPI \texttt{ventas-api} (\texttt{:8002} PID \texttt{22488}), el servicio \texttt{notificaciones-service} (\texttt{:8081} PID \texttt{16648} conectado a RabbitMQ \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}5672}) y los cuatro clientes multicanal: PWA (\texttt{:5173}), React (\texttt{:5174}), Windows Forms (.NET 8) y JavaFX (JDK 25) (Figuras \ref{fig:act10_srv_backend_gw} a \ref{fig:act10_srv_escritorio}).
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.62\textwidth]{act10_srv_01_nginx.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act10_srv_02_java_8080.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.78\textwidth]{act10_srv_02_java_8080.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.84\textwidth]{act10_srv_03_java_8082.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.78\textwidth]{act10_srv_03_java_8082.png}
   \caption{Arranque de la capa perimetral y clúster de vehículos: inicio de NGINX en \texttt{C:\allowbreak{}\textbackslash nginx} (arriba), Spring Boot Instancia A en puerto 8080 (PID 24040) atendiendo consultas SQL (medio) y Spring Boot Instancia B en puerto 8082 (PID 17740) operando simultáneamente bajo balanceo 3:1 (abajo).}
   \label{fig:act10_srv_backend_gw}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act10_srv_04_fastapi_8002.png}
+  \includegraphics[width=0.77\textwidth]{act10_srv_04_fastapi_8002.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act10_srv_05_notificaciones_8081.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.77\textwidth]{act10_srv_05_notificaciones_8081.png}
   \caption{Despliegue de microservicios de negocio y eventos: Python FastAPI \texttt{ventas-api} ejecutándose con Uvicorn en \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}8002} (arriba) y \texttt{notificaciones-service} en puerto 8081 (PID 16648) enlazado a RabbitMQ en \texttt{amqp:\allowbreak{}/\allowbreak{}/\allowbreak{}guest@127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}5672/} (abajo).}
   \label{fig:act10_srv_ventas_notif}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act10_srv_09_pwa_terminal.png}
+  \includegraphics[width=0.75\textwidth]{act10_srv_09_pwa_terminal.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.84\textwidth]{act10_srv_10_pwa_web.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.75\textwidth]{act10_srv_10_pwa_web.png}
   \caption{Despliegue del canal móvil exclusivo (PWA): servidor Node.js \texttt{server.mjs} activo en \texttt{http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}5173} enrutando hacia NGINX \texttt{:8090} (arriba) e interfaz PWA operativa en navegador con credenciales y token protegidos (abajo).}
   \label{fig:act10_srv_pwa}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act10_srv_07_react_terminal.png}
+  \includegraphics[width=0.75\textwidth]{act10_srv_07_react_terminal.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.84\textwidth]{act10_srv_08_react_web.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.75\textwidth]{act10_srv_08_react_web.png}
   \caption{Despliegue del portal web de consulta y auditoría (React): servidor de desarrollo Vite v8.3.8 en el puerto dedicado \texttt{http:\allowbreak{}/\allowbreak{}/\allowbreak{}localhost:\allowbreak{}5174/} (arriba) e interfaz web de consulta operativa sin conflicto de puertos con la PWA (abajo).}
   \label{fig:act10_srv_react}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.80\textwidth]{act10_srv_06_winforms.png}
 
@@ -2986,90 +3017,91 @@ JavaFX (Escritorio) & Sondeo 3 s (\texttt{GET /\allowbreak{}api/\allowbreak{}not
   \item \textbf{Cadena asíncrona completa (FastAPI $\rightarrow$ RabbitMQ $\rightarrow$ Notificaciones $\rightarrow$ JavaFX):} El evento JSON emitido por FastAPI transitó por la cola durable \texttt{notificaciones.\allowbreak{}ventas} (\texttt{Consumers: 1}, \texttt{Ready: 0}), fue recibido por \texttt{VentasRabbitListener} a las \texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}255} con \texttt{eventoId: 3b913705-92a5-49fd-866c-0e335271c2d5} y confirmado en \texttt{113 ms} (\texttt{12:\allowbreak{}23:\allowbreak{}14.\allowbreak{}368}) como \texttt{ID=\allowbreak{}1, ventaId=\allowbreak{}37, operacionId=\allowbreak{}938cf622-...}. De manera automática, el sondeo cada 3 segundos de JavaFX cambió el indicador a barra verde (\texttt{12:23:42}) desplegando la fila con el mismo \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{Operación ID: 938cf622-...} en estado \texttt{PROCESADA} (Figura \ref{fig:act10_p27_cadena_rmq_javafx}).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act10_p27_01_winforms_vehiculo_creado.png}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act10_p27_01_winforms_vehiculo_creado.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act10_p27_02_winforms_vehiculo_lista.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act10_p27_02_winforms_vehiculo_lista.png}
   \caption{Etapa 1 en Windows Forms (alta de vehículo): registro de Honda CR-V placa \texttt{PBC-2026} devolviendo \texttt{ID generado: 44} y \texttt{HTTP 201 Created} (arriba) y catálogo actualizado a 32 vehículos mostrando la fila 44 en estado \texttt{DISPONIBLE} (abajo).}
   \label{fig:act10_p27_winforms_vehiculo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act10_p27_03_winforms_comprador_creado.png}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act10_p27_03_winforms_comprador_creado.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act10_p27_04_winforms_comprador_lista.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.5cm,keepaspectratio]{act10_p27_04_winforms_comprador_lista.png}
   \caption{Etapa 1 en Windows Forms (alta de comprador): creación de Carlos Lopez (\texttt{1805556677}) con \texttt{ID generado: 9} y \texttt{HTTP 201 Created} (arriba) y tabla actualizada con los 6 compradores del usuario \texttt{admin} incluyendo el registro 9 (abajo).}
   \label{fig:act10_p27_winforms_comprador}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act10_p27_05_react_vehiculo_disponible.png}
+  \includegraphics[width=0.79\textwidth]{act10_p27_05_react_vehiculo_disponible.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.88\textwidth]{act10_p27_06_javafx_antes_venta.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act10_p27_06_javafx_antes_venta.png}
   \caption{Etapa 2 (propagación previa a la venta): verificación en React (\texttt{:5174}) del vehículo \texttt{ID 44} (Honda CR-V, \texttt{PBC-2026}, VIN \texttt{2HKRW2H80NH123456}) en estado \texttt{DISPONIBLE} (arriba) y monitor JavaFX en espera con barra azul \texttt{CONECTADO (HTTP 200)} y 0 notificaciones a las 12:22:12 (abajo).}
   \label{fig:act10_p27_react_javafx_previo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.82\textwidth]{act10_p27_07_pwa_auth_cargado.png}
+  \includegraphics[width=0.74\textwidth,height=4.7cm,keepaspectratio]{act10_p27_07_pwa_auth_cargado.png}
 
-  \vspace{0.20cm}
-  \includegraphics[width=0.82\textwidth]{act10_p27_08_pwa_seleccion_venta.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.74\textwidth,height=4.7cm,keepaspectratio]{act10_p27_08_pwa_seleccion_venta.png}
   \caption{Etapa 2 y 3 en PWA móvil (\texttt{:5173}): sesión activa \texttt{admin} con credenciales ocultas cargando 32 vehículos y 6 compradores (arriba) y selección exacta de \texttt{[ID 44] Honda CR-V [DISPONIBLE]} y \texttt{[ID 9] Carlos Lopez} con \texttt{Idempotency-Key} única (abajo).}
   \label{fig:act10_p27_pwa_auth_seleccion}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act10_p27_09_pwa_venta_201_json.png}
+  \includegraphics[width=0.75\textwidth]{act10_p27_09_pwa_venta_201_json.png}
 
-  \vspace{0.20cm}
-  \includegraphics[width=0.84\textwidth]{act10_p27_10_pwa_venta_201_banner.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.75\textwidth]{act10_p27_10_pwa_venta_201_banner.png}
   \caption{Etapa 3 (emisión exclusiva de venta en PWA): respuesta \texttt{HTTP 201} del Gateway NGINX confirmando \texttt{id: 37}, \texttt{operacionId: 938cf622-1d4b-46e5-a5b6-bc00b5455a65}, \texttt{vehiculoId: 44}, \texttt{compradorId: 9}, \texttt{COMPLETADA} y \texttt{notificacion: ENVIADA} (arriba) junto al indicador visual de confirmación (abajo).}
   \label{fig:act10_p27_pwa_venta37}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act10_p27_13_winforms_vehiculo_vendido.png}
+  \includegraphics[width=0.79\textwidth]{act10_p27_13_winforms_vehiculo_vendido.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act10_p27_12_winforms_ventas_37.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.77\textwidth]{act10_p27_12_winforms_ventas_37.png}
   \caption{Etapa 3 (coherencia post-venta en Windows Forms): consulta directa del vehículo \texttt{ID 44} evidenciando su transición automática a \texttt{VENDIDO} (arriba) y pestaña «3. Ventas» reflejando la Venta \texttt{ID 37} con idéntico \texttt{operacionId}, vehículo 44, comprador 9 y estado \texttt{COMPLETADA / ENVIADA} (abajo).}
   \label{fig:act10_p27_coherencia_winforms}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act10_p27_14_react_venta_37.png}
+  \includegraphics[width=0.72\textwidth]{act10_p27_14_react_venta_37.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act10_p27_15_springboot_8082_reserva.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth]{act10_p27_15_springboot_8082_reserva.png}
   \caption{Etapa 3 (coherencia en React y backend Java): auditoría de la venta \texttt{\#37} en React confirmando \texttt{UUID 938cf622-...}, vehículo 44, comprador 9, \$33,500.00 USD y notificación \texttt{ENVIADA} (arriba) y trazas Hibernate en Spring Boot (\texttt{:8082}) verificando la reserva por \texttt{operacion\_id} (abajo).}
   \label{fig:act10_p27_coherencia_react_java}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act10_p27_16_rabbitmq_cola_consumida.png}
+  \includegraphics[width=0.70\textwidth]{act10_p27_16_rabbitmq_cola_consumida.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.88\textwidth]{act10_p27_17_notificaciones_log_37.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.70\textwidth]{act10_p27_17_notificaciones_log_37.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.88\textwidth]{act10_p27_11_javafx_despues_venta.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.70\textwidth]{act10_p27_11_javafx_despues_venta.png}
   \caption{Etapa 4 (trazabilidad asíncrona de \texttt{ventaId=37}): cola durable \texttt{notificaciones.\allowbreak{}ventas} en RabbitMQ con \texttt{Consumers: 1} y \texttt{Ready: 0} (arriba), log de \texttt{notificaciones-service} confirmando \texttt{eventoId: 3b913705-...} y \texttt{ventaId=37} en 113 ms (medio) y recepción automática en JavaFX en verde con los mismos \texttt{ID Venta: 37}, \texttt{ID Veh.: 44}, \texttt{ID Comp.: 9} y \texttt{Operación ID: 938cf622-...} (abajo).}
   \label{fig:act10_p27_cadena_rmq_javafx}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.11 Actividad 11. Seguridad, tolerancia a fallos y recuperación}
 
 \vspace{0.2cm}
@@ -3189,103 +3221,104 @@ Recuperación B + JWT Stateless (P25)\newline \textit{Desde:} \texttt{12:54:46} 
 \vspace{0.2cm}
 \noindent\textbf{E. Evidencia experimental completa de la Actividad 11}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act11_01_monitor_normal.png}
+  \includegraphics[width=0.77\textwidth]{act11_01_monitor_normal.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.88\textwidth]{act11_02_p22_duplicado_descartado.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act11_02_p22_duplicado_descartado.png}
   \caption{Operación inicial del monitor y deduplicación \texttt{P22}: \texttt{monitor-balancer-service} (\texttt{:8083}, PID 14988) reportando \texttt{NGINX: UP, A(8080): UP, B(8082): UP =\allowbreak{}> NORMAL} (arriba) y traza real en \texttt{notificaciones-service} descartando el \texttt{eventoId} duplicado \texttt{3b913705-...} a las 12:42:59 sin generar segunda notificación (abajo).}
   \label{fig:act11_monitor_normal_p22}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act11_03_monitor_balanceo_75_25.png}
+  \includegraphics[width=0.77\textwidth]{act11_03_monitor_balanceo_75_25.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act11_04_monitor_estadisticas_100get.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.77\textwidth]{act11_04_monitor_estadisticas_100get.png}
   \caption{Medición real de los 100 \texttt{GET /\allowbreak{}api/\allowbreak{}vehiculos} en \texttt{monitor-balancer-service} (\texttt{P23}): reparto exacto 3:1 con \texttt{solicitudesA: 75} y \texttt{solicitudesB: 25} más sondeos JavaFX en \texttt{sinUpstream} (arriba) y estadísticas acumuladas con \texttt{total2xx: 177}, \texttt{total4xx: 0}, \texttt{total5xx: 0} y latencia media de 13.15 ms (abajo).}
   \label{fig:act11_balanceo_estadisticas_100get}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act11_05_java_b_detenida.png}
+  \includegraphics[width=0.72\textwidth,height=4.2cm,keepaspectratio]{act11_05_java_b_detenida.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act11_09_monitor_terminal_degradado.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.2cm,keepaspectratio]{act11_09_monitor_terminal_degradado.png}
   \caption{Detención de la Instancia Java B (\texttt{P24}): apagado ordenado de Spring Boot \texttt{:8082} (PID 17740) a las 12:47:09.385 (arriba) y detección inmediata en consola del monitor reportando \texttt{A(8080): UP, B(8082): DOWN =\allowbreak{}> ESTADO: DEGRADADO} (abajo).}
   \label{fig:act11_caida_java_b_terminal}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.62\textwidth]{act11_06_monitor_estado_degradado.png}
+  \includegraphics[width=0.68\textwidth,height=3.4cm,keepaspectratio]{act11_06_monitor_estado_degradado.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.68\textwidth]{act11_07_monitor_alertas_down.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.68\textwidth,height=3.4cm,keepaspectratio]{act11_07_monitor_alertas_down.png}
 
-  \vspace{0.18cm}
-  \includegraphics[width=0.82\textwidth]{act11_08_monitor_balanceo_20_0.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.68\textwidth,height=3.4cm,keepaspectratio]{act11_08_monitor_balanceo_20_0.png}
   \caption{Continuidad por NGINX y telemetría en estado \texttt{DEGRADADO}: \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}estado} con \texttt{8080: UP} y \texttt{8082: DOWN} (arriba), \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}alertas} registrando las transiciones a las 12:47:14.198 (medio) y \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}balanceo} confirmando \texttt{solicitudesA: 20} y \texttt{solicitudesB: 0} sin fallos al cliente (abajo).}
   \label{fig:act11_monitor_degradado_api}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act11_10_java_b_reiniciada.png}
+  \includegraphics[width=0.72\textwidth,height=4.4cm,keepaspectratio]{act11_10_java_b_reiniciada.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.88\textwidth]{act11_11_monitor_recuperacion_normal.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.4cm,keepaspectratio]{act11_11_monitor_recuperacion_normal.png}
   \caption{Recuperación de la Instancia Java B (\texttt{P25}): reinicio en puerto 8082 (nuevo PID 20688) a las 12:53:38.838 (arriba) y detección de recuperación en 537 ms (\texttt{12:\allowbreak{}53:\allowbreak{}39.\allowbreak{}375}) por el monitor con \texttt{Vehiculos\_8082: DOWN -> UP} y \texttt{ESTADO\_GENERAL: DEGRADADO -> NORMAL} (abajo).}
   \label{fig:act11_recuperacion_java_b}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act11_12_monitor_balanceo_recuperado_16_4.png}
+  \includegraphics[width=0.72\textwidth,height=4.4cm,keepaspectratio]{act11_12_monitor_balanceo_recuperado_16_4.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.72\textwidth]{act11_13_monitor_alertas_ciclo_completo.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.72\textwidth,height=4.4cm,keepaspectratio]{act11_13_monitor_alertas_ciclo_completo.png}
   \caption{Retorno al balanceo con JWT stateless y ciclo completo de alertas: \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}balanceo} evidenciando \texttt{solicitudesA: 16} y \texttt{solicitudesB: 4} con el mismo JWT emitido a las 12:42:36 (arriba) e historial completo de 4 alertas en \texttt{/\allowbreak{}api/\allowbreak{}monitor/\allowbreak{}alertas} (\texttt{UP -> DOWN -> UP}) (abajo).}
   \label{fig:act11_monitor_recuperado_alertas}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.78\textwidth]{act11_14_pwa_clave_fija.png}
 
   \vspace{0.16cm}
-  \includegraphics[width=0.84\textwidth]{act11_15_fastapi_detenida.png}
+  \includegraphics[width=0.78\textwidth]{act11_15_fastapi_detenida.png}
 
   \vspace{0.16cm}
-  \includegraphics[width=0.82\textwidth]{act11_16_pwa_fallo_504_sin_confirmacion.png}
+  \includegraphics[width=0.76\textwidth]{act11_16_pwa_fallo_504_sin_confirmacion.png}
   \caption{Prueba con API Python apagada (\texttt{P28}): fijación de la clave \texttt{8eaa0174-...} en la PWA sobre vehículo \texttt{ID 32} (arriba), detención de FastAPI \texttt{:8002} (medio) y respuesta real \texttt{HTTP 504} de NGINX sin generar ninguna confirmación ficticia (abajo).}
   \label{fig:act11_fastapi_apagado_504}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act11_17_fastapi_reiniciada.png}
+  \includegraphics[width=0.70\textwidth]{act11_17_fastapi_reiniciada.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.84\textwidth]{act11_18_pwa_503_bd_no_disponible.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.70\textwidth]{act11_18_pwa_503_bd_no_disponible.png}
   \caption{Reinicio de FastAPI y manejo controlado de caída de MySQL: Uvicorn nuevamente activo en \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1:\allowbreak{}8002} (arriba) y respuesta RFC 7807 \texttt{HTTP 503 BD\_NO\_DISPONIBLE} (\texttt{traceId: 168c9705-...}) al detectarse la base de datos temporalmente detenida, evitando confirmaciones falsas (abajo).}
   \label{fig:act11_fastapi_reinicio_503}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.84\textwidth]{act11_19_pwa_recuperacion_venta38_201.png}
+  \includegraphics[width=0.70\textwidth]{act11_19_pwa_recuperacion_venta38_201.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.84\textwidth]{act11_20_pwa_bloqueo_ui_vendido.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.70\textwidth]{act11_20_pwa_bloqueo_ui_vendido.png}
   \caption{Recuperación idempotente tras reactivar MySQL y protección en interfaz: reintento con la misma \texttt{Idempotency-Key} \texttt{8eaa0174-...} completando la Venta \texttt{ID 38} (\texttt{HTTP 201}, \texttt{COMPLETADA}, \texttt{ENVIADA}) (arriba) y bloqueo inmediato del vehículo \texttt{ID 32} en la PWA impidiendo una segunda selección accidental (abajo).}
   \label{fig:act11_recuperacion_venta38_bloqueo}
 \end{figure}
 
 \vspace{0.4cm}
+\FloatBarrier
 \noindent\textbf{1.7.12 Actividad 12. Documentación, presentación y análisis final}
 
 \vspace{0.2cm}
@@ -3296,21 +3329,21 @@ Recuperación B + JWT Stateless (P25)\newline \textit{Desde:} \texttt{12:54:46} 
 
 \noindent Con el propósito de garantizar una lectura nítida y sin pérdida de detalle en cada capa tecnológica, la arquitectura final verificada en ejecución real se presenta de forma encadenada en tres vistas consecutivas que conservan el flujo continuo de extremo a extremo (Figuras \ref{fig:act12_arq_parte1}, \ref{fig:act12_arq_parte2} y \ref{fig:act12_arq_parte3}): (1) \textbf{Parte 1/3} abarca los cuatro clientes multicanal, el API Gateway NGINX (\texttt{:8090}) y la observabilidad independiente (\texttt{monitor-balancer-service :\allowbreak{}8083}); (2) \textbf{Parte 2/3} recibe dicho enrutamiento hacia los microservicios backend (Spring Boot A/B en balanceo 3:1 stateless, FastAPI \texttt{ventas-api} y \texttt{notificaciones-service}); y (3) \textbf{Parte 3/3} cierra el flujo en la persistencia relacional separada de MySQL (\texttt{:3306}), el broker durable RabbitMQ (\texttt{:5672}) y la leyenda cromática oficial de los cinco planos de comunicación.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.98\textwidth]{act12_arq_parte1_clientes_gateway.png}
   \caption{Arquitectura final multicanal SOA (Parte 1/3): capa de clientes multicanal (Windows Forms, PWA \texttt{AutoUTA} v5, React y JavaFX), punto único de entrada NGINX (\texttt{:8090}) y observabilidad independiente (\texttt{monitor-balancer-service :\allowbreak{}8083}), continuando hacia la capa backend.}
   \label{fig:act12_arq_parte1}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.98\textwidth]{act12_arq_parte2_microservicios.png}
   \caption{Arquitectura final multicanal SOA (Parte 2/3): continuación del flujo desde NGINX hacia los microservicios backend — Spring Boot Vehículos A (\texttt{:8080}) y B (\texttt{:8082}) con JWT stateless, FastAPI \texttt{ventas-api} (\texttt{:8002}) con orquestación en dos fases e idempotencia, y \texttt{notificaciones-service} (\texttt{:8081}) — enlazando hacia datos y RabbitMQ.}
   \label{fig:act12_arq_parte2}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=0.98\textwidth]{act12_arq_parte3_datos_rabbitmq_leyenda.png}
   \caption{Arquitectura final multicanal SOA (Parte 3/3): cierre del flujo en la persistencia relacional separada por dominio en MySQL (\texttt{:3306}), la mensajería asíncrona durable AMQP en RabbitMQ (\texttt{:5672}, cola \texttt{notificaciones.\allowbreak{}ventas}) y la leyenda cromática de los cinco planos verificados.}
@@ -3498,52 +3531,52 @@ P28 & \textbf{Precond.:} Auditoría de repo, ZIP y fallos reales.\newline \textb
   \item \textbf{Catálogo en cuadrícula con filtros rápidos y gestión limpia de sesión:} La pestaña \texttt{Autos} presenta las 32 unidades en tarjetas minimalistas filtrables por estado (\texttt{Todos}, \texttt{Disponibles}, \texttt{Vendidos}), mientras \texttt{Sesión} mantiene el JWT oculto en memoria volátil con controles de recarga y cierre de sesión (Figuras \ref{fig:act12_ui_catalogo_todos_disp} y \ref{fig:act12_ui_catalogo_vendidos_sesion}).
 \end{enumerate}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act12_ui_01_login.jpg}
+  \includegraphics[width=0.79\textwidth]{act12_ui_01_login.jpg}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.88\textwidth]{act12_ui_02_inicio_hero.jpg}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act12_ui_02_inicio_hero.jpg}
   \caption{Mejora visual post-pruebas de la PWA (\texttt{AutoUTA} v5 Minimalista Claro): pantalla dedicada de inicio de sesión ocultando ventas y catálogo antes de autenticarse (arriba) y vista \texttt{Inicio} tras el login \texttt{admin} mostrando la barra de pestañas, botones de acceso rápido y métricas reales del inventario (abajo).}
   \label{fig:act12_ui_login_inicio}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act12_ui_03_ventas_form.png}
+  \includegraphics[width=0.77\textwidth]{act12_ui_03_ventas_form.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act12_ui_04_ventas_emision43.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.77\textwidth]{act12_ui_04_ventas_emision43.png}
   \caption{Pestaña \texttt{Ventas} rediseñada en \texttt{AutoUTA} v5: formulario limpio con control de \texttt{Idempotency-Key} e insignia \texttt{CANAL AUTORIZADO} (arriba) y ejecución real de la Venta \texttt{ID 43} devolviendo \texttt{HTTP 201 [COMPLETADA] | Notificación RabbitMQ: ENVIADA} (abajo).}
   \label{fig:act12_ui_ventas_form_emision}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\textwidth]{act12_ui_05_comprobante_venta43.png}
+  \includegraphics[width=0.79\textwidth]{act12_ui_05_comprobante_venta43.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.88\textwidth]{act12_ui_10_consulta_venta33.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.79\textwidth]{act12_ui_10_consulta_venta33.png}
   \caption{Nuevo comprobante visual de operación en la PWA: confirmación estructurada de la Venta \texttt{\#43} (\texttt{Kia Sportage GHI9015}, \texttt{\$27.\allowbreak{}600,\allowbreak{}00 USD}, \texttt{VEHÍCULO VENDIDO}, \texttt{COMPLETADA/\allowbreak{}ENVIADA} y desplegable JSON técnico) (arriba) y consulta individual de la Venta \texttt{\#33} (\texttt{Kia Rio NOP7788}, \texttt{\$17.\allowbreak{}200,\allowbreak{}00 USD}, \texttt{HTTP 200}) (abajo).}
   \label{fig:act12_ui_comprobantes_43_33}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act12_ui_06_autos_todos.png}
+  \includegraphics[width=0.74\textwidth,height=4.45cm,keepaspectratio]{act12_ui_06_autos_todos.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act12_ui_07_autos_disponibles.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.74\textwidth,height=4.45cm,keepaspectratio]{act12_ui_07_autos_disponibles.png}
   \caption{Pestaña \texttt{Autos} rediseñada en cuadrícula minimalista: vista completa de los 32 vehículos sincronizados vía NGINX (arriba) y aplicación del filtro rápido \texttt{Disponibles} resaltando las unidades listas para venta (abajo).}
   \label{fig:act12_ui_catalogo_todos_disp}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.86\textwidth]{act12_ui_08_autos_vendidos.png}
+  \includegraphics[width=0.74\textwidth,height=4.45cm,keepaspectratio]{act12_ui_08_autos_vendidos.png}
 
-  \vspace{0.22cm}
-  \includegraphics[width=0.86\textwidth]{act12_ui_09_sesion_jwt.png}
+  \vspace{0.12cm}
+  \includegraphics[width=0.74\textwidth,height=4.45cm,keepaspectratio]{act12_ui_09_sesion_jwt.png}
   \caption{Filtro \texttt{Vendidos} y pestaña \texttt{Sesión}: listado de unidades con insignia \texttt{VENDIDO} tras las operaciones registradas (arriba) y panel de \texttt{Sesión y Seguridad JWT} con token oculto en memoria volátil, expiración de 1800 s y botón de cierre de sesión (abajo).}
   \label{fig:act12_ui_catalogo_vendidos_sesion}
 \end{figure}
@@ -3587,6 +3620,7 @@ Continuidad ante falla y recuperación & Caída Java B (\texttt{12:47:09}) detec
 
 \vspace{0.3cm}
 
+\FloatBarrier
 \noindent\textbf{1.8 Habilidades blandas empleadas en la práctica}
 
 \begin{itemize}[label={},leftmargin=1.5em,itemsep=1pt,topsep=2pt]
@@ -3603,6 +3637,7 @@ Continuidad ante falla y recuperación & Caída Java B (\texttt{12:47:09}) detec
 
 \vspace{0.2cm}
 
+\FloatBarrier
 \noindent\textbf{1.9 Conclusiones}
 
 \begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
@@ -3616,6 +3651,7 @@ Continuidad ante falla y recuperación & Caída Java B (\texttt{12:47:09}) detec
 
 \vspace{0.2cm}
 
+\FloatBarrier
 \noindent\textbf{1.10 Recomendaciones}
 
 \begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
