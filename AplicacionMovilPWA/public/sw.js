@@ -3,10 +3,10 @@
  * Por seguridad NUNCA intercepta /api, /oauth, Authorization ni las respuestas JSON.
  * Estrategia Network-First con respaldo en caché para asegurar actualizaciones inmediatas.
  */
-const VERSION = 'vehiculos-pwa-v2';
+const VERSION = 'vehiculos-pwa-v5';
 const RECURSOS = [
   '/', '/index.html', '/styles.css', '/main.js', '/api.js',
-  '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'
+  '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/hero-auto-uta.png'
 ];
 
 self.addEventListener('install', (evento) => {

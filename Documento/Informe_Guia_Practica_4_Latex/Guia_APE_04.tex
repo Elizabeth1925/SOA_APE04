@@ -3136,7 +3136,7 @@ Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \textt
 \hline
 \texttt{ConsultaVehiculosForms} (.NET 8) & \texttt{Form1.cs}, \texttt{VehiculoApiClient.cs}, \texttt{VentaApiClient.cs}, DTOs & Integración contra NGINX (\texttt{:8090}); 3 pestañas: alta/listado de vehículos, alta/listado de compradores y consulta de ventas con detalle individual; prohibición expresa de \texttt{POST /api/ventas}. \\
 \hline
-\texttt{AplicacionMovilPWA} (:5173) & \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/sw.js}, \texttt{public/index.html} & Login OAuth 2.0 real (\texttt{idapli=92}), JWT solo en memoria; filtro de cabeceras hop-by-hop en proxy Node; Service Worker \texttt{v2} (\textit{Network-First}, sin cachear \texttt{/oauth/}); único canal con \texttt{POST /api/ventas} e \texttt{Idempotency-Key} fijable; bloqueo UI de vendidos; 7 pruebas unitarias superadas. \\
+\texttt{AplicacionMovilPWA} (:5173) & \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/sw.js}, \texttt{public/index.html}, \texttt{public/styles.css}, \texttt{icons/hero-auto-uta.png} & Login OAuth 2.0 real (\texttt{idapli=92}), JWT solo en memoria; filtro hop-by-hop en proxy Node; único canal con \texttt{POST /api/ventas} e \texttt{Idempotency-Key}; bloqueo UI de vendidos; rediseño visual post-pruebas \textit{AutoUTA} v5 Minimalista Claro con pantalla de login separada, vistas por pestañas y comprobante visual de venta; Service Worker \texttt{v5}; 7/7 pruebas unitarias superadas. \\
 \hline
 \texttt{react-fetch-vehiculos} (:5174) & \texttt{vite.config.js}, \texttt{src/api/vehiculosApi.js}, \texttt{src/api/ventasApi.js}, \texttt{src/App.jsx}, \texttt{src/App.css} & Puerto dedicado \texttt{5174} (sin conflicto con PWA); proxy Vite hacia NGINX; consulta y filtro por marca, detalle VIN, estado vacío y tablero de métricas reales de ventas; sin \texttt{POST /api/ventas}; 0 errores en \texttt{oxlint} y \texttt{vite build}. \\
 \hline
@@ -3257,6 +3257,68 @@ P28 & Auditoría de repo, ZIP y fallos reales & Detener FastAPI (:8002), MySQL (
   \item \textbf{Flujo OAuth 2.0 Password Grant y entorno HTTP local:} Por compatibilidad con el laboratorio académico se utilizó HTTP en \texttt{127.0.0.1} y \texttt{grant\_type=password} con cliente de aula en la PWA; en producción es obligatorio migrar a HTTPS/TLS en NGINX y flujo \textit{Authorization Code + PKCE} sin secreto de cliente en el navegador.
   \item \textbf{Comportamiento de \texttt{proxy\_connect\_timeout 2s} en Windows:} Al detener servicios locales (\texttt{8002} u \texttt{8081}), el retardo de rechazo TCP en loopback de Windows hace que NGINX responda \texttt{504 Gateway Timeout} antes de emitir \texttt{502 Bad Gateway}; tanto la PWA como JavaFX fueron probados para reportar ambos códigos como fallo real del servicio.
 \end{itemize}
+
+\vspace{0.2cm}
+\noindent\textbf{E. Mejora visual post-pruebas de la interfaz PWA móvil (\texttt{AutoUTA} v5 Minimalista Claro)}
+
+\noindent Una vez verificadas al 100\% todas las pruebas funcionales, de seguridad, balanceo, mensajería RabbitMQ, tolerancia a fallos e integración extremo a extremo (\texttt{P01}--\texttt{P28}), se realizó una \textbf{iteración de refinamiento estrictamente visual y de experiencia de usuario (UI/UX)} sobre la aplicación móvil instalada \texttt{AplicacionMovilPWA} (\textbf{\texttt{AutoUTA}}). Esta mejora modificó únicamente la capa de presentación (\texttt{public/index.html}, \texttt{public/styles.css}, \texttt{public/main.js}, \texttt{public/manifest.webmanifest}, \texttt{public/sw.js} versión \texttt{vehiculos-pwa-v5} y el recurso gráfico \texttt{public/icons/hero-auto-uta.png}), \textbf{sin alterar en absoluto} el cliente HTTP (\texttt{public/api.js}), el proxy Node.js (\texttt{server.mjs}), los contratos REST, las validaciones de negocio, la idempotencia ni la seguridad JWT/RBAC en el backend. Tras el rediseño se reejecutaron las pruebas automatizadas (\texttt{npm test}: 7/7 aprobadas) y la compilación (\texttt{npm run build}) sin incidencias:
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Pantalla de acceso dedicada y aislamiento visual antes del login:} Al abrir la PWA sin sesión activa, la interfaz presenta exclusivamente una tarjeta minimalista clara con el título \textit{«Gestiona tus ventas de forma fácil»}, el vehículo ilustrativo con placa \texttt{UTA}, el formulario OAuth 2.0 y un desplegable opcional para token manual, ocultando completamente los formularios de venta y el catálogo hasta completar la autenticación (Figura \ref{fig:act12_ui_login_inicio}, arriba).
+  \item \textbf{Espacio de trabajo estructurado por pestañas (\texttt{Inicio}, \texttt{Ventas}, \texttt{Autos}, \texttt{Sesión}):} Tras iniciar sesión, la barra superior minimalista identifica al usuario autenticado (\texttt{admin}) junto al botón \texttt{Salir} y despliega en \texttt{Inicio} accesos rápidos y tres indicadores reales del inventario (\texttt{10 Disponibles}, \texttt{21 Vendidos}, \texttt{6 Compradores}) (Figura \ref{fig:act12_ui_login_inicio}, abajo).
+  \item \textbf{Formulario de emisión y comprobante visual de operación (\texttt{Venta \#43} y consulta \texttt{Venta \#33}):} La pestaña \texttt{Ventas} reemplaza la presentación exclusiva en JSON crudo por un \textbf{comprobante visual de venta} de lectura inmediata (ícono de confirmación, monto destacado \texttt{\$27.600,00 USD}, etiqueta \texttt{VEHÍCULO VENDIDO}, vehículo \texttt{Kia Sportage (GHI9015) · ID \#36}, comprador \texttt{Carlos Mendoza · ID \#3}, fecha local, píldoras \texttt{COMPLETADA} y \texttt{ENVIADA}, y UUID de operación), conservando la respuesta JSON técnica en un desplegable auditable. El mismo comprobante opera en \textit{Consultar Venta Emitida por ID} (ej. \texttt{Venta \#33}, \texttt{\$17.200,00 USD}, \texttt{Kia Rio NOP7788}) (Figuras \ref{fig:act12_ui_ventas_form_emision} y \ref{fig:act12_ui_comprobantes_43_33}).
+  \item \textbf{Catálogo en cuadrícula con filtros rápidos y gestión limpia de sesión:} La pestaña \texttt{Autos} presenta las 32 unidades en tarjetas minimalistas filtrables por estado (\texttt{Todos}, \texttt{Disponibles}, \texttt{Vendidos}), mientras \texttt{Sesión} mantiene el JWT oculto en memoria volátil con controles de recarga y cierre de sesión (Figuras \ref{fig:act12_ui_catalogo_todos_disp} y \ref{fig:act12_ui_catalogo_vendidos_sesion}).
+\end{enumerate}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act12_ui_01_login.jpg}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.88\textwidth]{act12_ui_02_inicio_hero.jpg}
+  \caption{Mejora visual post-pruebas de la PWA (\texttt{AutoUTA} v5 Minimalista Claro): pantalla dedicada de inicio de sesión ocultando ventas y catálogo antes de autenticarse (arriba) y vista \texttt{Inicio} tras el login \texttt{admin} mostrando la barra de pestañas, botones de acceso rápido y métricas reales del inventario (abajo).}
+  \label{fig:act12_ui_login_inicio}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act12_ui_03_ventas_form.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act12_ui_04_ventas_emision43.png}
+  \caption{Pestaña \texttt{Ventas} rediseñada en \texttt{AutoUTA} v5: formulario limpio con control de \texttt{Idempotency-Key} e insignia \texttt{CANAL AUTORIZADO} (arriba) y ejecución real de la Venta \texttt{ID 43} devolviendo \texttt{HTTP 201 [COMPLETADA] | Notificación RabbitMQ: ENVIADA} (abajo).}
+  \label{fig:act12_ui_ventas_form_emision}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.88\textwidth]{act12_ui_05_comprobante_venta43.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.88\textwidth]{act12_ui_10_consulta_venta33.png}
+  \caption{Nuevo comprobante visual de operación en la PWA: confirmación estructurada de la Venta \texttt{\#43} (\texttt{Kia Sportage GHI9015}, \texttt{\$27.600,00 USD}, \texttt{VEHÍCULO VENDIDO}, \texttt{COMPLETADA/ENVIADA} y desplegable JSON técnico) (arriba) y consulta individual de la Venta \texttt{\#33} (\texttt{Kia Rio NOP7788}, \texttt{\$17.200,00 USD}, \texttt{HTTP 200}) (abajo).}
+  \label{fig:act12_ui_comprobantes_43_33}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act12_ui_06_autos_todos.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act12_ui_07_autos_disponibles.png}
+  \caption{Pestaña \texttt{Autos} rediseñada en cuadrícula minimalista: vista completa de los 32 vehículos sincronizados vía NGINX (arriba) y aplicación del filtro rápido \texttt{Disponibles} resaltando las unidades listas para venta (abajo).}
+  \label{fig:act12_ui_catalogo_todos_disp}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.86\textwidth]{act12_ui_08_autos_vendidos.png}
+
+  \vspace{0.22cm}
+  \includegraphics[width=0.86\textwidth]{act12_ui_09_sesion_jwt.png}
+  \caption{Filtro \texttt{Vendidos} y pestaña \texttt{Sesión}: listado de unidades con insignia \texttt{VENDIDO} tras las operaciones registradas (arriba) y panel de \texttt{Sesión y Seguridad JWT} con token oculto en memoria volátil, expiración de 1800 s y botón de cierre de sesión (abajo).}
+  \label{fig:act12_ui_catalogo_vendidos_sesion}
+\end{figure}
 
 \vspace{0.4cm}
 \noindent\textbf{Resultados obtenidos — Plantilla mínima consolidada}
