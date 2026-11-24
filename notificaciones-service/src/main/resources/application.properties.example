@@ -1,0 +1,15 @@
+# Plantilla de configuracion reproducible - Servicio de Notificaciones (Spring Boot)
+# Copiar a application.properties (excluido del ZIP de entrega) o definir variables de entorno
+spring.application.name=notificaciones-service
+server.port=8081
+server.address=127.0.0.1
+
+# Clave compartida para escritura POST (GET /api/notificaciones es consultable por JavaFX via NGINX)
+app.notificacion-key=${NOTIFICACIONES_KEY:CAMBIAR_CLAVE_NOTIFICACIONES_MIN_32_CAR}
+
+# Configuracion de RabbitMQ (AMQP 0-9-1)
+spring.rabbitmq.host=${RABBITMQ_HOST:localhost}
+spring.rabbitmq.port=${RABBITMQ_PORT:5672}
+spring.rabbitmq.username=${RABBITMQ_USER:guest}
+spring.rabbitmq.password=${RABBITMQ_PASSWORD:CAMBIAR_PASSWORD_RABBITMQ}
+app.rabbitmq.queue=${RABBITMQ_QUEUE:notificaciones.ventas}

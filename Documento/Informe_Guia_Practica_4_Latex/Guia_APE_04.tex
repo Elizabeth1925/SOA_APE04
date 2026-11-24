@@ -3096,33 +3096,198 @@ Recuperación B + JWT Stateless (P25) & 12:54:46 & 16 (80\%) & 4 (20\%) & \textt
 \end{figure}
 
 \vspace{0.4cm}
-
-\noindent Se incluirá una tabla con el número real de registros creados/consultados, identificadores de venta, códigos HTTP observados, distribución de 100 solicitudes entre instancias A y B, eventos publicados/consumidos, tiempos de recuperación y estado final de los componentes. Las cifras se derivarán de logs, bases de datos y respuestas reales, sin redondeos que oculten discrepancias.
+\noindent\textbf{1.7.12 Actividad 12. Documentación, presentación y análisis final}
 
 \vspace{0.2cm}
+\noindent En esta actividad de cierre se consolida la arquitectura final ejecutada, el inventario de modificaciones realizadas en cada proyecto base, la matriz integral de las \textbf{28 pruebas obligatorias (\texttt{P01}--\texttt{P28})} sustentadas en evidencias reales, el análisis de decisiones técnicas y limitaciones, los resultados cuantificables finales y el empaquetado reproducible del código fuente (\texttt{APE04\_DELACRUZ\_ELIZABETH.zip}) sin dependencias ni credenciales reales.
 
-\noindent\textbf{Plantilla mínima para resultados}
+\vspace{0.2cm}
+\noindent\textbf{A. Diagrama final actualizado de la arquitectura multicanal SOA}
 
-\vspace{0.1cm}
+\noindent La Figura \ref{fig:act12_arquitectura_final} presenta la arquitectura final verificada en ejecución real, diferenciando explícitamente mediante codificación cromática cinco planos de comunicación: (1) solicitudes \textbf{REST / OAuth 2.0 / JWT} síncronas (azul marino) canalizadas por NGINX (\texttt{:8090}); (2) \textbf{persistencia relacional MySQL} (\texttt{:3306}, verde esmeralda) con dominios de tablas separados entre Java y Python; (3) \textbf{mensajería asíncrona durable AMQP} sobre RabbitMQ (\texttt{:5672}, naranja ámbar); (4) \textbf{notificaciones visibles en el cliente JavaFX} vía NGINX (\texttt{GET /api/notificaciones} cada 3 s, púrpura); y (5) \textbf{observabilidad independiente} (\texttt{monitor-balancer-service :8083}, gris punteado) operando fuera del flujo transaccional.
 
-\noindent
-\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{6.8cm}|>{\centering\arraybackslash}p{3.5cm}|X|}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{act12_diagrama_arquitectura_final.png}
+  \caption{Diagrama final actualizado de la arquitectura multicanal SOA (APE 04), diferenciando solicitudes REST/JWT, persistencia MySQL separada por dominio, mensajería durable RabbitMQ, notificaciones visibles en JavaFX y monitoreo independiente.}
+  \label{fig:act12_arquitectura_final}
+\end{figure}
+
+\vspace{0.2cm}
+\noindent\textbf{B. Matriz de modificaciones efectuadas en los proyectos base y componentes}
+
+\noindent La Tabla \ref{tab:act12_modificaciones_proyectos} documenta las adaptaciones, clases nuevas, endpoints añadidos y contratos consolidados en los siete proyectos base y los módulos de infraestructura:
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.18}
+\caption{Resumen consolidado de modificaciones, clases/endpoints nuevos y contratos en cada componente del sistema.}
+\label{tab:act12_modificaciones_proyectos}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{3.6cm}|X|}
 \hline
-\textbf{Indicador} & \textbf{Valor medido} & \textbf{Evidencia} \\
+\textbf{Proyecto / Módulo} & \textbf{Archivos Clave / Nuevos} & \textbf{Modificaciones, Endpoints y Contratos Aplicados} \\
 \hline
-Vehículos y compradores creados / listados & \rule{3cm}{0.4pt} & Captura y respuesta API \\
+\texttt{venta-vehiculos-api\_security} (:8080 / :8082) & \texttt{SecurityConfig.java}, \texttt{JwtService.java}, \texttt{VehiculoController.java}, \texttt{ReservaController.java}, \texttt{application.properties.example} & Despliegue de 2 instancias equivalentes stateless (\texttt{weight=3} y \texttt{weight=1}); RBAC estricto (\texttt{401}/\texttt{403} RFC 7807); \texttt{/actuator/health} público para monitor; soporte de reservas 2 fases y plantilla sin secretos. \\
 \hline
-Ventas confirmadas / rechazadas / reintentadas & \rule{3cm}{0.4pt} & FastAPI y MySQL \\
+\texttt{ventas-api} (:8002) & \texttt{routers/ventas.py}, \texttt{services/venta\_service.py}, \texttt{clients/rabbitmq\_publisher.py}, \texttt{worker.py}, \texttt{.env.example} & Se incorporaron \texttt{GET /api/compradores} y \texttt{GET /api/ventas} con aislamiento RBAC; idempotencia por \texttt{Idempotency-Key} + SHA-256; publicador AMQP desacoplado (\texttt{durable=True}, \texttt{delivery\_mode=2}) solo para \texttt{COMPLETADA}; conciliador Outbox \texttt{worker.py}. \\
 \hline
-Mensajes emitidos / pendientes / consumidos & \rule{3cm}{0.4pt} & RabbitMQ y listener \\
+\texttt{notificaciones-service} (:8081) & \texttt{VentasRabbitListener.java}, \texttt{NotificacionService.java}, \texttt{NotificacionController.java}, \texttt{NotificacionKeyFilter.java} & Listener real \texttt{@RabbitListener} en \texttt{notificaciones.ventas}; deduplicación concurrente por \texttt{eventoId} (\texttt{ConcurrentHashMap}); historial \texttt{CopyOnWriteArrayList}; exposición de \texttt{GET /api/notificaciones} sin exponer clave interna en clientes. \\
 \hline
-NGINX: A / B / total de GET & \rule{3cm}{0.4pt} & access\_log y monitor \\
+\texttt{ConsultaVehiculosForms} (.NET 8) & \texttt{Form1.cs}, \texttt{VehiculoApiClient.cs}, \texttt{VentaApiClient.cs}, DTOs & Integración contra NGINX (\texttt{:8090}); 3 pestañas: alta/listado de vehículos, alta/listado de compradores y consulta de ventas con detalle individual; prohibición expresa de \texttt{POST /api/ventas}. \\
 \hline
-Notificaciones presentadas en JavaFX & \rule{3cm}{0.4pt} & API y pantalla \\
+\texttt{AplicacionMovilPWA} (:5173) & \texttt{server.mjs}, \texttt{public/api.js}, \texttt{public/main.js}, \texttt{public/sw.js}, \texttt{public/index.html} & Login OAuth 2.0 real (\texttt{idapli=92}), JWT solo en memoria; filtro de cabeceras hop-by-hop en proxy Node; Service Worker \texttt{v2} (\textit{Network-First}, sin cachear \texttt{/oauth/}); único canal con \texttt{POST /api/ventas} e \texttt{Idempotency-Key} fijable; bloqueo UI de vendidos; 7 pruebas unitarias superadas. \\
 \hline
-Continuidad ante falla y recuperación & \rule{3cm}{0.4pt} & HTTP, alertas y registros \\
+\texttt{react-fetch-vehiculos} (:5174) & \texttt{vite.config.js}, \texttt{src/api/vehiculosApi.js}, \texttt{src/api/ventasApi.js}, \texttt{src/App.jsx}, \texttt{src/App.css} & Puerto dedicado \texttt{5174} (sin conflicto con PWA); proxy Vite hacia NGINX; consulta y filtro por marca, detalle VIN, estado vacío y tablero de métricas reales de ventas; sin \texttt{POST /api/ventas}; 0 errores en \texttt{oxlint} y \texttt{vite build}. \\
+\hline
+\texttt{consultarvehiculojavafx} (JavaFX 21) & \texttt{VehiculosApp.java}, \texttt{VehiculosApiClient.java}, \texttt{NotificacionVentaDto.java} & Pestaña en vivo de notificaciones con sondeo \texttt{Timeline} cada 3 s; registro \texttt{ResultadoNotificaciones} para diferenciar 3 estados reales (verde conectado, azul vacío \texttt{200 []}, rojo fallo \texttt{502/504}); alias \texttt{@JsonAlias} para \texttt{fechaRegistro}. \\
+\hline
+NGINX (:8090), RabbitMQ (:5672), Monitor (:8083), MySQL (:3306) & \texttt{nginx/nginx.conf}, \texttt{rabbitmq/definitions.json}, \texttt{monitor-balancer-service}, \texttt{database/schema\_base.sql} & Log NGINX seguro con \texttt{\$uri} (sin query strings), upstream 3:1 con \texttt{proxy\_next\_upstream} y \texttt{/nginx-ping}; cola durable reproducible en \texttt{definitions.json}; monitor independiente con 5 endpoints de salud/ventanas; DDL base reproducible. \\
 \hline
 \end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{C. Matriz consolidada de pruebas obligatorias (\texttt{P01}--\texttt{P28})}
+
+\noindent En las Tablas \ref{tab:act12_pruebas_a}, \ref{tab:act12_pruebas_b} y \ref{tab:act12_pruebas_c} se consolidan las 28 pruebas exigidas por la guía con precondiciones, acciones, roles (sin revelar ningún JWT), resultados esperados, resultados reales medidos, referencias a evidencias y su interpretación técnica:
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.14}
+\caption{Matriz consolidada de pruebas obligatorias — Parte A: Clientes y operaciones comerciales (\texttt{P01}--\texttt{P13}).}
+\label{tab:act12_pruebas_a}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.65cm}|>{\raggedright\arraybackslash}p{2.35cm}|>{\raggedright\arraybackslash}p{2.55cm}|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{2.65cm}|>{\raggedright\arraybackslash}p{1.55cm}|X|}
+\hline
+\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\hline
+P01 & Infraestructura iniciada en orden & Arranque MySQL, RMQ, NGINX, A/B, FastAPI, Notif. y 4 clientes & N/A & Todos los servicios responden en sus puertos y \texttt{/nginx-ping} = \texttt{200 UP}. & Sec. 1.7.10 (Figs. \ref{fig:act10_srv_backend_gw}--\ref{fig:act10_srv_escritorio}) & Topología multicanal íntegra y estable sin conflictos de puerto. \\
+\hline
+P02 & WinForms con JWT válido & \texttt{POST /api/vehiculos} (Honda CR-V \texttt{PBC-2026}) & \texttt{ADMIN} & \texttt{HTTP 201 Created}, \texttt{ID 44} (y \texttt{ID 43} en Act 5) en API y MySQL. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo} & Alta administrativa validada en Spring Boot y persistida en MySQL. \\
+\hline
+P03 & Catálogo en MySQL & \texttt{GET /api/vehiculos} desde WinForms & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 32 vehículos coherentes con Spring Boot. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_vehiculo} & Sincronización directa sin listas locales ni datos ficticios. \\
+\hline
+P04 & WinForms pestaña 2 & \texttt{POST /api/compradores} (Carlos Lopez \texttt{1805556677}) & \texttt{ADMIN} & \texttt{HTTP 201 Created}, \texttt{ID 9} (y \texttt{ID 8} en Act 5) en FastAPI/MySQL. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_winforms_comprador} & Registro de comprador validado por Pydantic y persistido en Python. \\
+\hline
+P05 & Compradores registrados & \texttt{GET /api/compradores} en WinForms & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 6 compradores de \texttt{admin} (9 globales con \texttt{operador}). & Fig. \ref{fig:act10_p27_winforms_comprador} & Endpoint incorporado respeta propiedad RBAC por usuario. \\
+\hline
+P06 & Ventas en MySQL & \texttt{GET /api/ventas} en WinForms pestaña 3 & \texttt{ADMIN} & \texttt{HTTP 200 OK}, 28 ventas listadas; sin botón ni \texttt{POST /api/ventas}. & Sec. 1.7.5; Fig. \ref{fig:act10_p27_coherencia_winforms} & Separación de responsabilidades administrativa cumplida. \\
+\hline
+P07 & PWA en \texttt{:5173} & Login en PWA (\texttt{POST /oauth/token}, \texttt{idapli=92}) & \texttt{ADMIN} / \texttt{OPERADOR} & \texttt{HTTP 200 OK}, JWT en memoria volátil oculto, catálogo cargado. & Sec. 1.7.6; Fig. \ref{fig:act10_p27_pwa_auth_seleccion} & Autenticación móvil OAuth 2.0 real vía NGINX sin guardar en disco. \\
+\hline
+P08 & Credencial errónea / JWT vencido o alterado & \texttt{POST /oauth/token}, \texttt{GET /vehiculos}, \texttt{GET /ventas} & Inválido / Vencido & \texttt{HTTP 401} en todos los casos (\texttt{SEC-01} a \texttt{SEC-07}); ninguna venta creada. & Tabla \ref{tab:act11_matriz_seguridad_errores}; Fig. \ref{fig:act7_vite_error401} & Filtros de autenticación activos sin bypass ni fallos silenciosos. \\
+\hline
+P09 & Vehículo \texttt{DISPONIBLE} + comprador en PWA & \texttt{POST /api/ventas} con \texttt{Idempotency-Key} & \texttt{ADMIN} / \texttt{OPERADOR} & \texttt{HTTP 201 Created} (Ventas 33, 37 y 38: \texttt{COMPLETADA}, \texttt{ENVIADA}). & Sec. 1.7.6; Figs. \ref{fig:act10_p27_pwa_venta37}, \ref{fig:act11_recuperacion_venta38_bloqueo} & Transacción distribuida 2 fases confirmada y vehículo pasa a \texttt{VENDIDO}. \\
+\hline
+P10 & Venta 38 creada con clave \texttt{8eaa0174-...} & Reenvío \texttt{POST /api/ventas} misma clave y JSON & \texttt{ADMIN} & \texttt{HTTP 200 OK} retornando el mismo \texttt{id: 38} y \texttt{operacionId: f43ffc57-...}. & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-04}) & Idempotencia verificada: cero ventas duplicadas ni doble evento. \\
+\hline
+P11 & Misma clave \texttt{8eaa0174-...} & \texttt{POST /api/ventas} cambiando precio a \$25,100 & \texttt{ADMIN} & \texttt{HTTP 409 Conflict} (\texttt{CLAVE\_REUTILIZADA}, \texttt{traceId: 0e7e6ccb-...}). & Sec. 1.7.6; Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-05}) & Huella SHA-256 bloquea reutilización maliciosa o errónea de clave. \\
+\hline
+P12 & Vehículo \texttt{ID 32} ya \texttt{VENDIDO} & \texttt{POST /api/ventas} con clave nueva & \texttt{ADMIN} & \texttt{HTTP 409} (\texttt{VENTA\_RECHAZADA}); \texttt{ID 39} queda \texttt{FALLIDA} sin evento. & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{RES-06}) & Integridad de inventario protegida contra doble venta. \\
+\hline
+P13 & Sesión con rol de solo lectura & \texttt{POST /api/ventas}, \texttt{/vehiculos}, \texttt{/compradores} & \texttt{CONSULTA} & \texttt{HTTP 403 Forbidden} (\texttt{SIN\_PERMISO}: requiere \texttt{OPERADOR/ADMIN}). & Tabla \ref{tab:act11_matriz_seguridad_errores} (\texttt{SEC-09..12}) & RBAC aplicado tanto en Spring Boot como en FastAPI. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\caption{Matriz consolidada de pruebas obligatorias — Parte B: Cliente React y notificaciones (\texttt{P14}--\texttt{P22}).}
+\label{tab:act12_pruebas_b}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.65cm}|>{\raggedright\arraybackslash}p{2.35cm}|>{\raggedright\arraybackslash}p{2.55cm}|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{2.65cm}|>{\raggedright\arraybackslash}p{1.55cm}|X|}
+\hline
+\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\hline
+P14 & React en \texttt{:5174} con JWT & \texttt{GET /api/vehiculos} y filtro \texttt{ferrari} & \texttt{ADMIN} & \texttt{HTTP 200 OK} (31/32 filas reales) y aviso claro «0 visibles» en búsqueda vacía. & Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio} & Consulta web real vía proxy Vite $\rightarrow$ NGINX sin errores de render. \\
+\hline
+P15 & Catálogo cargado en React & Filtrar \texttt{Toyota} / \texttt{Honda} y seleccionar fila & \texttt{ADMIN} & 5 \texttt{Toyota} coincidentes (incl. ID 43); detalle exacto de VIN/placa para IDs 14 y 44. & Figs. \ref{fig:act7_consulta_filtro}, \ref{fig:act7_detalle_vacio}, \ref{fig:act10_p27_react_javafx_previo} & Coincidencia exacta entre tabla filtrada y ficha de detalle. \\
+\hline
+P16 & Pestaña Ventas en React & \texttt{GET /api/ventas} y selección de fila & \texttt{ADMIN} & 25+ ventas, métricas reales y detalle de \texttt{\#3} y \texttt{\#37}; sin \texttt{POST /api/ventas}. & Figs. \ref{fig:act7_ventas_metricas}, \ref{fig:act7_ventas_detalle}, \ref{fig:act10_p27_coherencia_react_java} & Portal de auditoría estricto de solo lectura confirmado en código y red. \\
+\hline
+P17 & RabbitMQ activo (\texttt{:5672}) & Venta confirmada (IDs 35, 36, 37, 38) & \texttt{ADMIN} & 1 único evento JSON persistente (\texttt{delivery\_mode=2}, 223 B) sin PII/JWT. & Figs. \ref{fig:act8_payload_persistente}, \ref{fig:act10_p27_cadena_rmq_javafx} & Publicación desacoplada y auditable solo tras confirmar venta. \\
+\hline
+P18 & Venta rechazada (ID 39) & Intento de venta sobre vehículo vendido & \texttt{ADMIN} & \texttt{HTTP 409}; registro queda \texttt{FALLIDA} con \texttt{notificacion=PENDIENTE}; 0 eventos. & Tabla \ref{tab:act11_matriz_seguridad_errores}; Sec. 1.7.8 & La guardia \texttt{estado != COMPLETADA} evita notificaciones falsas. \\
+\hline
+P19 & \texttt{notificaciones-service} detenido & \texttt{POST /api/ventas} (Venta 35) & \texttt{ADMIN} & Venta \texttt{201 Created}; cola durable \texttt{notificaciones.ventas} registra \texttt{Consumers=0, Ready=1}. & Figs. \ref{fig:act8_rmq_overview_detenido}, \ref{fig:act8_venta35_ready1} & Persistencia en disco garantiza cero pérdida con consumidor caído. \\
+\hline
+P20 & Mensaje retenido en cola & Reinicio de \texttt{notificaciones-service} sin repetir POST & Sistema & Listener consume \texttt{ventaId=35} automáticamente; cola pasa a \texttt{Consumers=1, Ready=0}. & Fig. \ref{fig:act8_reinicio_consumidor_ready0} & Entrega diferida fiable sin alterar ni duplicar ventas en MySQL. \\
+\hline
+P21 & JavaFX en pestaña En Vivo & Emisión de Ventas 36 y 37 sin refresco manual & \texttt{ADMIN} & Sondeo 3 s pasa de azul (vacío) a verde mostrando \texttt{ID 36} y \texttt{ID 37} automáticamente. & Figs. \ref{fig:act9_javafx_despues_auto}, \ref{fig:act10_p27_cadena_rmq_javafx} & Desacoplamiento completo: JavaFX solo consume \texttt{GET /api/notificaciones}. \\
+\hline
+P22 & Evento \texttt{3b913705-...} ya procesado & Reenvío del mismo \texttt{eventoId} a RabbitMQ & Sistema & Log \texttt{WARN: EVENTO DUPLICADO DESCARTADO}; historial permanece en 1 fila. & Fig. \ref{fig:act11_monitor_normal_p22} (abajo) & Idempotencia AMQP efectiva ante entregas «al menos una vez». \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.16}
+\caption{Matriz consolidada de pruebas obligatorias — Parte C: Infraestructura, recuperación e integración (\texttt{P23}--\texttt{P28}).}
+\label{tab:act12_pruebas_c}
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}p{0.65cm}|>{\raggedright\arraybackslash}p{2.35cm}|>{\raggedright\arraybackslash}p{2.55cm}|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{2.65cm}|>{\raggedright\arraybackslash}p{1.55cm}|X|}
+\hline
+\textbf{ID} & \textbf{Precondición y Prueba} & \textbf{Acción / Ruta} & \textbf{Rol} & \textbf{Resultado Real Medido} & \textbf{Evidencia} & \textbf{Interpretación} \\
+\hline
+P23 & NGINX + A (:8080) + B (:8082) + Monitor & Ráfaga de 100 \texttt{GET /api/vehiculos} & \texttt{ADMIN} & \texttt{100/100 HTTP 200} en 2565 ms: \textbf{75} en A (75\%) y \textbf{25} en B (25\%) (promedio 17.21 ms). & Tabla \ref{tab:act11_balanceo_failover}; Fig. \ref{fig:act11_balanceo_estadisticas_100get} & Reparto ponderado 3:1 exacto verificado en \texttt{access.log} real. \\
+\hline
+P24 & Instancia Java B (:8082) detenida & 20 \texttt{GET /api/vehiculos} vía NGINX & \texttt{ADMIN} & \texttt{20/20 HTTP 200} atendidos 100\% por A (20/0); monitor alerta \texttt{DEGRADADO} en 4.8 s. & Figs. \ref{fig:act11_caida_java_b_terminal}, \ref{fig:act11_monitor_degradado_api} & Continuidad total al cliente sin errores \texttt{5xx} gracias a \texttt{proxy\_next\_upstream}. \\
+\hline
+P25 & Java B reiniciada (PID 20688) & 20 \texttt{GET /api/vehiculos} con el \textbf{mismo JWT} & \texttt{ADMIN} & Monitor recupera en 537 ms; \texttt{20/20 HTTP 200} repartidos 16 en A y 4 en B sin relogin. & Figs. \ref{fig:act11_recuperacion_java_b}, \ref{fig:act11_monitor_recuperado_alertas} & Autenticación JWT 100\% stateless validada entre instancias independientes. \\
+\hline
+P26 & Monitor (:8083) y NGINX activos & \texttt{GET /nginx-ping} y 5 endpoints \texttt{/api/monitor/*} & Público / Monitor & \texttt{/nginx-ping} = \texttt{200 UP} directo; 4 alertas reales con timestamps exactos. & Figs. \ref{fig:act11_monitor_normal_p22}, \ref{fig:act11_monitor_recuperado_alertas} & Observabilidad desacoplada del tráfico de negocio y log seguro \texttt{\$uri}. \\
+\hline
+P27 & Todo el sistema encendido simultáneamente & WinForms (ID 44, ID 9) $\rightarrow$ PWA (Venta 37) $\rightarrow$ RMQ $\rightarrow$ JavaFX + React & \texttt{ADMIN} & Identificadores idénticos (\texttt{ventaId=37}, \texttt{vehiculoId=44}, \texttt{compradorId=9}, \texttt{operacionId=938cf622-...}) en los 4 clientes. & Tabla \ref{tab:act10_trazabilidad_p27}; Figs. \ref{fig:act10_p27_winforms_vehiculo}--\ref{fig:act10_p27_cadena_rmq_javafx} & Integración extremo a extremo verificada sin divergencias de estado. \\
+\hline
+P28 & Auditoría de repo, ZIP y fallos reales & Detener FastAPI (:8002), MySQL (:3306), Notif. (:8081) y revisar entrega & Todos & Errores reales \texttt{504}/\texttt{503} sin ventas ficticias; JWT enmascarado; ZIP sin secretos ni dependencias. & Figs. \ref{fig:act9_javafx_fallo_504}, \ref{fig:act11_fastapi_apagado_504}, \ref{fig:act11_fastapi_reinicio_503} & Honestidad técnica y protección de credenciales cumplidas íntegramente. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\vspace{0.2cm}
+\noindent\textbf{D. Decisiones técnicas clave y limitaciones identificadas}
+
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Separación estricta de responsabilidades multicanal:} Bloquear la emisión de ventas fuera de la PWA tanto en las interfaces de Windows Forms y React como en los contratos RBAC del backend evitó duplicación de lógica comercial y aseguró que toda venta respete \texttt{Idempotency-Key} y reserva en dos fases.
+  \item \textbf{Sondeo automático limitado (3 s) vs. SSE/WebSocket en JavaFX:} Se optó por sondeo HTTP cada 3 segundos con \texttt{Timeline} y manejo explícito de códigos \texttt{200} vs. \texttt{502/504} por su simplicidad diagnóstica a través de NGINX; como limitación, genera tráfico periódico de lectura (\texttt{sinUpstream} en \texttt{access.log}) que escalaría mejor mediante Server-Sent Events (SSE) o WebSocket en entornos de alta concurrencia.
+  \item \textbf{Historial de notificaciones en memoria (\texttt{CopyOnWriteArrayList}):} En \texttt{notificaciones-service}, el conjunto de deduplicación y el historial residen en memoria JVM, por lo que un reinicio completo del proceso limpia el historial previo; en producción debe respaldarse en una tabla dedicada en MySQL o Redis.
+  \item \textbf{Flujo OAuth 2.0 Password Grant y entorno HTTP local:} Por compatibilidad con el laboratorio académico se utilizó HTTP en \texttt{127.0.0.1} y \texttt{grant\_type=password} con cliente de aula en la PWA; en producción es obligatorio migrar a HTTPS/TLS en NGINX y flujo \textit{Authorization Code + PKCE} sin secreto de cliente en el navegador.
+  \item \textbf{Comportamiento de \texttt{proxy\_connect\_timeout 2s} en Windows:} Al detener servicios locales (\texttt{8002} u \texttt{8081}), el retardo de rechazo TCP en loopback de Windows hace que NGINX responda \texttt{504 Gateway Timeout} antes de emitir \texttt{502 Bad Gateway}; tanto la PWA como JavaFX fueron probados para reportar ambos códigos como fallo real del servicio.
+\end{itemize}
+
+\vspace{0.4cm}
+\noindent\textbf{Resultados obtenidos — Plantilla mínima consolidada}
+
+\vspace{0.1cm}
+\noindent Las cifras de la Tabla \ref{tab:resultados_finales_consolidados} provienen directamente de las consultas a MySQL, los registros de \texttt{access.log} procesados por \texttt{monitor-balancer-service}, la consola de RabbitMQ y las respuestas HTTP reales capturadas durante la práctica, sin redondeos artificiales:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.22}
+\caption{Resultados cuantificables finales consolidados de la práctica APE 04.}
+\label{tab:resultados_finales_consolidados}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.8cm}|>{\raggedright\arraybackslash}p{5.2cm}|X|}
+\hline
+\textbf{Indicador} & \textbf{Valor Medido Real} & \textbf{Evidencia Verificable} \\
+\hline
+Vehículos y compradores creados / listados & \textbf{32 vehículos} totales (altas reales IDs 43 y 44 en WinForms; 19 \texttt{VENDIDO}, 12 \texttt{DISPONIBLE}, 1 \texttt{RESERVADO}). \textbf{9 compradores} totales (6 de \texttt{admin}, 3 de \texttt{operador}; altas reales IDs 8 y 9). & Respuestas \texttt{GET /api/vehiculos} y \texttt{GET /api/compradores}; Figs. \ref{fig:act10_p27_winforms_vehiculo}, \ref{fig:act10_p27_winforms_comprador}. \\
+\hline
+Ventas confirmadas / rechazadas / reintentadas & \textbf{39 ventas} totales en MySQL (\texttt{IDs 1--39}): \textbf{18 \texttt{COMPLETADA}} (todas \texttt{ENVIADA}), \textbf{7 \texttt{FALLIDA}}, \textbf{10 \texttt{EN\_REVISION}}, \textbf{4 \texttt{PENDIENTE}}. Reintento idéntico \texttt{P10} = \texttt{200 OK} (mismo ID 38); conflictos \texttt{P11/P12} = \texttt{409}. & FastAPI (\texttt{:8002}), MySQL, Tabla \ref{tab:act11_matriz_seguridad_errores}, Figs. \ref{fig:act10_p27_pwa_venta37}, \ref{fig:act11_recuperacion_venta38_bloqueo}. \\
+\hline
+Mensajes emitidos / pendientes / consumidos & 18 ventas confirmadas con \texttt{notificacion=ENVIADA}; 21 no confirmadas en \texttt{PENDIENTE} (0 eventos falsos). Prueba \texttt{P19/P20} (Venta 35): \texttt{Ready=1} con \texttt{Consumers=0} $\rightarrow$ \texttt{Ready=0} con \texttt{Consumers=1}. Prueba \texttt{P22}: 1 duplicado descartado. & RabbitMQ 3.13 (\texttt{notificaciones.ventas}) y \texttt{VentasRabbitListener}; Figs. \ref{fig:act8_venta35_ready1}--\ref{fig:act8_reinicio_consumidor_ready0}, \ref{fig:act11_monitor_normal_p22}. \\
+\hline
+NGINX: A / B / total de GET & Ráfaga \texttt{P23} (100 GET vehículos, \texttt{2565.2 ms}): \textbf{A (:8080) = 75 (75\%)} / \textbf{B (:8082) = 25 (25\%)}, promedio \texttt{17.21 ms} (\texttt{13.15 ms} sobre 177 pet. incluyendo sondeos JavaFX en \texttt{sinUpstream}), \texttt{0} errores \texttt{4xx/5xx}. & \texttt{access.log} y \texttt{/api/monitor/balanceo}, \texttt{/estadisticas}; Fig. \ref{fig:act11_balanceo_estadisticas_100get}. \\
+\hline
+Notificaciones presentadas en JavaFX & Recepción automática sin refresco manual (< 3 s) para \textbf{Venta 36} (Act 9, \texttt{107 ms} en listener) y \textbf{Venta 37} (Act 10, \texttt{113 ms} en listener); diferenciación visual de vacío azul (\texttt{200 []}) vs. fallo rojo (\texttt{504}). & \texttt{GET /api/notificaciones} vía NGINX y pantalla JavaFX; Figs. \ref{fig:act9_javafx_despues_auto}, \ref{fig:act9_javafx_fallo_504}, \ref{fig:act10_p27_cadena_rmq_javafx}. \\
+\hline
+Continuidad ante falla y recuperación & Caída Java B (\texttt{12:47:09}) detectada en \textbf{4.8 s}; \textbf{20/20 \texttt{HTTP 200}} por A (20/0). Reinicio B (\texttt{12:53:38}) recuperado en \textbf{537 ms}; \textbf{20/20 \texttt{HTTP 200}} (16/4) con el \textbf{mismo JWT stateless}. Caída FastAPI = \texttt{504}, MySQL = \texttt{503}, Notif. = \texttt{504} (0 confirmaciones ficticias). & Alertas \texttt{/api/monitor/alertas}, logs y PWA; Tabla \ref{tab:act11_balanceo_failover}, Figs. \ref{fig:act11_caida_java_b_terminal}--\ref{fig:act11_recuperacion_venta38_bloqueo}. \\
+\hline
+\end{tabularx}
+\end{table}
 
 \vspace{0.3cm}
 
@@ -3135,8 +3300,8 @@ Continuidad ante falla y recuperación & \rule{3cm}{0.4pt} & HTTP, alertas y reg
   \item [$\square$] La empatía
   \item [$\boxtimes$] Pensamiento crítico
   \item [$\square$] Flexibilidad
-  \item [$\square$] La resolución de conflictos
-  \item [$\square$] Adaptabilidad
+  \item [$\boxtimes$] La resolución de conflictos
+  \item [$\boxtimes$] Adaptabilidad
   \item [$\boxtimes$] Responsabilidad
 \end{itemize}
 
@@ -3144,22 +3309,63 @@ Continuidad ante falla y recuperación & \rule{3cm}{0.4pt} & HTTP, alertas y reg
 
 \noindent\textbf{1.9 Conclusiones}
 
-\noindent Se redactarán conclusiones técnicas relacionadas directamente con los objetivos general y específicos, apoyadas en resultados verificados de los clientes, la seguridad, el balanceo y la mensajería. No se utilizarán conclusiones genéricas desconectadas de las pruebas..
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Integración multicanal SOA verificada (Objetivo General):} Se integraron exitosamente cuatro clientes heterogéneos (Windows Forms .NET 8, PWA móvil Node.js, React Web Vite y JavaFX 21) sobre una arquitectura distribuida de tres microservicios backend (Spring Boot Vehículos A/B, Python FastAPI Ventas y Spring Boot Notificaciones), demostrando en la prueba integral \texttt{P27} la propagación consistente de los mismos identificadores (\texttt{vehiculoId=44}, \texttt{compradorId=9}, \texttt{ventaId=37} y \texttt{operacionId=938cf622-...}) desde el alta administrativa hasta la alerta automática en escritorio.
+  \item \textbf{Conservación de reglas de negocio y seguridad en el backend (Objetivo Específico 1):} Las adaptaciones efectuadas en los siete proyectos base (incorporación de \texttt{GET /api/compradores}, \texttt{GET /api/ventas}, \texttt{GET /api/notificaciones} y filtros de idempotencia) mantuvieron todas las validaciones críticas en los servidores: las 12 pruebas de seguridad (\texttt{SEC-01}--\texttt{SEC-12}) confirmaron rechazos reales \texttt{401} ante tokens ausentes, alterados o vencidos y \texttt{403} para roles insuficientes (\texttt{CONSULTA} y \texttt{OPERADOR}), mientras que la verificación SHA-256 sobre \texttt{Idempotency-Key} respondió \texttt{200 OK} ante reintentos idénticos (\texttt{P10}) y \texttt{409 Conflict} ante cambios de cuerpo (\texttt{P11}) o vehículos ya vendidos (\texttt{P12}).
+  \item \textbf{Separación estricta de canales cliente (Objetivo Específico 2):} Se comprobó tanto en interfaz como en código fuente que Windows Forms administra vehículos/compradores y consulta ventas sin emitirlas, React opera exclusivamente como portal de consulta y auditoría en el puerto dedicado \texttt{5174} (0 errores en \texttt{oxlint}), y la PWA móvil (\texttt{:5173}) actúa como único canal emisor de ventas con autenticación OAuth 2.0 real, Service Worker \texttt{v2} y bloqueo inmediato de unidades vendidas.
+  \item \textbf{Desacoplamiento asíncrono confiable con RabbitMQ y JavaFX (Objetivo Específico 3):} La cola durable \texttt{notificaciones.ventas} con mensajes persistentes (\texttt{delivery\_mode=2}) garantizó cero pérdida de avisos cuando \texttt{notificaciones-service} estuvo detenido (\texttt{Consumers=0, Ready=1} $\rightarrow$ drenaje automático al reinicio sin repetir \texttt{POST}), cero duplicación ante reentregas del mismo \texttt{eventoId} (\texttt{P22}) y visualización automática en JavaFX en menos de 3 segundos diferenciando claramente pantalla vacía saludable (azul \texttt{HTTP 200 []}) de fallo de servicio (rojo \texttt{HTTP 504}).
+  \item \textbf{Balanceo ponderado 3:1, disponibilidad y JWT stateless en NGINX (Objetivo Específico 4):} El balanceador NGINX distribuyó exactamente \textbf{75} solicitudes a la Instancia A (\texttt{:8080}) y \textbf{25} a la Instancia B (\texttt{:8082}) en la ráfaga de 100 \texttt{GET} (\texttt{100\% HTTP 200}). Ante la caída de la Instancia B, NGINX mantuvo \texttt{20/20 HTTP 200} a través de A mientras el monitor alertó \texttt{DEGRADADO} en \textbf{4.8 s}; tras el reinicio de B, la recuperación se detectó en \textbf{537 ms} retomando el balanceo (\texttt{16/4}) con el \textbf{mismo JWT stateless} sin exigir nueva autenticación.
+  \item \textbf{Tolerancia a fallos sin resultados ficticios (Objetivo Específico 5):} Las caídas provocadas en FastAPI (\texttt{HTTP 504}), MySQL (\texttt{HTTP 503 BD\_NO\_DISPONIBLE}) y Notificaciones (\texttt{HTTP 504}) fueron comunicadas explícitamente por los clientes sin inventar confirmaciones, logrando diferenciar en las 39 ventas reales de MySQL exactamente 18 \texttt{COMPLETADA}, 7 \texttt{FALLIDA}, 10 \texttt{EN\_REVISION} y 4 \texttt{PENDIENTE}, con cero eventos espurios en RabbitMQ.
+\end{enumerate}
 
 \vspace{0.2cm}
 
 \noindent\textbf{1.10 Recomendaciones}
 
-\noindent Se formularán recomendaciones que se deriven de las conclusiones y limitaciones observadas: despliegue HTTPS, publicación confiable de eventos, manejo de sesiones móviles, rendimiento del balanceador, monitoreo y protección de credenciales, cuando los resultados las justifiquen.
+\begin{enumerate}[leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item \textbf{Despliegue con HTTPS/TLS en NGINX:} Dado que las pruebas locales operaron sobre HTTP en \texttt{127.0.0.1} exponiendo potencialmente cabeceras \texttt{Authorization: Bearer} en redes no confiables, se recomienda habilitar terminación TLS 1.3 con certificados firmados y cabeceras HSTS en NGINX antes de cualquier paso a producción.
+  \item \textbf{Migración del login móvil a OAuth 2.0 Authorization Code + PKCE:} En la PWA se empleó \textit{Password Grant} con credenciales de cliente de aula; para entornos reales se debe migrar a \textit{Authorization Code + PKCE} con tokens de vida corta y renovación segura sin incluir secretos de cliente en JavaScript del navegador.
+  \item \textbf{Persistencia relacional del historial de notificaciones y ejecución continua del Outbox:} Reemplazar el almacenamiento en memoria (\texttt{CopyOnWriteArrayList}) de \texttt{notificaciones-service} por una tabla dedicada en MySQL con índice único sobre \texttt{evento\_id} para preservar historial y deduplicación tras reinicios, y ejecutar \texttt{ventas-api/app/worker.py} como servicio permanente para conciliar automáticamente ventas en \texttt{EN\_REVISION} o \texttt{notificacion=PENDIENTE}.
+  \item \textbf{Evolución del sondeo JavaFX hacia Server-Sent Events (SSE) o WebSocket:} Sustituir el sondeo HTTP cada 3 segundos por un flujo reactivo \texttt{GET /api/notificaciones/stream} (SSE) o WebSocket en \texttt{notificaciones-service}, eliminando peticiones repetitivas en \texttt{access.log} (\texttt{sinUpstream}) y reduciendo la latencia percibida a milisegundos.
+  \item \textbf{Ajuste de timeouts y chequeos activos en el balanceador:} Incorporar comprobaciones activas de salud, rotación automática de \texttt{access.log} y calibración diferenciada de \texttt{proxy\_connect\_timeout} / \texttt{proxy\_read\_timeout} por ruta en NGINX para distinguir más rápido entre indisponibilidad inmediata (\texttt{502}) y saturación de respuesta (\texttt{504}).
+  \item \textbf{Gestión centralizada de secretos y auditoría automatizada:} Mantener la política aplicada en el paquete ZIP (plantillas \texttt{.example} y variables de entorno externas) integrándola con un gestor de secretos (como Vault o variables CI/CD) y pruebas automatizadas de no exposición de credenciales en cada commit.
+\end{enumerate}
 
 \vspace{0.2cm}
 
 \noindent\textbf{1.11 Referencias bibliográficas}
 
-\noindent Insertar las referencias bibliográficas empleadas aplicando la norma IEEE.
+\begin{enumerate}[label={[\arabic*]},leftmargin=*,itemsep=3pt,topsep=2pt]
+  \item R. T. Fielding, ``Architectural Styles and the Design of Network-based Software Architectures,'' Ph.D. dissertation, Dept. Inf. Comput. Sci., Univ. California, Irvine, CA, USA, 2000.
+  \item D. Hardt, ``The OAuth 2.0 Authorization Framework,'' Internet Engineering Task Force (IETF), RFC 6749, Oct. 2012. [En línea]. Disponible en: \texttt{https://datatracker.ietf.org/doc/html/rfc6749}
+  \item M. Jones, J. Bradley y N. Sakimura, ``JSON Web Token (JWT),'' Internet Engineering Task Force (IETF), RFC 7519, May 2015. [En línea]. Disponible en: \texttt{https://datatracker.ietf.org/doc/html/rfc7519}
+  \item M. Nottingham, E. Wilde y S. Dalal, ``Problem Details for HTTP APIs,'' Internet Engineering Task Force (IETF), RFC 9457 (actualiza RFC 7807), Jul. 2023. [En línea]. Disponible en: \texttt{https://datatracker.ietf.org/doc/html/rfc9457}
+  \item Broadcom Inc., ``Spring Boot and Spring Security Reference Documentation,'' 2026. [En línea]. Disponible en: \texttt{https://docs.spring.io/spring-boot/}
+  \item S. Ramírez, ``FastAPI Framework, High Performance, Easy to Learn, Fast to Code,'' 2026. [En línea]. Disponible en: \texttt{https://fastapi.tiangolo.com/}
+  \item F5 Inc., ``NGINX Documentation: HTTP Load Balancing and Upstream Module,'' 2026. [En línea]. Disponible en: \texttt{https://nginx.org/en/docs/http/ngx\_http\_upstream\_module.html}
+  \item Broadcom Inc., ``RabbitMQ Documentation: Reliability Guide, Queues and Spring AMQP,'' 2026. [En línea]. Disponible en: \texttt{https://www.rabbitmq.com/docs/reliability}
+  \item Microsoft Corp., ``Windows Forms Documentation for .NET 8,'' 2026. [En línea]. Disponible en: \texttt{https://learn.microsoft.com/dotnet/desktop/winforms/}
+  \item Meta Platforms Inc. y Vite Contributors, ``React Documentation and Vite Server Proxy Configuration,'' 2026. [En línea]. Disponible en: \texttt{https://react.dev/} y \texttt{https://vite.dev/config/server-options.html}
+  \item MDN Web Docs, ``Progressive Web Apps (PWAs) and Service Worker API,'' Mozilla Foundation, 2026. [En línea]. Disponible en: \texttt{https://developer.mozilla.org/en-US/docs/Web/Progressive\_web\_apps}
+  \item Gluon y OpenJFX Community, ``OpenJFX Documentation: JavaFX 21 UI Controls and Concurrency,'' 2026. [En línea]. Disponible en: \texttt{https://openjfx.io/}
+\end{enumerate}
 
 \vspace{0.2cm}
 
 \noindent\textbf{1.12 Anexos}
+
+\vspace{0.1cm}
+\noindent\textbf{Anexo A. Repositorio de control de versiones y trazabilidad Git}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Repositorio privado GitHub:} \texttt{https://github.com/Elizabeth1925/SOA\_APE04.git} (rama \texttt{main}), con historial incremental documentado por actividad desde la configuración inicial hasta la entrega final.
+  \item \textbf{Documento oficial PDF:} \texttt{INFORME\_APE04\_DELACRUZ\_ELIZABETH.pdf} (compilado desde \texttt{Documento/Informe\_Guia\_Practica\_4\_Latex/Guia\_APE\_04.tex}).
+\end{itemize}
+
+\vspace{0.1cm}
+\noindent\textbf{Anexo B. Contenido reproducible y exclusiones verificadas del paquete \texttt{APE04\_DELACRUZ\_ELIZABETH.zip}}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=1pt]
+  \item \textbf{Módulos incluidos:} Código fuente completo de los siete proyectos base modificados (\texttt{ConsultaVehiculosForms}, \texttt{AplicacionMovilPWA}, \texttt{reactweb/react-fetch-vehiculos}, \texttt{escritorioFx/consultarvehiculojavafx}, \texttt{venta-vehiculos-api\_security}, \texttt{ventas-api}, \texttt{notificaciones-service}), módulo independiente \texttt{monitor-balancer-service}, configuración \texttt{nginx/nginx.conf}, definición reproducible \texttt{rabbitmq/definitions.json}, esquema SQL \texttt{database/schema\_base.sql}, plantillas de configuración \texttt{.example} sin secretos y \texttt{README.md} con orden de arranque, puertos y comandos.
+  \item \textbf{Exclusiones verificadas (0 archivos indebidos):} Se excluyeron estrictamente las carpetas \texttt{target}, \texttt{bin}, \texttt{obj}, \texttt{node\_modules}, \texttt{.venv}, \texttt{.git}, \texttt{dist}, \texttt{.vs}, cachés (\texttt{\_\_pycache\_\_}), archivos \texttt{.env}, archivos \texttt{application.properties} con secretos locales, dumps con credenciales y tokens JWT reales.
+\end{itemize}
 
 \end{document}
