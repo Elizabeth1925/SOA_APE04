@@ -76,8 +76,8 @@ Solución orientada a servicios (SOA) multicanal compuesta por **4 clientes espe
 ## 3. Estructura del Repositorio
 
 ```text
-APE4/
-├── AplicacionMovilPWA/             # Cliente PWA Móvil (Node.js :5173, Service Worker v2, OAuth2, POST /api/ventas)
+APE04_DELACRUZ_ELIZABETH/
+├── AplicacionMovilPWA/             # Cliente PWA Móvil (Node.js :5173, AutoUTA v5, OAuth2, POST /api/ventas)
 ├── ConsultaVehiculosForms/         # Cliente administrativo en C# .NET 8 (Vehículos, Compradores, Consulta Ventas)
 ├── escritorioFx/
 │   └── consultarvehiculojavafx/    # Cliente JavaFX (Catálogo + Notificaciones en Vivo con sondeo cada 3 s)
@@ -89,11 +89,8 @@ APE4/
 ├── monitor-balancer-service/       # Servicio independiente de monitoreo NGINX y métricas (:8083)
 ├── nginx/                          # Configuración nginx.conf (balanceo 3:1, failover y log sin query strings)
 ├── rabbitmq/                       # Definición reproducible de cola durable (definitions.json)
-├── database/                       # Scripts SQL reproducibles (schema_base.sql y dump de referencia)
-├── Documento/                      # Informe LaTeX, evidencias numeradas y guía práctica
-├── INFORME_APE04_DELACRUZ_ELIZABETH.pdf
-├── .gitignore
-└── README.md
+├── database/                       # Script SQL base reproducible (schema_base.sql)
+└── README.md                       # Guía general de arquitectura, puertos, configuración y arranque
 ```
 
 ---
