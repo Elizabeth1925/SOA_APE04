@@ -1,15 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ============================================================================
+  Archivo: primary.fxml
+  Proyecto: Cliente de Escritorio JavaFX (consultarvehiculojavafx) - SOA APE 04
+  Función:
+    Plantilla declarativa FXML de vista primaria generada por el arquetipo base
+    de OpenJFX/Maven. En la implementación activa de la APE 04 la interfaz con
+    pestañas (Catálogo de Vehículos y Notificaciones en Vivo) se construye
+    programáticamente en VehiculosApp.java, conservando este recurso como
+    referencia estructural del proyecto Maven JavaFX.
+  Actividades APE 04 cubiertas:
+    - [Actividad 9]: Estructura de recursos FXML del cliente de escritorio JavaFX.
+  ============================================================================
+-->
 
+<!-- Importaciones de clases JavaFX requeridas para instanciar el árbol de nodos FXML -->
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
 <?import javafx.geometry.Insets?>
 
+<!-- Contenedor raíz VBox centrado, con espaciado vertical de 20px y enlace al controlador primario -->
 <VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ec.edu.com.PrimaryController">
+   <!-- Nodos hijos visibles dentro de la vista primaria -->
    <children>
+      <!-- Etiqueta descriptiva de la vista primaria -->
       <Label text="Primary View" />
+      <!-- Botón de navegación que invoca el manejador #switchToSecondary en el controlador -->
       <Button fx:id="primaryButton" text="Switch to Secondary View" onAction="#switchToSecondary"/>
    </children>
+   <!-- Relleno interno (padding) uniforme de 20px en los cuatro lados del contenedor -->
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
    </padding>

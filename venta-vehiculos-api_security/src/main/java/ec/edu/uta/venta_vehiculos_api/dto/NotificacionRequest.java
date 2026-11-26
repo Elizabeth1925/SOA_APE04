@@ -1,80 +1,101 @@
-// Identifica el paquete que contiene los objetos de transferencia de datos.
+/**
+ * Archivo: NotificacionRequest.java
+ * Responsabilidad arquitectónica:
+ *   Objeto de Transferencia de Datos (DTO) que modela la carga útil JSON enviada
+ *   por NotificacionClient hacia el microservicio independiente de notificaciones
+ *   (:8081) cuando ocurre un evento CRUD sobre el catálogo de vehículos.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 1]: Define el contrato de datos saliente asociado a las operaciones
+ *     REST de vehículos.
+ *   - [Actividad 2]: Soporta la integración desacoplada con el microservicio externo
+ *     de notificaciones parametrizado en la configuración.
+ */
+
+// Identifica el paquete que agrupa los DTOs de entrada y salida de la API.
 package ec.edu.uta.venta_vehiculos_api.dto;
 
-// Representa la información que la API envía al servicio de notificaciones.
+// [Actividad 1] DTO serializable a JSON que encapsula la solicitud enviada a POST /api/notificaciones.
 public class NotificacionRequest {
 
-    // Identifica el vehículo relacionado con la notificación.
+    // Identificador numérico del vehículo que originó el evento notificado.
     private Integer vehiculoId;
-    // Indica a quién debe enviarse la notificación.
+    // Dirección o identificador del destinatario configurado para recibir el aviso.
     private String destinatario;
-    // Describe la categoría o evento que origina la notificación.
+    // Categoría del evento de negocio (por ejemplo: REGISTRO, ACTUALIZACION, ELIMINACION).
     private String tipo;
-    // Contiene el texto que se comunicará al destinatario.
+    // Mensaje descriptivo que detalla la acción ejecutada sobre el vehículo.
     private String mensaje;
 
-    // Constructor vacío requerido para convertir el DTO a/desde JSON.
+    // Constructor vacío requerido por Jackson para serialización y deserialización JSON.
     public NotificacionRequest() {
     }
 
-    // Construye una solicitud de notificación con todos sus datos.
+    // Constructor completo utilizado por NotificacionClient al crear el cuerpo de cada notificación.
     public NotificacionRequest(
-            // Identificador del vehículo relacionado.
+            // Identificador del vehículo relacionado con el evento.
             Integer vehiculoId,
-            // Dirección o identificador del destinatario.
+            // Destinatario configurado para el envío del aviso.
             String destinatario,
-            // Tipo de notificación que se enviará.
+            // Tipo o categoría del evento ocurrido.
             String tipo,
-            // Contenido del mensaje que recibirá el destinatario.
+            // Texto descriptivo del evento a notificar.
             String mensaje) {
 
-        // Guarda el identificador del vehículo en el objeto.
+        // Asigna el identificador del vehículo al atributo de instancia.
         this.vehiculoId = vehiculoId;
-        // Guarda el destinatario en el objeto.
+        // Asigna el destinatario al atributo de instancia.
         this.destinatario = destinatario;
-        // Guarda el tipo de notificación en el objeto.
+        // Asigna el tipo de notificación al atributo de instancia.
         this.tipo = tipo;
-        // Guarda el mensaje en el objeto.
+        // Asigna el contenido textual del mensaje al atributo de instancia.
         this.mensaje = mensaje;
     }
 
-    // Devuelve el identificador del vehículo asociado.
+    // Devuelve el identificador del vehículo asociado a la notificación.
     public Integer getVehiculoId() {
+        // Retorna el valor almacenado en vehiculoId.
         return vehiculoId;
     }
 
-    // Cambia el identificador del vehículo asociado.
+    // Establece o actualiza el identificador del vehículo asociado.
     public void setVehiculoId(Integer vehiculoId) {
+        // Actualiza el campo vehiculoId con el argumento recibido.
         this.vehiculoId = vehiculoId;
     }
 
-    // Devuelve el destinatario de la notificación.
+    // Devuelve el destinatario configurado en la solicitud de notificación.
     public String getDestinatario() {
+        // Retorna el valor almacenado en destinatario.
         return destinatario;
     }
 
-    // Cambia el destinatario de la notificación.
+    // Establece o actualiza el destinatario de la notificación.
     public void setDestinatario(String destinatario) {
+        // Actualiza el campo destinatario con el argumento recibido.
         this.destinatario = destinatario;
     }
 
-    // Devuelve el tipo de notificación.
+    // Devuelve el tipo o categoría del evento de notificación.
     public String getTipo() {
+        // Retorna el valor almacenado en tipo.
         return tipo;
     }
 
-    // Cambia el tipo de notificación.
+    // Establece o actualiza el tipo de notificación.
     public void setTipo(String tipo) {
+        // Actualiza el campo tipo con el argumento recibido.
         this.tipo = tipo;
     }
 
-    // Devuelve el texto del mensaje.
+    // Devuelve el texto descriptivo del mensaje de notificación.
     public String getMensaje() {
+        // Retorna el valor almacenado en mensaje.
         return mensaje;
     }
 
-    // Cambia el texto del mensaje.
+    // Establece o actualiza el texto del mensaje de notificación.
     public void setMensaje(String mensaje) {
+        // Actualiza el campo mensaje con el argumento recibido.
         this.mensaje = mensaje;
     }
 }

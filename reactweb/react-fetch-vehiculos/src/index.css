@@ -1,16 +1,47 @@
-/* Estilos globales: tipografía, colores de fondo y tamaño de controles. */
+/*
+ * ============================================================================
+ * Archivo: src/index.css
+ * Proyecto: Portal Web React de Consulta y Auditoría (react-fetch-vehiculos) - SOA APE 04
+ * Función:
+ *   Hoja de estilos base global del portal web: define tipografía institucional,
+ *   paleta de color de texto y fondo, modelo de cajas universal y accesibilidad
+ *   visual del foco de teclado en botones y entradas.
+ * Actividades APE 04 cubiertas:
+ *   - [Actividad 7]: Base visual uniforme y accesible del portal web de
+ *     consulta de vehículos y auditoría de ventas.
+ * ============================================================================
+ */
+
+/* Estilos globales: tipografía, colores de fondo y tamaño de controles [Actividad 7]. */
 :root {
+  /* Familia tipográfica sans-serif legible en todos los sistemas operativos. */
   font-family: Arial, Helvetica, sans-serif;
+  /* Color azul marino oscuro principal para el texto del portal. */
   color: #19324d;
+  /* Fondo gris azulado claro para resaltar las tarjetas blancas de contenido. */
   background: #f2f5f9;
+  /* Desactiva la síntesis artificial de negritas/cursivas para mantener nitidez tipográfica. */
   font-synthesis: none;
+  /* Prioriza la legibilidad del texto en tablas y fichas técnicas. */
   text-rendering: optimizeLegibility;
 }
+
+/* Modelo de caja border-box universal para que padding y border no desborden anchos declarados. */
 * { box-sizing: border-box; }
+
+/* Elimina el margen predeterminado del navegador en el cuerpo de la página. */
 body { margin: 0; }
+
+/* Hereda la tipografía y tamaño de fuente global en botones y campos de texto. */
 button, input { font: inherit; }
+
+/* Indica interactividad mostrando el cursor tipo mano sobre botones habilitados. */
 button { cursor: pointer; }
+
+/* Señala visualmente estados en carga o bloqueados con cursor de espera y opacidad reducida. */
 button:disabled { cursor: wait; opacity: 0.60; }
+
+/* Anillo de enfoque visible en dorado para navegación accesible por teclado en botones e inputs. */
 button:focus-visible, input:focus-visible {
   outline: 3px solid #e4a529;
   outline-offset: 2px;

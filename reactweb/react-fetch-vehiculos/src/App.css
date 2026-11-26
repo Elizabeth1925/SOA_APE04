@@ -1,95 +1,186 @@
-/* Contenedor central adaptable a pantallas de escritorio y móviles. */
+/*
+ * ============================================================================
+ * Archivo: src/App.css
+ * Proyecto: Portal Web React de Consulta y Auditoría (react-fetch-vehiculos) - SOA APE 04
+ * Función:
+ *   Define los estilos modulares de toda la interfaz del portal web:
+ *   cabecera institucional, panel JWT, pestañas de navegación, banner de
+ *   aislamiento de perfil (solo lectura), tarjetas KPI de ventas, banners de
+ *   estado HTTP, tablas con desplazamiento horizontal, insignias de estado
+ *   (DISPONIBLE/VENDIDO/EXITOSA/FALLIDA/PENDIENTE), ficha técnica y diseño
+ *   responsivo para pantallas móviles.
+ * Actividades APE 04 cubiertas:
+ *   - [Actividad 7]: Estética del portal de consulta de vehículos (filtrado,
+ *     tabla, ficha técnica VIN/placa) y pestaña de Métricas y Auditoría de
+ *     Ventas (KPIs, tabla de auditoría y aviso de solo lectura).
+ *   - [Actividad 10 - P27]: Insignias visuales diferenciadas para estados
+ *     DISPONIBLE -> VENDIDO y estados reales de ventas auditadas.
+ *   - [Actividad 11]: Estilos de alerta (.estado-error) para respuestas HTTP
+ *     401/403/502/504 y fallos de red.
+ * ============================================================================
+ */
+
+/* --- Contenedor principal y cabecera institucional [Actividad 7] --- */
+/* Contenedor central adaptable a pantallas de escritorio y móviles (máximo 1060px). */
 .contenedor { width: min(1060px, calc(100% - 28px)); margin: 26px auto; }
+/* Cabecera con franja lateral institucional roja UTA y espaciado interior izquierdo. */
 .cabecera { border-left: 5px solid #b50018; padding: 6px 0 16px 18px; }
+/* Etiqueta superior en versales con la identificación institucional UTA · FISEI · SOA APE 04. */
 .marca-producto { color: #af001c; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+/* Título principal adaptable mediante clamp() entre 27px y 35px según ancho de viewport. */
 h1 { font-size: clamp(27px, 4vw, 35px); margin: 7px 0; }
+/* Subtítulos de sección para paneles numerados de acceso, catálogo, detalle y auditoría. */
 h2 { margin: 0 0 12px; font-size: 21px; }
+/* Interlineado cómodo para textos explicativos y avisos de arquitectura. */
 p { line-height: 1.5; }
+/* Subtítulo descriptivo dentro de la cabecera en tono gris pizarra. */
 .cabecera p { margin: 0; color: #5a6d80; }
 
-/* Paneles de separación */
+/* --- Paneles, formularios JWT y botones de acción [Actividad 7] --- */
+/* Tarjeta blanca elevada con borde suave, esquinas redondeadas y sombra ligera. */
 .panel { background: white; border: 1px solid #d9e1eb; border-radius: 10px;
   padding: 23px; margin: 18px 0; box-shadow: 0 3px 14px #18364d0a; }
+/* Textos auxiliares de explicación y nota de seguridad JWT en memoria. */
 .ayuda, .nota { color: #586c80; font-size: 14px; }
+/* Elimina margen inferior de la nota de cierre en el panel de autenticación. */
 .nota { margin-bottom: 0; }
+/* Etiquetas de campos de formulario en bloque y negrita. */
 label { display: block; margin: 15px 0 7px; font-weight: bold; }
+/* Campos de entrada (JWT y filtro por marca) a ancho completo con borde limpio. */
 input { display: block; width: 100%; min-width: 0; padding: 11px 12px;
   border: 1px solid #aebdcc; border-radius: 6px; color: #18344f; background: white; }
+/* Contenedor flex horizontal que alinea el input con botones adyacentes (Mostrar, Filtrar, Limpiar). */
 .linea-token { display: flex; gap: 9px; }
+/* Permite que el campo de texto ocupe todo el espacio horizontal restante de la línea. */
 .linea-token input { flex: 1; }
+/* Barra flexible de botones de acción principal y secundaria. */
 .acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+/* Estilo primario rojo institucional aplicado a botones estándar (excluye enlaces de ID y pestañas). */
 button:not(.enlace-id):not(.pestana-btn) { border: 1px solid #a80016; border-radius: 6px;
   padding: 10px 16px; color: white; background: #b50018; font-weight: bold; cursor: pointer; }
+/* Oscurece el botón primario al pasar el puntero. */
 button:not(.enlace-id):not(.pestana-btn):hover { background: #960014; }
+/* Variante de botón secundario en fondo blanco con borde y texto rojizo suave. */
 button.secundario { background: #fff; color: #8f0015; border-color: #bfa2a8; }
+/* Tinte rosado muy claro al pasar el puntero sobre botones secundarios. */
 button.secundario:hover { background: #fdf5f5; }
 
-/* Barra de Navegación por Pestañas */
+/* --- Barra de Navegación por Pestañas (Catálogo vs. Métricas de Ventas) [Actividad 7] --- */
+/* Contenedor horizontal de pestañas con línea divisoria inferior. */
 .pestanas-nav { display: flex; gap: 8px; margin: 20px 0 10px; border-bottom: 2px solid #e1e7ee; }
+/* Botón de pestaña sin fondo con borde inferior animable para resaltar la pestaña activa. */
 .pestana-btn { padding: 12px 20px; border: none; background: transparent; font-size: 15px; font-weight: bold; color: #5a6f84; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+/* Resalta el texto de la pestaña en rojo institucional al pasar el cursor. */
 .pestana-btn:hover { color: #b50018; }
+/* Marca visualmente la pestaña seleccionada actualmente con subrayado inferior rojo. */
 .pestana-btn.activa { color: #b50018; border-bottom-color: #b50018; }
 
-/* Aviso de seguridad y perfil */
+/* --- Aviso de seguridad y aislamiento de perfil (solo lectura GET /api/ventas) [Actividad 7] --- */
+/* Panel informativo en tono azul claro que destaca la restricción de no emitir POST /api/ventas. */
 .panel-aviso-seguridad { background: #f0f7fb; border: 1px solid #bde0f2; }
+/* Alineación horizontal del ícono informativo con el bloque de texto explicativo. */
 .aviso-cabecera { display: flex; gap: 12px; align-items: flex-start; }
+/* Tamaño destacado para el ícono informativo del banner de auditoría. */
 .aviso-icono { font-size: 24px; line-height: 1; }
+/* Tipografía compacta en azul petróleo para la descripción de aislamiento de perfil. */
 .aviso-texto { margin: 4px 0 0; color: #23526d; font-size: 13px; }
 
-/* Cuadrícula de Métricas */
+/* --- Cuadrícula de Métricas / KPIs reales de ventas [Actividad 7 / Actividad 10 - P27] --- */
+/* Grid adaptable de tarjetas KPI (mínimo 200px por tarjeta, ajuste automático por columnas). */
 .metricas-grilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 18px 0; }
+/* Tarjeta individual de indicador KPI con fondo blanco y sombra sutil. */
 .metrica-card { background: white; border: 1px solid #d9e1eb; border-radius: 10px; padding: 18px; box-shadow: 0 2px 10px #18364d08; }
+/* Título superior del KPI en mayúsculas y espaciado de letras. */
 .metrica-titulo { font-size: 12px; font-weight: bold; color: #597086; text-transform: uppercase; letter-spacing: .05em; }
+/* Cifra principal del KPI con gran jerarquía visual. */
 .metrica-valor { font-size: 28px; font-weight: 850; margin: 8px 0 4px; color: #18344f; }
+/* Subtítulo descriptivo bajo el valor numérico del KPI. */
 .metrica-sub { font-size: 11px; color: #7f93a5; }
+/* Color verde azulado para destacar el KPI de Monto Facturado en USD. */
 .metrica-dinero .metrica-valor { color: #0d6b52; }
+/* Color verde para destacar el KPI de Ventas Exitosas. */
 .metrica-exito .metrica-valor { color: #1b7e3e; }
+/* Color ámbar para destacar el KPI de Ventas en Revisión u observadas. */
 .metrica-observada .metrica-valor { color: #b36b00; }
 
-/* Mensajes de respuesta HTTP y fallos */
+/* --- Mensajes de respuesta HTTP y manejo controlado de errores (401/403/502/504) [Actividad 11] --- */
+/* Banner horizontal que presenta el mensaje de estado a la izquierda y el código HTTP a la derecha. */
 .estado { margin-top: 16px; padding: 11px 13px; border-radius: 6px;
   display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+/* Apariencia azul suave para estados operativos normales o respuestas HTTP 200/204 exitosas. */
 .estado-ok { background: #ecf4fc; border: 1px solid #bdd5e9; }
+/* Apariencia rojiza de alerta controlada para HTTP 401 sin token/vencido o caídas del gateway [Actividad 11]. */
 .estado-error { background: #fff0ee; color: #923326; border: 1px solid #f2b5aa; }
+/* Evita saltos de línea en la insignia "HTTP XXX". */
 .estado strong { white-space: nowrap; }
 
-/* Tabla */
+/* --- Encabezado de listados y tablas de catálogo y auditoría [Actividad 7] --- */
+/* Distribuye el título del listado a la izquierda y los contadores/controles a la derecha. */
 .titulo-listado { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+/* Agrupa el botón de recarga y el contador de ventas en una sola línea. */
 .acciones-inline { display: flex; align-items: center; gap: 10px; }
+/* Botón compacto en azul acero para recargar el listado de ventas auditadas. */
 .boton-recargar { padding: 6px 12px !important; font-size: 12px !important; background: #37536d !important; border-color: #2b4359 !important; }
+/* Estado hover más oscuro para el botón de recarga de ventas. */
 .boton-recargar:hover { background: #2b4359 !important; }
+/* Píldora contadora que muestra el número exacto de registros visibles. */
 .contador { border: 1px solid #d1dbe6; border-radius: 18px; padding: 6px 10px;
   color: #51647b; white-space: nowrap; font-size: 13px; font-weight: bold; }
+/* Contenedor con desplazamiento horizontal para evitar roturas de tabla en pantallas estrechas. */
 .tabla-scroll { overflow-x: auto; margin-top: 16px; }
+/* Tabla de datos a ancho completo con bordes colapsados y ancho mínimo legible. */
 table { width: 100%; border-collapse: collapse; min-width: 600px; text-align: left; }
+/* Fondo gris claro para distinguir la fila de encabezados de columna. */
 th { background: #f1f4f8; font-size: 14px; }
+/* Espaciado uniforme y separador inferior suave en todas las celdas. */
 th, td { padding: 12px 10px; border-bottom: 1px solid #e5ebf1; font-size: 14px; }
+/* Resalta sutilmente la fila activa al pasar el puntero para facilitar la lectura. */
 tr:hover td { background: #fafcff; }
+/* Botón con aspecto de hipervínculo en la columna ID para abrir la ficha técnica o detalle de venta [Actividad 7]. */
 .enlace-id { border: 0; padding: 0; background: transparent;
   color: #075a98; font-weight: bold; text-decoration: underline; cursor: pointer; }
+/* Celda centrada usada en el manejo explícito de listados vacíos o estados de carga [Actividad 7]. */
 .sin-datos { text-align: center; padding: 22px; color: #60758a; }
 
-/* Badges de estado */
+/* --- Badges semánticos de estado (coherencia DISPONIBLE -> VENDIDO y auditoría) [Actividad 10 - P27] --- */
+/* Estilo base tipo píldora en mayúsculas para cualquier estado textual. */
 .badge-estado { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; background: #eef2f6; color: #496378; }
+/* Insignia verde para vehículos en estado DISPONIBLE [Actividad 10 - P27]. */
 .badge-estado.disponible { background: #dff4e7; color: #166c39; }
+/* Insignia ámbar/naranja para vehículos que cambiaron a VENDIDO tras una venta en la PWA [Actividad 10 - P27]. */
 .badge-estado.vendido { background: #fff1df; color: #96531c; }
+/* Insignia verde para ventas en estados exitosos/confirmados/procesados. */
 .badge-estado.exitosa, .badge-estado.completada, .badge-estado.procesada, .badge-estado.confirmada { background: #dff4e7; color: #166c39; }
+/* Insignia roja para transacciones marcadas como FALLIDA. */
 .badge-estado.fallida { background: #fde4e1; color: #a12018; }
+/* Insignia amarilla para ventas en revisión o pendientes. */
 .badge-estado.en_revision, .badge-estado.pendiente { background: #fff3d6; color: #9a5d00; }
 
-/* Detalle */
+/* --- Ficha técnica detallada de vehículo (VIN/placa) y detalle de venta auditada [Actividad 7] --- */
+/* Lista de definición en cuadrícula adaptable para desplegar atributos individuales. */
 .detalle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px; margin: 16px 0 0; }
+/* Tarjeta individual de cada par etiqueta-valor en la ficha de detalle. */
 .detalle div { background: #f2f6fb; border-radius: 7px; padding: 14px; }
+/* Nombre del atributo (ej. Placa, Chasis VIN, ID Operación UUID) en mayúsculas compactas. */
 .detalle dt { font-size: 12px; color: #5a7289; margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+/* Valor del atributo con quiebre automático para UUIDs o números de chasis extensos. */
 .detalle dd { margin: 0; font-weight: bold; overflow-wrap: anywhere; font-size: 15px; }
+/* Formato monoespaciado para rutas REST y URLs mostradas dentro de notas informativas. */
 code { background: #f1f3f6; padding: 2px 4px; border-radius: 3px; font-family: Consolas, monospace; }
 
+/* --- Adaptación responsiva para pantallas móviles (ancho <= 620px) [Actividad 7] --- */
 @media (max-width: 620px) {
+  /* Reduce el relleno interior de los paneles en dispositivos pequeños. */
   .panel { padding: 16px; }
+  /* Permite envolver controles en múltiples líneas dentro de barras de entrada. */
   .linea-token { flex-wrap: wrap; }
+  /* Expande el campo de texto al 100% en móviles antes de los botones. */
   .linea-token input { flex-basis: 100%; }
+  /* Apila verticalmente el mensaje de estado y el código HTTP. */
   .estado { flex-direction: column; align-items: flex-start; }
+  /* Apila el título del listado y el contador/acciones. */
   .titulo-listado { flex-direction: column; }
+  /* Muestra las tarjetas KPI de ventas en una sola columna vertical. */
   .metricas-grilla { grid-template-columns: 1fr; }
 }

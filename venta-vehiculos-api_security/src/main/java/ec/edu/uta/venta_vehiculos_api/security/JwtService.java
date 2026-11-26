@@ -1,310 +1,241 @@
-// Identifica el paquete donde se implementa el soporte de autenticación JWT.
+/**
+ * Archivo: JwtService.java
+ * Responsabilidad arquitectónica:
+ *   Servicio criptográfico responsable de emitir (firmar) y validar tokens JWT
+ *   mediante firma simétrica HMAC-SHA (JJWT) usando la clave secreta externa
+ *   app.security.jwt-secret. Encapsula la construcción de claims estándar (sub,
+ *   iat, exp) y personalizados (idapli, scope, rol, tipo) tanto para Access Token
+ *   como para Refresh Token.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 3]: Permite operación 100% STATELESS detrás de NGINX en balanceo
+ *     ponderado 3:1; al compartir exactamente la misma clave HMAC-SHA entre
+ *     Instancia A (:8080) e Instancia B (:8082), un token emitido por la Instancia A
+ *     es validado sin estado por la Instancia B y viceversa.
+ *   - [Actividad 11]: Pilar criptográfico del esquema OAuth 2.0 / JWT STATELESS;
+ *     asegura integridad, autenticidad, vigencia temporal y propagación del rol RBAC
+ *     (ADMIN, OPERADOR, CONSULTA) y del tipo de token ("access" vs "refresh").
+ */
+
+// Identifica el paquete donde se implementa el soporte criptográfico y de seguridad JWT.
 package ec.edu.uta.venta_vehiculos_api.security;
 
 
-// Importa Claims, que representa los datos contenidos dentro del JWT.
+// Importa StandardCharsets.UTF_8 para derivar bytes deterministas de la clave secreta HMAC.
 import java.nio.charset.StandardCharsets;
-// Importa Date para definir cuándo se emite y cuándo expira cada token.
+// Importa Date para establecer las marcas temporales iat (emisión) y exp (expiración).
 import java.util.Date;
-// Importa Map para construir los claims personalizados del token.
+// Importa Map para declarar el conjunto de claims personalizados embebidos en el payload JWT.
 import java.util.Map;
 
-// Importa la interfaz de clave criptográfica usada para firmar los tokens.
+// Importa SecretKey del API JCA para representar la clave simétrica HMAC-SHA.
 import javax.crypto.SecretKey;
 
-// Importa la anotación que inyecta valores externos de la configuración.
+// Importa @Value para inyectar secreto y vigencias desde configuración externa.
 import org.springframework.beans.factory.annotation.Value;
-// Importa la anotación que registra esta clase como servicio de Spring.
+// Importa @Service para registrar la clase como bean singleton inyectable en AuthController y JwtAuthenticationFilter.
 import org.springframework.stereotype.Service;
 
-// Importa el tipo de datos que representa los claims extraídos de un JWT.
+// Importa Claims de JJWT para representar los atributos verificados del payload JWT.
 import io.jsonwebtoken.Claims;
-// Importa el API para crear, analizar y validar JWT.
+// Importa Jwts, fachada principal de JJWT para construir (builder) y verificar (parser) tokens.
 import io.jsonwebtoken.Jwts;
-// Importa utilidades para crear claves criptográficas compatibles.
+// Importa Keys de JJWT para construir una SecretKey HMAC-SHA válida a partir de bytes del secreto.
 import io.jsonwebtoken.security.Keys;
 
 
-// Registra esta clase como un servicio de Spring.
-// Gracias a esto podemos inyectarla "pasar el dato" en AuthController
-// o en JwtAuthenticationFilter. 
+// [Actividad 3] [Actividad 11] Registra el servicio criptográfico JWT en el contenedor Spring.
 @Service
-// Genera y valida los tokens JWT usados para autenticar solicitudes.
+// Genera y verifica criptográficamente los JWT STATELESS compartidos entre instancias A y B.
 public class JwtService {
 
 
-    // Lee desde application.properties:
-    // app.security.jwt-secret=....
-    //
-    // Este valor será la clave secreta utilizada
-    // para FIRMAR y posteriormente VALIDAR los JWT.
+    // [Actividad 2] [Actividad 3] [Actividad 11] Secreto simétrico HMAC-SHA compartido entre Instancia A (:8080) e Instancia B (:8082).
     @Value("${app.security.jwt-secret}")
     private String jwtSecret;
 
 
-    // Lee la duración del Access Token desde application.properties.
-    //
-    // Ejemplo:
-    // app.security.access-token-minutes=600
+    // [Actividad 11] Tiempo de vigencia configurado en minutos para el Access Token (ej. 30 min).
     @Value("${app.security.access-token-minutes}")
     private long accessTokenMinutes;
 
 
-    // Lee la duración del Refresh Token.
-    //
-    // Ejemplo:
-    // app.security.refresh-token-minutes=1440
+    // [Actividad 11] Tiempo de vigencia configurado en minutos para el Refresh Token (ej. 1200 min).
     @Value("${app.security.refresh-token-minutes}")
     private long refreshTokenMinutes;
 
 
-    // Método privado que genera la clave criptográfica
-    // que utilizará JJWT para firmar y validar los tokens.
+    // [Actividad 3] [Actividad 11] Deriva la SecretKey HMAC-SHA utilizada tanto para firmar como para verificar tokens.
     private SecretKey getSigningKey() {
 
-        // Keys.hmacShaKeyFor() crea una clave HMAC
-        // utilizando los bytes de nuestro secreto.
+        // Construye la clave criptográfica HMAC-SHA (>= 256 bits) a partir de los bytes UTF-8 del secreto compartido.
         return Keys.hmacShaKeyFor(
 
-                // Convierte el String jwtSecret en un arreglo de bytes
-                // utilizando codificación UTF-8.
+                // Convierte el secreto de texto en arreglo de bytes UTF-8 de manera portable entre entornos.
                 jwtSecret.getBytes(StandardCharsets.UTF_8)
         );
     }
 
 
-    // Método público utilizado para generar un ACCESS TOKEN.
-    //
-    // Recibe:
-    // username -> usuario autenticado.
-    // idapli   -> identificador de la aplicación.
-    // scope    -> permiso que tendrá el token.
+    // [Actividad 11] Genera un Access Token JWT de corta duración con claim "tipo"="access" y el rol RBAC del usuario.
     public String generarAccessToken(
-            // Nombre del usuario que será el subject del token.
+            // Nombre del usuario autenticado que ocupará el claim estándar "sub".
             String username,
-            // Identificador de la aplicación que solicita el token.
+            // Identificador de la aplicación cliente (claim "idapli").
             String idapli,
-            // Alcance de autorización que se incluirá entre los claims.
+            // Alcance funcional autorizado (claim "scope").
             String scope,
-            // Rol que se incluirá para aplicar autorización a las solicitudes.
+            // Rol RBAC asignado al usuario (claim "rol": ADMIN, OPERADOR o CONSULTA).
             String rol) {
 
-        // No genera directamente todo el JWT.
-        // Reutiliza el método privado generarToken().
+        // Delega la construcción al método privado común usando la duración de Access Token y tipo "access".
         return generarToken(
 
-                // Usuario que aparecerá como subject del JWT.
+                // Sujeto propietario del token.
                 username,
 
-                // Identificador de aplicación que irá dentro del token.
+                // Identificador de aplicación cliente.
                 idapli,
 
-                // Permiso asociado al token.
+                // Alcance lógico de autorización.
                 scope,
+                // Rol RBAC validado posteriormente por JwtAuthenticationFilter.
                 rol,
 
-                // Tiempo de duración configurado para el Access Token.
+                // Vigencia configurada en minutos para el Access Token.
                 accessTokenMinutes,
 
-                // Tipo de token.
-                // Este claim permitirá identificar que es un ACCESS TOKEN.
+                // Marca el JWT como token de acceso válido para consumir endpoints protegidos.
                 "access"
         );
     }
 
 
-    // Método público utilizado para generar un REFRESH TOKEN.
-    //
-    // Recibe los mismos datos que el Access Token.
+    // [Actividad 11] Genera un Refresh Token JWT de mayor duración con claim "tipo"="refresh" (rechazado en endpoints de recursos).
     public String generarRefreshToken(
             // Nombre del usuario propietario del token de renovación.
             String username,
-            // Identificador de la aplicación asociada al token.
+            // Identificador de la aplicación cliente asociada.
             String idapli,
-            // Alcance de autorización que se incluirá entre los claims.
+            // Alcance lógico conservado en el token de renovación.
             String scope,
-            // Rol que se conservará en el token de renovación.
+            // Rol RBAC del usuario.
             String rol) {
 
-        // También reutiliza generarToken().
+        // Delega la construcción al método privado común usando la duración de Refresh Token y tipo "refresh".
         return generarToken(
 
-                // Usuario.
+                // Sujeto propietario del token.
                 username,
 
-                // Identificador de aplicación.
+                // Identificador de aplicación cliente.
                 idapli,
 
-                // Scope o permiso.
+                // Alcance lógico de autorización.
                 scope,
+                // Rol RBAC del usuario.
                 rol,
 
-                // En este caso utiliza el tiempo configurado
-                // específicamente para el Refresh Token.
+                // Vigencia configurada en minutos para el Refresh Token.
                 refreshTokenMinutes,
 
-                // Indica que este JWT será de tipo refresh.
+                // Marca el JWT como "refresh" para que JwtAuthenticationFilter impida usarlo como Bearer de acceso.
                 "refresh"
         );
     }
 
 
-    // Método privado reutilizable encargado realmente
-    // de construir cualquier JWT.
-    //
-    // Se utiliza tanto para Access Token como para Refresh Token.
+    // [Actividad 11] Método interno que ensambla cabecera, payload con claims, tiempos iat/exp y firma HMAC-SHA.
     private String generarToken(
-            String username, // Usuario propietario del token.
-            String idapli,   // Identificador de la aplicación.
-            String scope,    // Permiso del usuario/token.
+            // Usuario propietario (claim "sub").
+            String username,
+            // Identificador de aplicación (claim "idapli").
+            String idapli,
+            // Alcance autorizado (claim "scope").
+            String scope,
+            // Rol RBAC del usuario (claim "rol").
             String rol,
-            long minutos,    // Tiempo de duración.
-            String tipo) {   // access o refresh.
+            // Duración de validez en minutos.
+            long minutos,
+            // Tipo de token ("access" o "refresh").
+            String tipo) {
 
 
-        // Obtiene la fecha y hora actual.
-        //
-        // Ejemplo conceptual:
-        // 03/09/2026 07:40
+        // Captura la marca temporal actual del sistema para el claim "iat" (Issued At).
         Date ahora = new Date();
 
 
-        // Calcula cuándo debe expirar el token.
+        // Calcula el instante exacto de vencimiento sumando los minutos convertidos a milisegundos.
         Date expiracion = new Date(
 
-                // getTime() devuelve la fecha actual en milisegundos.
-                //
-                // minutos * 60     -> convierte minutos a segundos.
-                // * 1000           -> convierte segundos a milisegundos.
+                // Milisegundos actuales + (minutos * 60 segundos * 1000 milisegundos).
                 ahora.getTime() + minutos * 60 * 1000
         );
 
 
-        // Comienza la construcción del JWT.
+        // [Actividad 11] Construye, firma y serializa el JWT compacto <HEADER>.<PAYLOAD>.<SIGNATURE>.
         return Jwts.builder()
 
-                // Define el SUBJECT del token.
-                //
-                // El subject normalmente representa
-                // al usuario propietario del token.
-                //
-                // En el JWT aparecerá como:
-                //
-                // "sub": "9999999999"
+                // Establece el claim estándar "sub" con el username autenticado.
                 .subject(username)
 
 
-                // Agrega claims personalizados.
-                //
-                // Claims = información almacenada
-                // dentro del payload del JWT.
+                // Adjunta los claims personalizados exigidos por la arquitectura de seguridad.
                 .claims(Map.of(
 
-                        // Guarda el identificador de aplicación.
-                        //
-                        // Ejemplo:
-                        // "idapli": "92"
+                        // Identificador de aplicación cliente.
                         "idapli", idapli,
 
-                        // Guarda el scope o permiso.
-                        //
-                        // Ejemplo:
-                        // "scope": "secret"
+                        // Alcance funcional del token (ej. "vehiculos").
                         "scope", scope,
-                       // Rol de validadicion
+                        // [Actividad 11] Rol RBAC utilizado por JwtAuthenticationFilter para construir ROLE_<rol>.
                         "rol", rol,
 
-                        // Guarda el tipo de token.
-                        //
-                        // Puede ser:
-                        // "access"
-                        // o
-                        // "refresh"
+                        // [Actividad 11] Distingue explícitamente entre token "access" y token "refresh".
                         "tipo", tipo
                 ))
 
 
-                // Agrega la fecha en la cual fue creado el token.
-                //
-                // En JWT corresponde al claim estándar:
-                // iat = Issued At
+                // Registra la fecha/hora de emisión en el claim estándar "iat".
                 .issuedAt(ahora)
 
 
-                // Define hasta cuándo será válido el JWT.
-                //
-                // Corresponde al claim:
-                // exp = Expiration Time
+                // Registra la fecha/hora límite de validez en el claim estándar "exp".
                 .expiration(expiracion)
 
 
-                // Firma digitalmente el JWT.
-                //
-                // Utiliza la clave obtenida desde jwt-secret.
-                //
-                // Esta firma permite detectar
-                // si alguien modificó el contenido del token.
+                // [Actividad 3] [Actividad 11] Firma el JWT con la clave simétrica HMAC-SHA compartida entre instancias A y B.
                 .signWith(getSigningKey())
 
 
-                // Convierte todo lo construido a la representación
-                // compacta del JWT:
-                //
-                // HEADER.PAYLOAD.SIGNATURE
-                //
-                // Ejemplo:
-                // eyJhbGciOiJIUzI1NiJ9...
+                // Serializa el token firmado a su representación compacta Base64URL (<HEADER>.<PAYLOAD>.<SIGNATURE>).
                 .compact();
     }
 
 
-    // Método que recibe un JWT enviado por el cliente
-    // y comprueba que sea válido.
+    // [Actividad 3] [Actividad 11] Verifica estructura, firma HMAC-SHA y expiración del JWT recibido y devuelve sus claims.
     public Claims validarToken(String token) {
 
-        // Comienza a construir el parser
-        // encargado de leer y verificar JWT.
+        // Construye el parser verificador de JJWT configurado con la clave compartida HMAC-SHA.
         return Jwts.parser()
 
-                // Indica qué clave debe utilizarse
-                // para comprobar la firma del JWT.
-                //
-                // Debe ser la MISMA clave utilizada
-                // cuando se generó el token.
+                // Exige que la firma coincida criptográficamente con la clave secreta compartida.
                 .verifyWith(getSigningKey())
 
-                // Construye el parser.
+                // Finaliza la construcción del parser inmutable.
                 .build()
 
-                // Intenta analizar el JWT recibido.
-                //
-                // Aquí JJWT verifica, entre otras cosas:
-                // - estructura del JWT
-                // - firma
-                // - expiración
-                //
-                // Si algo está mal, lanza una excepción.
+                // Analiza el JWT compacto verificando formato, algoritmo, firma y vigencia (lanza JwtException si falla).
                 .parseSignedClaims(token)
 
-                // Si todo fue correcto,
-                // devuelve el payload del JWT.
-                //
-                // Es decir, devuelve sus Claims.
+                // Extrae y devuelve el conjunto de claims verificados del payload.
                 .getPayload();
     }
 
 
-    // Método auxiliar que devuelve cuánto dura
-    // el Access Token, pero expresado en SEGUNDOS.
+    // [Actividad 11] Convierte la vigencia configurada del Access Token de minutos a segundos para el campo expires_in.
     public long getAccessTokenExpiresInSeconds() {
 
-        // La configuración originalmente está en minutos.
-        //
-        // Por ejemplo:
-        // 600 minutos * 60 = 36 000 segundos.
-        //
-        // Este valor normalmente se utiliza
-        // para devolver el campo expires_in.
+        // Multiplica los minutos configurados por 60 conforme al estándar OAuth 2.0 (expires_in en segundos).
         return accessTokenMinutes * 60;
     }
 }

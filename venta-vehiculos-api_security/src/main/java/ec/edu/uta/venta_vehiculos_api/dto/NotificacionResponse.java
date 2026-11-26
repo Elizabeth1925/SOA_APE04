@@ -1,53 +1,67 @@
-// Identifica el paquete de objetos usados para intercambiar datos con otros servicios.
+/**
+ * Archivo: NotificacionResponse.java
+ * Responsabilidad arquitectónica:
+ *   Objeto de Transferencia de Datos (DTO) que representa la estructura de respuesta
+ *   JSON devuelta por el microservicio externo de notificaciones (:8081) al procesar
+ *   un aviso de evento de vehículo.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 1]: Completa el contrato de integración REST de eventos de vehículos.
+ *   - [Actividad 2]: Modela el intercambio interoperable entre el servicio de vehículos
+ *     y el servicio auxiliar de notificaciones.
+ */
+
+// Identifica el paquete que contiene los DTOs de intercambio de datos de la API.
 package ec.edu.uta.venta_vehiculos_api.dto;
 
-// Modela los campos devueltos por el servicio externo de notificaciones.
+// [Actividad 1] DTO deserializable desde JSON con el resultado reportado por el servicio de notificaciones.
 public class NotificacionResponse {
 
-    // Indica si el servicio de notificaciones procesó correctamente la solicitud.
+    // Bandera booleana que indica si el servicio externo procesó exitosamente la notificación.
     private boolean success;
-    // Contiene el estado textual informado por el servicio externo.
+    // Estado textual del envío reportado por el servicio de notificaciones.
     private String estado;
-    // Contiene el mensaje descriptivo devuelto por el servicio externo.
+    // Mensaje descriptivo adicional devuelto por el servicio de notificaciones.
     private String mensaje;
 
-    // Constructor vacío que permite deserializar la respuesta JSON recibida.
+    // Constructor sin argumentos requerido por Jackson para deserializar respuestas JSON.
     public NotificacionResponse(){
 
     }
 
-    // Actualiza el indicador de éxito de la respuesta.
+    // Asigna el indicador de éxito reportado por el servicio externo.
     public void setSuccess(boolean success) {
+        // Guarda el valor booleano recibido en el atributo success.
         this.success = success;
     }
 
-    // Actualiza el estado informado por el servicio de notificaciones.
+    // Asigna el estado textual devuelto por el servicio de notificaciones.
     public void setEstado(String estado) {
+        // Guarda la cadena recibida en el atributo estado.
         this.estado = estado;
     }
 
-    // Actualiza el mensaje descriptivo de la respuesta.
+    // Asigna el mensaje descriptivo devuelto por el servicio de notificaciones.
     public void setMensaje(String mensaje) {
+        // Guarda la cadena recibida en el atributo mensaje.
         this.mensaje = mensaje;
     }
 
-    // Devuelve si la notificación se procesó correctamente.
+    // Indica si el procesamiento remoto de la notificación fue exitoso.
     public boolean isSuccess() {
+        // Retorna el valor almacenado en success.
         return success;
     }
 
-    // Devuelve el estado informado por el servicio externo.
+    // Devuelve el estado textual reportado por el servicio de notificaciones.
     public String getEstado() {
+        // Retorna el valor almacenado en estado.
         return estado;
     }
 
-    // Devuelve el mensaje informado por el servicio externo.
+    // Devuelve el mensaje informativo devuelto por el servicio de notificaciones.
     public String getMensaje() {
+        // Retorna el valor almacenado en mensaje.
         return mensaje;
     }
 
-    
-    
-
-    
 }

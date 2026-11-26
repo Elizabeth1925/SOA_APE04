@@ -1,46 +1,91 @@
 <!doctype html>
+<!-- ==========================================================================
+     Archivo: public/index.html
+     Propósito:
+       Documento HTML5 principal de la Aplicación Móvil PWA "AutoUTA".
+       Estructura las dos pantallas independientes del flujo autenticado:
+         1. Pantalla de Login dedicada (`#pantallaLogin`): visible antes de
+            autenticarse, ocultando ventas y catálogo mientras no exista JWT.
+         2. Pantalla Principal de la App (`#pantallaApp`, atributo `hidden` por
+            defecto): accesible solo tras autenticación exitosa, organizada en
+            4 pestañas (Inicio, Ventas, Autos, Sesión).
+
+     Actividades de la guía APE 04 implementadas:
+       - [Actividad 6] Metadatos de PWA instalable (`manifest.webmanifest`,
+         iconos, viewport móvil), formulario de Login OAuth 2.0 (`operador`,
+         `admin`, `consulta`), opción de ingreso manual de JWT, formulario único
+         emisor de ventas (`POST /api/ventas` con `Idempotency-Key`), consulta
+         individual `GET /api/ventas/{id}`, catálogo de vehículos y gestión de
+         JWT únicamente en memoria volátil.
+       - [Actividad 10 - P27] Controles sincronizados con identificadores
+         transversales (`selectVehiculo`, `selectComprador`, `idVentaBuscar`,
+         comprobante con `ventaId` y `operacionId`).
+       - [Actividad 11 - P08/P10/P11/P12/P13/503/504] Botones de prueba de
+         idempotencia ("Nuevo UUID" / "Fijar Clave"), usuario `consulta` para
+         verificar rechazo HTTP 403 y zonas de estado/comprobante de error real.
+       - [Actividad 12 - Mejora Visual AutoUTA v5] Rediseño visual "AutoUTA v5
+         Minimalista Claro": pantalla dedicada de login con ilustración hero,
+         barra superior con pestañas Inicio/Ventas/Autos/Sesión, KPIs en Inicio,
+         comprobante visual estructurado de venta + desplegable JSON técnico y
+         filtros rápidos de catálogo (Todos/Disponibles/Vendidos).
+     ========================================================================== -->
 <html lang="es">
   <head>
+    <!-- [Actividad 6] Codificación UTF-8 y configuración responsive con soporte para áreas seguras móviles (`viewport-fit=cover`). -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Color de barra del navegador en tono blanco acorde al tema Minimalista Claro. -->
     <meta name="theme-color" content="#ffffff" />
+    <!-- [Actividad 6] [Actividad 12 - Mejora Visual AutoUTA v5] Descripción semántica de la PWA AutoUTA. -->
     <meta name="description" content="AutoUTA · Canal móvil PWA minimalista para registro exclusivo de ventas y consulta de vehículos con OAuth 2.0 y NGINX." />
+    <!-- [Actividad 6] Metadatos de capacidad instalable tipo app móvil para Android y iOS/Safari. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Título de la pestaña e ícono instalado de la PWA. -->
     <title>AutoUTA · Canal Móvil de Ventas PWA</title>
+    <!-- [Actividad 6] Enlace al Web App Manifest e iconos PWA de 192px necesarios para instalación. -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Hoja de estilos v5 y controlador principal ES module v5 con bust de caché. -->
     <link rel="stylesheet" href="/styles.css?v=5" />
     <script type="module" src="/main.js?v=5"></script>
   </head>
   <body>
+    <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Marco centrado que alberga la tarjeta blanca principal en escritorio y móvil. -->
     <div class="marco-pagina">
       <!-- ================================================================
+           [Actividad 12 - Mejora Visual AutoUTA v5] [Actividad 6]
            PANTALLA 1: INICIO DE SESIÓN MINIMALISTA (ANTES DE AUTENTICARSE)
+           Oculta ventas, catálogo y datos protegidos hasta completar OAuth 2.0.
            ================================================================ -->
       <section id="pantallaLogin" class="tarjeta-shell vista-login" aria-labelledby="titulo-login">
+        <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Cabecera de marca AutoUTA e indicador visual del Gateway NGINX :8090. -->
         <header class="topbar topbar-login">
           <div class="brand">
             <span class="brand-nombre">AutoUTA</span>
             <span class="brand-tag">SOA · PWA</span>
           </div>
+          <!-- [Actividad 6] Indicador del punto único de entrada SOA a través de NGINX en el puerto 8090. -->
           <div class="gateway-pill">
             <span class="punto-vivo" aria-hidden="true"></span>
             <span>NGINX :8090</span>
           </div>
         </header>
 
+        <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Rejilla de dos columnas: formulario de login a la izquierda e ilustración hero a la derecha. -->
         <div class="login-grid">
           <div class="login-columna-form">
             <p class="eyebrow">UNIVERSIDAD TÉCNICA DE AMBATO · FISEI</p>
             <h1 id="titulo-login" class="titulo-hero">Gestiona tus ventas de forma fácil</h1>
             <p class="subtitulo-hero">Simple. Rápido. Seguro.</p>
 
+            <!-- [Actividad 6] [Actividad 11 - P08] Formulario de autenticación OAuth 2.0 real (`POST /oauth/token`, `idapli=92`). -->
             <form id="formularioLogin" class="form-login" novalidate>
               <div class="campo-grupo">
                 <label for="usuario">Cuenta de usuario</label>
+                <!-- [Actividad 6] [Actividad 11 - P08] Selector de perfiles SOA: operador/admin habilitados para ventas; consulta solo lectura (HTTP 403 en ventas). -->
                 <select id="usuario" class="campo-select">
                   <option value="operador" selected>operador (Permiso de Ventas)</option>
                   <option value="admin">admin (Administrador Total)</option>
@@ -50,17 +95,21 @@
 
               <div class="campo-grupo">
                 <label for="contrasena">Contraseña</label>
+                <!-- [Actividad 6] Campo enmascarado de contraseña sin valores precargados ni persistidos. -->
                 <input id="contrasena" type="password" placeholder="Ingrese su contraseña" autocomplete="current-password" required />
               </div>
 
+              <!-- [Actividad 6] [Actividad 12 - Mejora Visual AutoUTA v5] Botón píldora oscuro que dispara la solicitud de token OAuth 2.0. -->
               <button id="botonLogin" class="btn-pill-dark btn-full" type="submit">
                 <span>Iniciar sesión</span>
                 <span aria-hidden="true">→</span>
               </button>
             </form>
 
+            <!-- [Actividad 11] Banner accesible (`aria-live`) para informar errores reales de login (401/502/503/504) o estado de autenticación. -->
             <div id="mensajeLogin" class="mensaje neutro" role="status" aria-live="polite" style="display: none;"></div>
 
+            <!-- [Actividad 6] [Actividad 11 - P08] Desplegable opcional para ingresar manualmente un JWT (útil para pruebas de token válido/expirado/inválido). -->
             <details class="desplegable-token">
               <summary>¿Ingresar un token JWT manualmente?</summary>
               <form id="formularioLoginManual" class="form-token-manual" novalidate>
@@ -72,6 +121,7 @@
               </form>
             </details>
 
+            <!-- [Actividad 6] Aviso explícito de seguridad: el JWT reside exclusivamente en memoria RAM de JavaScript. -->
             <p class="nota-seguridad">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -81,6 +131,7 @@
             </p>
           </div>
 
+          <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Composición decorativa del vehículo sedán blanco AutoUTA sobre halo circular suave. -->
           <div class="hero-visual" aria-hidden="true">
             <div class="circulo-suave"></div>
             <img src="/icons/hero-auto-uta.png" alt="Vehículo sedán blanco AutoUTA" class="img-auto-hero" />
@@ -89,16 +140,19 @@
       </section>
 
       <!-- ================================================================
+           [Actividad 12 - Mejora Visual AutoUTA v5]
            PANTALLA 2: APLICACIÓN PRINCIPAL (VISIBLE SOLO TRAS INICIAR SESIÓN)
+           El atributo `hidden` oculta el espacio operativo hasta tener JWT válido.
            ================================================================ -->
       <div id="pantallaApp" class="tarjeta-shell vista-app" hidden>
-        <!-- Barra superior estilo Minimalista Claro -->
+        <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Barra superior estilo Minimalista Claro con marca, pestañas y sesión activa. -->
         <header class="topbar">
           <div class="brand">
             <span class="brand-nombre">AutoUTA</span>
             <span class="brand-tag">PWA</span>
           </div>
 
+          <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Navegación por pestañas: Inicio, Ventas, Autos y Sesión (`data-vista` controlado por `main.js`). -->
           <nav class="menu-principal" aria-label="Secciones de la aplicación">
             <button type="button" class="tab-link activa" data-vista="inicio">Inicio</button>
             <button type="button" class="tab-link" data-vista="ventas">Ventas</button>
@@ -106,6 +160,7 @@
             <button type="button" class="tab-link" data-vista="sesion">Sesión</button>
           </nav>
 
+          <!-- [Actividad 6] [Actividad 12 - Mejora Visual AutoUTA v5] Chip del usuario autenticado y botón rápido de cierre de sesión (limpia JWT en memoria). -->
           <div class="usuario-barra">
             <span class="usuario-chip" id="chipUsuario" title="Usuario autenticado">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -118,16 +173,21 @@
           </div>
         </header>
 
-        <!-- Barra de estado / notificaciones operativas -->
+        <!-- [Actividad 11] [Actividad 12 - Mejora Visual AutoUTA v5] Barra global de notificaciones operativas y códigos HTTP reales. -->
         <div class="zona-estado-app">
           <div id="mensaje" class="mensaje neutro" role="status" aria-live="polite">Sesión lista para operar.</div>
         </div>
 
+        <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Contenedor principal de las 4 vistas intercambiables de la PWA. -->
         <main class="contenido-vistas">
-          <!-- VISTA A: INICIO (HERO MINIMALISTA COMO REFERENCIA) -->
+          <!-- ==============================================================
+               [Actividad 12 - Mejora Visual AutoUTA v5]
+               VISTA A: INICIO (HERO MINIMALISTA + MINI KPIS DE INVENTARIO)
+               ============================================================== -->
           <section id="vista-inicio" class="vista-panel activa" aria-labelledby="titulo-inicio">
             <div class="hero-grid">
               <div class="hero-texto">
+                <!-- [Actividad 6] Etiqueta que reafirma el rol exclusivo de la PWA como único canal emisor de ventas. -->
                 <span class="etiqueta-canal">
                   <span class="punto-vivo" aria-hidden="true"></span>
                   Canal Móvil Exclusivo de Ventas
@@ -135,6 +195,7 @@
                 <h1 id="titulo-inicio" class="titulo-hero">Registra tus ventas de forma fácil</h1>
                 <p class="subtitulo-hero">Simple. Rápido. Seguro.</p>
 
+                <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Botones de acceso directo hacia el formulario de ventas y el catálogo de autos. -->
                 <div class="hero-acciones">
                   <button type="button" id="btnIrAVentas" class="btn-pill-dark">
                     <span>Emitir venta ahora</span>
@@ -145,6 +206,7 @@
                   </button>
                 </div>
 
+                <!-- [Actividad 12 - Mejora Visual AutoUTA v5] [Actividad 10 - P27] Tarjetas resumen de inventario sincronizado (Disponibles, Vendidos, Compradores). -->
                 <div class="mini-kpis" aria-label="Resumen actual del inventario">
                   <div class="mini-kpi">
                     <span class="mini-kpi-num" id="statDisponibles">0</span>
@@ -161,6 +223,7 @@
                 </div>
               </div>
 
+              <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Ilustración hero del sedán blanco AutoUTA en la vista de Inicio. -->
               <div class="hero-visual" aria-hidden="true">
                 <div class="circulo-suave"></div>
                 <img src="/icons/hero-auto-uta.png" alt="Vehículo sedán blanco AutoUTA" class="img-auto-hero" />
@@ -168,18 +231,24 @@
             </div>
           </section>
 
-          <!-- VISTA B: EMISIÓN DE VENTAS Y CONSULTA POR ID -->
+          <!-- ==============================================================
+               [Actividad 6] [Actividad 10 - P27] [Actividad 11] [Actividad 12]
+               VISTA B: EMISIÓN DE VENTAS Y CONSULTA POSTERIOR POR ID
+               ============================================================== -->
           <section id="vista-ventas" class="vista-panel" aria-labelledby="titulo-ventas" hidden>
             <div class="cabecera-vista">
               <div>
                 <h2 id="titulo-ventas">Emisión de Ventas</h2>
                 <p class="desc-vista">Transacción idempotente hacia FastAPI (:8002) vía NGINX (:8090) con publicación en RabbitMQ.</p>
               </div>
+              <!-- [Actividad 6] Insignia de canal móvil autorizado para emitir ventas SOA. -->
               <span class="badge-autorizado">Canal Autorizado</span>
             </div>
 
+            <!-- [Actividad 6] [Actividad 10 - P27] [Actividad 11 - P10/P11/P12] Formulario de registro de venta (`POST /api/ventas`). -->
             <form id="formularioVenta" class="tarjeta-interna" novalidate>
               <div class="grilla-dos">
+                <!-- [Actividad 6] [Actividad 10 - P27] [Actividad 11 - P12] Selector de vehículo (`vehiculoId`) sincronizado con Spring Boot; deshabilita autos VENDIDOS. -->
                 <div class="campo-grupo">
                   <div class="fila-etiqueta-accion">
                     <label for="selectVehiculo">Vehículo disponible</label>
@@ -190,6 +259,7 @@
                   </select>
                 </div>
 
+                <!-- [Actividad 6] [Actividad 10 - P27] Selector de comprador (`compradorId`) sincronizado con FastAPI. -->
                 <div class="campo-grupo">
                   <div class="fila-etiqueta-accion">
                     <label for="selectComprador">Comprador</label>
@@ -202,11 +272,13 @@
               </div>
 
               <div class="grilla-venta-campos">
+                <!-- [Actividad 6] Campo numérico del precio acordado en USD (autocompletado al elegir vehículo, editable para pruebas P11). -->
                 <div class="campo-grupo">
                   <label for="precioVenta">Precio acordado ($ USD)</label>
                   <input id="precioVenta" type="number" step="0.01" min="1" placeholder="Ej. 25000.00" required />
                 </div>
 
+                <!-- [Actividad 6] [Actividad 11 - P10/P11] Control de clave UUID v4 para la cabecera `Idempotency-Key` y botones de prueba de reintento/conflicto. -->
                 <div class="campo-grupo">
                   <div class="fila-etiqueta-accion">
                     <label for="idempotencyKey">Clave de Idempotencia (Idempotency-Key)</label>
@@ -218,8 +290,10 @@
                   <input id="idempotencyKey" type="text" class="input-codigo" placeholder="UUID v4 para control de duplicados" required />
                 </div>
               </div>
+              <!-- [Actividad 11 - P10/P11] Nota guía sobre el comportamiento idempotente (200/201) vs conflicto por payload distinto (409). -->
               <small class="texto-ayuda">Repetir la misma clave con idéntico payload devuelve HTTP 200/201 sin duplicar la venta; con payload distinto devuelve HTTP 409 Conflict.</small>
 
+              <!-- [Actividad 6] Botón principal de emisión de venta `POST /api/ventas`. -->
               <div class="acciones-venta">
                 <button id="btnRegistrarVenta" class="btn-pill-dark btn-full" type="submit">
                   <span>Registrar Venta (POST /api/ventas)</span>
@@ -228,6 +302,7 @@
               </div>
             </form>
 
+            <!-- [Actividad 12 - Mejora Visual AutoUTA v5] [Actividad 10 - P27] [Actividad 11] Comprobante visual estructurado de la venta/error + desplegable JSON técnico. -->
             <div id="contenedorResultadoVenta" class="resultado-caja" style="display: none;">
               <div class="resultado-cabecera">
                 <span class="resultado-titulo">Comprobante de Operación · Gateway NGINX</span>
@@ -240,13 +315,14 @@
               </details>
             </div>
 
-            <!-- Consulta individual por ID -->
+            <!-- [Actividad 6] [Actividad 10 - P27] [Actividad 12 - Mejora Visual AutoUTA v5] Subsección de consulta posterior de venta emitida (`GET /api/ventas/{id}`). -->
             <div class="tarjeta-interna subseccion-consulta">
               <h3 class="subtitulo-seccion">Consultar Venta Emitida por ID</h3>
               <div class="fila-buscar">
                 <input id="idVentaBuscar" type="number" min="1" placeholder="Ej. 40" />
                 <button id="btnBuscarVenta" type="button" class="btn-outline">Consultar (GET)</button>
               </div>
+              <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Comprobante visual de la consulta individual + desplegable JSON técnico. -->
               <div id="contenedorDetalleVenta" class="resultado-caja" style="display: none;">
                 <div id="resumenVisualDetalle" class="comprobante-venta"></div>
                 <details class="desplegable-json">
@@ -257,7 +333,10 @@
             </div>
           </section>
 
-          <!-- VISTA C: CATÁLOGO DE AUTOS -->
+          <!-- ==============================================================
+               [Actividad 6] [Actividad 10 - P27] [Actividad 12 - Mejora Visual AutoUTA v5]
+               VISTA C: CATÁLOGO DE AUTOS CON FILTROS RÁPIDOS DE ESTADO
+               ============================================================== -->
           <section id="vista-autos" class="vista-panel" aria-labelledby="titulo-vehiculos" hidden>
             <div class="cabecera-vista">
               <div>
@@ -270,18 +349,23 @@
               </div>
             </div>
 
+            <!-- [Actividad 12 - Mejora Visual AutoUTA v5] Chips de filtrado rápido por estado (`TODOS`, `DISPONIBLE`, `VENDIDO`). -->
             <div class="filtros-rapidos" role="group" aria-label="Filtrar por estado">
               <button type="button" class="chip-filtro activo" data-filtro="TODOS">Todos</button>
               <button type="button" class="chip-filtro" data-filtro="DISPONIBLE">Disponibles</button>
               <button type="button" class="chip-filtro" data-filtro="VENDIDO">Vendidos</button>
             </div>
 
+            <!-- [Actividad 6] [Actividad 10 - P27] Contenedor de tarjetas de vehículos renderizadas dinámicamente desde `GET /api/vehiculos`. -->
             <div id="vehiculos" class="vehiculos">
               <div class="vacio">No hay vehículos cargados todavía.</div>
             </div>
           </section>
 
-          <!-- VISTA D: SESIÓN Y TOKEN JWT -->
+          <!-- ==============================================================
+               [Actividad 6] [Actividad 12 - Mejora Visual AutoUTA v5]
+               VISTA D: SESIÓN Y TOKEN JWT EN MEMORIA VOLÁTIL
+               ============================================================== -->
           <section id="vista-sesion" class="vista-panel" aria-labelledby="titulo-sesion" hidden>
             <div class="cabecera-vista">
               <div>
@@ -291,8 +375,10 @@
             </div>
 
             <div class="tarjeta-interna">
+              <!-- [Actividad 6] Resumen textual de la sesión OAuth 2.0 activa (usuario, scope y tiempo de expiración). -->
               <div id="infoSesion" class="info-sesion">Estado: No autenticado</div>
 
+              <!-- [Actividad 6] Formulario para inspeccionar/reemplazar el JWT en memoria, recargar catálogos o cerrar sesión. -->
               <form id="formulario" class="form-sesion" novalidate>
                 <label for="jwt">Token JWT activo en memoria</label>
                 <div class="fila-token">
@@ -305,6 +391,7 @@
                 </div>
               </form>
 
+              <!-- [Actividad 6] Garantía explícita de no persistencia en `localStorage`, `sessionStorage` ni caché del Service Worker. -->
               <p class="nota-seguridad">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -316,6 +403,7 @@
           </section>
         </main>
 
+        <!-- [Actividad 6] [Actividad 12 - Mejora Visual AutoUTA v5] Pie de página con estado de red en vivo (`online`/`offline`) y referencia al Gateway NGINX. -->
         <footer class="pie-app">
           <span id="conexion">Comprobando conexión…</span>
           <span aria-hidden="true">·</span>

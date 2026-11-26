@@ -1,152 +1,188 @@
-// Define el paquete dentro del proyecto donde se ubica la clase del modelo
+/**
+ * Archivo: Vehiculo.java
+ * Responsabilidad arquitectónica:
+ *   Entidad JPA mapeada a la tabla "vehiculos" en el esquema relacional compartido
+ *   venta_vehiculos. Modela los atributos del inventario de vehículos y su estado
+ *   de ciclo de vida (DISPONIBLE -> RESERVADO -> VENDIDO) sujeto a bloqueo pesimista
+ *   nativo FOR UPDATE durante operaciones concurrentes.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 1]: Modelo JPA principal del catálogo REST de vehículos.
+ *   - [Actividad 4]: Soporta la máquina de estados DISPONIBLE -> RESERVADO -> VENDIDO
+ *     (y reversión RESERVADO -> DISPONIBLE) coordinada por ReservaService con ventas-api.
+ *   - [Actividad 10 - P27]: Al persistirse en la tabla compartida de MariaDB, asegura
+ *     coherencia transversal del inventario entre Instancia A (:8080) e Instancia B (:8082).
+ */
+
+// Define el paquete dentro del proyecto donde se ubican las entidades del modelo.
 package ec.edu.uta.venta_vehiculos_api.model;
 
-// Importa la clase BigDecimal para manejar valores numéricos de alta precisión
+// Importa BigDecimal para almacenar precios monetarios con precisión decimal exacta.
 import java.math.BigDecimal;
 
-// Importa la anotación que marca la clase como entidad JPA.
+// Importa @Column para especificar nombres, precisión y nulabilidad de columnas.
 import jakarta.persistence.Column;
-// Importa la anotación para declarar una entidad persistente.
+// Importa @Entity para declarar esta clase como entidad persistente JPA.
 import jakarta.persistence.Entity;
-// Importa la anotación para configurar la generación del identificador.
+// Importa @GeneratedValue para delegar la generación de la clave primaria.
 import jakarta.persistence.GeneratedValue;
-// Importa las estrategias disponibles para generar claves primarias.
+// Importa GenerationType para indicar la estrategia IDENTITY.
 import jakarta.persistence.GenerationType;
-// Importa la anotación que identifica la clave primaria.
+// Importa @Id para marcar el atributo que funge como clave primaria.
 import jakarta.persistence.Id;
-// Importa la anotación para asociar la entidad con una tabla.
+// Importa @Table para mapear la entidad a la tabla física "vehiculos".
 import jakarta.persistence.Table;
 
-// Declara la clase como una entidad relacional gestionada por JPA/Hibernate
+// [Actividad 1] Declara la clase como entidad relacional administrada por JPA/Hibernate.
 @Entity
-// Asocia la entidad a la tabla llamada "vehiculos" en la base de datos
+// [Actividad 1] [Actividad 10 - P27] Vincula la entidad con la tabla física "vehiculos" en MariaDB.
 @Table(name = "vehiculos")
+// Entidad persistente que representa un vehículo dentro del inventario del concesionario.
 public class Vehiculo {
 
-    // Define este campo como el identificador único (clave primaria) de la entidad
+    // Marca idVehiculo como clave primaria de la tabla vehiculos.
     @Id
-    // Aplica la estrategia autoincremental delegada a la base de datos (IDENTITY)
+    // Usa generación autoincremental nativa (AUTO_INCREMENT) de MariaDB/MySQL.
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // Especifica el nombre de la columna correspondiente en la base de datos ("id_vehiculo")
+    // Mapea explícitamente el atributo Java camelCase a la columna SQL snake_case "id_vehiculo".
     @Column(name = "id_vehiculo")
+    // Identificador numérico único del vehículo.
     private Integer idVehiculo;
 
-    // Campo para guardar la marca del vehículo
+    // Marca comercial del vehículo (ej. Toyota, Chevrolet).
     private String marca;
 
-    // Campo para guardar el modelo del vehículo
+    // Modelo comercial del vehículo (ej. Corolla, Sail).
     private String modelo;
 
-    // Campo para guardar la placa o matrícula del vehículo
+    // Placa o matrícula única del vehículo, normalizada en mayúsculas por VehiculoService.
     private String placa;
 
-    // Campo para guardar el número de chasis del vehículo
+    // Número de chasis (VIN) único de 17 caracteres normalizado en mayúsculas.
     private String chasis;
 
-    // Campo para guardar el año de fabricación del vehículo
+    // Año de fabricación del vehículo validado en rango permitido.
     private Integer anio;
 
-    // Campo para guardar el color del vehículo
+    // Color exterior del vehículo (campo opcional).
     private String color;
 
-    // Campo para guardar el precio del vehículo con precisión decimal
+    // Restricción de columna SQL DECIMAL(12,2) NOT NULL para exactitud financiera del precio.
     @Column (precision = 12, scale = 2, nullable = false) // Define la precisión y escala para el precio 
+    // Precio de venta del vehículo en moneda base.
     private BigDecimal precio;
 
-    // Campo para guardar el estado actual del vehículo (ej. Disponible, Vendido)
+    // [Actividad 4] [Actividad 10 - P27] Estado transaccional del vehículo: DISPONIBLE, RESERVADO o VENDIDO.
     private String estado;
 
-    // Constructor sin parámetros requerido por el estándar de JPA
+    // Constructor vacío requerido por el estándar JPA para la creación de proxies y entidades.
     public Vehiculo() {
     }
 
-    // Retorna el ID del vehículo
+    // Devuelve la clave primaria del vehículo.
     public Integer getIdVehiculo() {
+        // Retorna el valor del atributo idVehiculo.
         return idVehiculo;
     }
 
-    // Asigna o actualiza el ID del vehículo
+    // Establece o actualiza la clave primaria del vehículo.
     public void setIdVehiculo(Integer idVehiculo) {
+        // Guarda el valor recibido en idVehiculo.
         this.idVehiculo = idVehiculo;
     }
 
-    // Retorna la marca del vehículo
+    // Devuelve la marca comercial del vehículo.
     public String getMarca() {
+        // Retorna el valor del atributo marca.
         return marca;
     }
 
-    // Asigna o actualiza la marca del vehículo
+    // Establece o actualiza la marca comercial del vehículo.
     public void setMarca(String marca) {
+        // Guarda el valor recibido en marca.
         this.marca = marca;
     }
 
-    // Retorna el modelo del vehículo
+    // Devuelve el modelo comercial del vehículo.
     public String getModelo() {
+        // Retorna el valor del atributo modelo.
         return modelo;
     }
 
-    // Asigna o actualiza el modelo del vehículo
+    // Establece o actualiza el modelo comercial del vehículo.
     public void setModelo(String modelo) {
+        // Guarda el valor recibido en modelo.
         this.modelo = modelo;
     }
 
-    // Retorna la placa del vehículo
+    // Devuelve la placa o matrícula del vehículo.
     public String getPlaca() {
+        // Retorna el valor del atributo placa.
         return placa;
     }
 
-    // Asigna o actualiza la placa del vehículo
+    // Establece o actualiza la placa del vehículo.
     public void setPlaca(String placa) {
+        // Guarda el valor recibido en placa.
         this.placa = placa;
     }
 
-    // Retorna el código de chasis del vehículo
+    // Devuelve el código de chasis (VIN) de 17 caracteres.
     public String getChasis() {
+        // Retorna el valor del atributo chasis.
         return chasis;
     }
 
-    // Asigna o actualiza el código de chasis del vehículo
+    // Establece o actualiza el código de chasis (VIN) del vehículo.
     public void setChasis(String chasis) {
+        // Guarda el valor recibido en chasis.
         this.chasis = chasis;
     }
 
-    // Retorna el año de fabricación del vehículo
+    // Devuelve el año de fabricación del vehículo.
     public Integer getAnio() {
+        // Retorna el valor del atributo anio.
         return anio;
     }
 
-    // Asigna o actualiza el año de fabricación del vehículo
+    // Establece o actualiza el año de fabricación del vehículo.
     public void setAnio(Integer anio) {
+        // Guarda el valor recibido en anio.
         this.anio = anio;
     }
 
-    // Retorna el color del vehículo
+    // Devuelve el color registrado del vehículo.
     public String getColor() {
+        // Retorna el valor del atributo color.
         return color;
     }
 
-    // Asigna o actualiza el color del vehículo
+    // Establece o actualiza el color del vehículo.
     public void setColor(String color) {
+        // Guarda el valor recibido en color.
         this.color = color;
     }
 
-    // Retorna el precio del vehículo
+    // Devuelve el precio decimal actual del vehículo.
     public BigDecimal getPrecio() {
+        // Retorna el valor del atributo precio.
         return precio;
     }
 
-    // Asigna o actualiza el precio del vehículo
+    // Establece o actualiza el precio decimal del vehículo.
     public void setPrecio(BigDecimal precio) {
+        // Guarda el valor recibido en precio.
         this.precio = precio;
     }
 
-    // Retorna el estado del vehículo
+    // [Actividad 4] Devuelve el estado vigente del vehículo (DISPONIBLE, RESERVADO o VENDIDO).
     public String getEstado() {
+        // Retorna el valor del atributo estado.
         return estado;
     }
 
-    // Asigna o actualiza el estado del vehículo
+    // [Actividad 4] Actualiza el estado del vehículo dentro de las transiciones válidas del negocio.
     public void setEstado(String estado) {
+        // Guarda el valor recibido en estado.
         this.estado = estado;
     }
 }

@@ -1,42 +1,68 @@
-# Modulo del sistema operativo para acceder a variables de entorno opcionales
+"""
+===============================================================================
+ARCHIVO: app/db.py
+MICROSERVICIO: ventas-api (FastAPI, puerto :8002 detras de NGINX :8090)
+===============================================================================
+RESPONSABILIDAD EN LA ARQUITECTURA SOA:
+    Configura la capa de acceso a datos relacional con SQLAlchemy 2.0 sobre
+    MySQL (`pymysql`). Construye de forma segura la URL de conexion a partir de
+    variables de entorno, define el pool de conexiones con verificacion de salud
+    (`pool_pre_ping`), nivel de aislamiento `READ COMMITTED`, fabrica de
+    sesiones `SessionLocal` y la clase declarativa `Base` para los modelos ORM.
+
+ACTIVIDADES APE 04 CUBIERTAS:
+    - [Actividad 1 / Actividad 2]: Conexion parametrizada a MySQL via `app.config`
+      y proveedor de `engine`/`Base` para las migraciones Alembic (`alembic/env.py`).
+    - [Actividad 4]: Soporta el patron de aislamiento transaccional en 3 fases
+      mediante `SessionLocal` con `expire_on_commit=False` y aislamiento
+      `READ COMMITTED`, evitando lecturas sucias y sesiones colgadas.
+    - [Actividad 11]: `pool_pre_ping=True` detecta conexiones caidas ante fallos
+      de MySQL para propagar errores reales capturados como `503 BD_NO_DISPONIBLE`.
+===============================================================================
+"""
+
+# [Actividad 1 / Actividad 2] Modulo del sistema operativo para leer variables opcionales con valores por defecto
 import os
 
-# Clases de SQLAlchemy para construir la conexion (engine) y estructurar URLs de conexion de base de datos
+# [Actividad 1 / Actividad 2] Constructores de SQLAlchemy para instanciar el motor de BD y armar URLs escapadas de forma segura
 from sqlalchemy import create_engine, URL
-# Clases de SQLAlchemy ORM para declarar la clase base de modelos y crear fabricas de sesiones
+# [Actividad 1 / Actividad 2] [Actividad 4] Clases ORM de SQLAlchemy 2.0 para la base declarativa y la fabrica de sesiones
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# Importa la funcion 'requerido' definida en la configuracion para validar variables obligatorias
+# [Actividad 1 / Actividad 2] Importa el validador de variables obligatorias para exigir host, usuario y nombre de BD
 from app.config import requerido
 
-# Construccion segura del objeto URL de conexion para SQLAlchemy
+# [Actividad 1 / Actividad 2] Construye el objeto URL escapando caracteres especiales en usuario/contrasena sin interpolar strings manuales
 url = URL.create(
-    # Especifica el dialecto y el driver de conexion: MySQL usando PyMySQL
+    # Dialecto SQLAlchemy `mysql` con driver puro Python `pymysql`
     "mysql+pymysql",
-    # Usuario de la base de datos obtenido de las variables de entorno
+    # Usuario de base de datos exigido en `.env`
     username=requerido("DB_USER"),
-    # Contrasena de la base de datos (por defecto cadena vacia si no existe)
+    # Contrasena de base de datos opcional (cadena vacia si el entorno local no requiere clave)
     password=os.getenv("DB_PASSWORD", ""),
-    # Host o direccion IP del servidor de base de datos
+    # Direccion IP o dominio del servidor MySQL exigido en `.env`
     host=requerido("DB_HOST"),
-    # Puerto de conexion a MySQL convertido a entero (3306 por defecto)
+    # Puerto TCP de MySQL convertido a entero (3306 estandar por defecto)
     port=int(os.getenv("DB_PORT", "3306")),
-    # Nombre de la base de datos relacional a utilizar
+    # Nombre de la base de datos relacional (`venta_vehiculos`) exigido en `.env`
     database=requerido("DB_NAME"),
-    # Parametros adicionales de consulta: codificacion UTF-8 completa (soporta emojis y caracteres especiales)
+    # Parametro de conexion para habilitar UTF-8 completo de 4 bytes (`utf8mb4`, soporta acentos y caracteres internacionales)
     query={"charset": "utf8mb4"},
 )
 
-# Creacion del motor de base de datos (Engine) de SQLAlchemy
-# pool_pre_ping=True verifica la salud de la conexion antes de usarla evitando conexiones caidas
-# isolation_level="READ COMMITTED" evita lecturas sucias asegurando transacciones consistentes
+# [Actividad 4] [Actividad 11] Instancia el motor de conexiones SQLAlchemy con verificacion previa y aislamiento consistente
+# - `pool_pre_ping=True`: valida la conexion antes de prestarla del pool y detecta reinicios/caidas de MySQL (soporte P13)
+# - `isolation_level="READ COMMITTED"`: garantiza lectura de datos confirmados y coopera con bloqueos `SELECT ... FOR UPDATE`
 engine = create_engine(url, pool_pre_ping=True,
                        isolation_level="READ COMMITTED")
 
-# Fabrica de sesiones locales de base de datos
-# expire_on_commit=False evita que los atributos del objeto expiren despues de hacer commit, permitiendo usarlos fuera de la transaccion
+# [Actividad 4] Fabrica de sesiones por peticion o bloque `with SessionLocal()` / `with SessionLocal.begin()`
+# `expire_on_commit=False` permite leer atributos de entidades ya confirmadas despues de cerrar la transaccion corta
 SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
-# Clase base declarativa de la cual heredaran todos los modelos ORM de la aplicacion
+
+# [Actividad 1 / Actividad 2] [Actividad 4] Clase base declarativa que registra metadatos de `Comprador` y `Venta`
 class Base(DeclarativeBase):
+    """Raiz declarativa del mapeo ORM de SQLAlchemy 2.0 para `ventas-api`."""
+    # No requiere atributos adicionales; SQLAlchemy gestiona `metadata` automaticamente
     pass

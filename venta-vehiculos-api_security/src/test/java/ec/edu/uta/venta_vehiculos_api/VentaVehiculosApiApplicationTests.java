@@ -1,20 +1,35 @@
-// Identifica el paquete de las pruebas de la aplicación.
+/**
+ * Archivo: VentaVehiculosApiApplicationTests.java
+ * Responsabilidad arquitectónica:
+ *   Prueba de humo (smoke test) basada en JUnit 5 y @SpringBootTest que verifica la
+ *   correcta inicialización e inyección de dependencias del contexto completo de
+ *   Spring Boot del microservicio venta-vehiculos-api_security.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 2]: Comprueba que la configuración externa y la estructura de beans
+ *     permiten compilar y arrancar el contexto sin errores de cableado.
+ *   - [Actividad 3]: Valida la integridad base del artefacto desplegable en Instancia A
+ *     (:8080) e Instancia B (:8082).
+ *   - [Actividad 11]: Verifica que los beans de seguridad STATELESS (SecurityConfig,
+ *     JwtService, JwtAuthenticationFilter e IntegrationFilter) se registren sin conflictos.
+ */
+
+// Identifica el paquete raíz de pruebas alineado con el paquete principal de la aplicación.
 package ec.edu.uta.venta_vehiculos_api;
 
-// Importa la anotación que marca un método como prueba de JUnit.
+// Importa @Test de JUnit Jupiter (JUnit 5) para declarar casos de prueba ejecutables.
 import org.junit.jupiter.api.Test;
-// Importa la anotación que inicia el contexto de Spring Boot en la prueba.
+// Importa @SpringBootTest para arrancar el ApplicationContext completo durante la prueba.
 import org.springframework.boot.test.context.SpringBootTest;
 
-// Configura la prueba para cargar el contexto completo de la aplicación.
+// [Actividad 2] [Actividad 11] Instruye a Spring Test a cargar la configuración integral del microservicio.
 @SpringBootTest
-// Verifica que la configuración principal de la aplicación pueda inicializarse.
+// Clase de prueba de humo encargada de verificar el arranque del contexto Spring Boot.
 class VentaVehiculosApiApplicationTests {
 
-	// Indica a JUnit que ejecute este método como una prueba.
+	// Declara el método de prueba de carga de contexto ejecutable por JUnit 5.
 	@Test
 	void contextLoads() {
-		// No requiere instrucciones: el éxito consiste en que el contexto haya cargado.
+		// Sin aserciones adicionales: la prueba pasa si el ApplicationContext inicializa sin lanzar excepciones.
 	}
 
 }

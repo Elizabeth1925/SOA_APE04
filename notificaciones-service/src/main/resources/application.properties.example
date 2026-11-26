@@ -1,15 +1,37 @@
+# ==============================================================================
+# ARCHIVO: application.properties.example
+# COMPONENTE: notificaciones-service (Microservicio Spring Boot - Puerto 8081)
+# ROL: Plantilla reproducible de configuracion de arranque, seguridad HTTP y
+#      conexion AMQP hacia RabbitMQ sin exponer credenciales reales.
+# ACTIVIDADES APE 04 CUBIERTAS:
+#   - [Actividad 2]: Plantilla de configuracion segura sin secretos reales ni
+#     rutas locales; admite inyeccion por variables de entorno en despliegue.
+#   - [Actividad 8 y Actividad 9]: Parametrizacion del puerto 8081, clave
+#     compartida de escritura HTTP POST y cola durable "notificaciones.ventas".
+# ==============================================================================
+
 # Plantilla de configuracion reproducible - Servicio de Notificaciones (Spring Boot)
 # Copiar a application.properties (excluido del ZIP de entrega) o definir variables de entorno
+
+# [Actividad 8] Nombre logico del microservicio Spring Boot para trazas y gestion interna.
 spring.application.name=notificaciones-service
+# [Actividad 8] Puerto TCP dedicado donde escucha el servicio de notificaciones (enrutado desde NGINX :8090).
 server.port=8081
+# [Actividad 2 y Actividad 8] Enlace restringido a la interfaz loopback local para evitar exposicion directa en red externa.
 server.address=127.0.0.1
 
-# Clave compartida para escritura POST (GET /api/notificaciones es consultable por JavaFX via NGINX)
+# [Actividad 2, Actividad 8 y Actividad 9] Clave compartida para escritura POST (GET /api/notificaciones es consultable por JavaFX via NGINX).
+# Lee la variable de entorno NOTIFICACIONES_KEY; el valor por defecto es solo un marcador sin secreto real (>= 32 caracteres requeridos por NotificacionKeyFilter).
 app.notificacion-key=${NOTIFICACIONES_KEY:CAMBIAR_CLAVE_NOTIFICACIONES_MIN_32_CAR}
 
-# Configuracion de RabbitMQ (AMQP 0-9-1)
+# [Actividad 2, Actividad 8 y Actividad 9] Configuracion de conexion al broker RabbitMQ (protocolo AMQP 0-9-1).
+# Host del servidor RabbitMQ parametrizable mediante RABBITMQ_HOST (por defecto localhost).
 spring.rabbitmq.host=${RABBITMQ_HOST:localhost}
+# Puerto estandar AMQP del broker RabbitMQ parametrizable mediante RABBITMQ_PORT (por defecto 5672).
 spring.rabbitmq.port=${RABBITMQ_PORT:5672}
+# Usuario de autenticacion AMQP parametrizable mediante RABBITMQ_USER (sin credenciales productivas reales).
 spring.rabbitmq.username=${RABBITMQ_USER:guest}
+# Contrasena de autenticacion AMQP parametrizable mediante RABBITMQ_PASSWORD (placeholder seguro sin secreto real).
 spring.rabbitmq.password=${RABBITMQ_PASSWORD:CAMBIAR_PASSWORD_RABBITMQ}
+# [Actividad 8 y Actividad 9] Nombre de la cola durable consumida por VentasRabbitListener para eventos de venta.
 app.rabbitmq.queue=${RABBITMQ_QUEUE:notificaciones.ventas}

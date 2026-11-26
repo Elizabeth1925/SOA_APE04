@@ -1,15 +1,35 @@
 <!doctype html>
+<!--
+  ============================================================================
+  Archivo: index.html
+  Proyecto: Portal Web React de Consulta y Auditoría (react-fetch-vehiculos) - SOA APE 04
+  Función:
+    Documento HTML5 raíz servido por Vite en el puerto dedicado 5174 (sin
+    conflicto con la PWA en :5173). Define los metadatos básicos de la página,
+    el contenedor DOM #root donde se monta React y el punto de entrada ES module.
+  Actividades APE 04 cubiertas:
+    - [Actividad 7]: Plantilla base del portal web de consulta de vehículos y
+      auditoría de ventas (solo lectura), sin formularios de registro de venta.
+  ============================================================================
+-->
+<!-- Elemento raíz del documento HTML configurado en idioma español -->
 <html lang="es">
+<!-- Sección de metadatos, codificación, vista adaptable y título del navegador -->
 <head>
+  <!-- Define la codificación UTF-8 para renderizar correctamente tildes, eñes y símbolos -->
   <meta charset="UTF-8" />
+  <!-- Configura el viewport adaptable para escritorio, tabletas y teléfonos móviles -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Color institucional sugerido para la barra del navegador en dispositivos compatibles -->
   <meta name="theme-color" content="#123b65" />
+  <!-- Título visible en la pestaña del navegador para el portal de consulta React [Actividad 7] -->
   <title>Consulta de vehículos | React + Fetch</title>
 </head>
+<!-- Cuerpo visible del documento donde React renderiza toda la aplicación SPA -->
 <body>
-  <!-- React colocará aquí el contenido de App.jsx. -->
+  <!-- Contenedor raíz (#root): React colocará aquí el contenido de App.jsx [Actividad 7]. -->
   <div id="root"></div>
-  <!-- Vite transforma el archivo JSX y carga sus dependencias. -->
+  <!-- Carga el módulo ES inicial: Vite transforma el archivo JSX y resuelve sus dependencias [Actividad 7]. -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

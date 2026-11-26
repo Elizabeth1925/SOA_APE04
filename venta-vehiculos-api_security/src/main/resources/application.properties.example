@@ -1,32 +1,81 @@
-# Plantilla de configuracion reproducible - API de Vehiculos (Spring Boot)
-# Copiar a application.properties (excluido del ZIP de entrega) o definir variables de entorno
+# ==============================================================================
+# Archivo: application.properties.example
+# Responsabilidad arquitectónica:
+#   Plantilla externa y reproducible de configuración del microservicio
+#   venta-vehiculos-api_security (Spring Boot) sin secretos reales embebidos.
+#   Centraliza red, conexión a MariaDB/MySQL, Hibernate/JPA, Actuator,
+#   parámetros OAuth 2.0 / JWT STATELESS y claves de integración entre servicios.
+# Actividades APE 04 en las que participa:
+#   - [Actividad 2]: Plantilla de configuración externa sin secretos y
+#     preparación reproducible del microservicio mediante variables de entorno.
+#   - [Actividad 3]: Soporte para ejecutar dos instancias equivalentes
+#     (Instancia A en :8080 e Instancia B en :8082) detrás de NGINX en balanceo
+#     ponderado 3:1, junto con exposición de Actuator para monitoreo (:8083).
+#   - [Actividad 4]: Configuración de la clave interna compartida con
+#     ventas-api (FastAPI) para la orquestación de reservas en 2 fases y
+#     parámetros del microservicio de notificaciones.
+#   - [Actividad 10 - P27]: Conexión de las instancias A y B a un único esquema
+#     relacional compartido (venta_vehiculos) para coherencia transversal.
+#   - [Actividad 11]: Parámetros de seguridad OAuth 2.0 / JWT 100% STATELESS
+#     con clave secreta HMAC-SHA compartida entre instancias A y B.
+# ==============================================================================
+
+# [Actividad 2] Instrucciones de uso: copiar esta plantilla a application.properties
+# local (excluido de la entrega) o inyectar cada propiedad por variables de entorno.
+
+# --- Configuración de red y puertos ---
+# [Actividad 2] [Actividad 3] Puerto HTTP de escucha parametrizable: por defecto
+# 8080 (Instancia A) y sobreescribible vía SERVER_PORT=8082 (Instancia B) detrás de NGINX 3:1.
 server.port=${SERVER_PORT:8080}
+# [Actividad 2] [Actividad 3] Enlaza la escucha únicamente a loopback local (127.0.0.1)
+# para que el tráfico externo ingrese de forma controlada por el proxy inverso NGINX.
 server.address=127.0.0.1
 
-# Base de datos MySQL (esquema venta_vehiculos - tablas vehiculos, usuarios_api, reservas)
+# --- Base de datos relacional compartida (MySQL / MariaDB 10.4) ---
+# [Actividad 2] [Actividad 4] [Actividad 10 - P27] URL JDBC hacia el esquema compartido
+# venta_vehiculos (tablas vehiculos, usuarios_api, reservas) consultado por instancias A y B.
 spring.datasource.url=jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:venta_vehiculos}?useSSL=false&serverTimezone=UTC
+# [Actividad 2] Usuario de conexión a la base de datos inyectado por variable DB_USER (sin exponer credenciales reales).
 spring.datasource.username=${DB_USER:root}
+# [Actividad 2] Contraseña de base de datos inyectada únicamente por variable de entorno DB_PASSWORD (vacía en plantilla).
 spring.datasource.password=${DB_PASSWORD:}
 
+# --- Configuración ORM JPA / Hibernate ---
+# [Actividad 2] [Actividad 10 - P27] Valida el esquema existente al iniciar sin modificar ni destruir tablas en producción.
 spring.jpa.hibernate.ddl-auto=validate
+# [Actividad 2] Desactiva Open Session in View para cerrar conexiones JDBC al finalizar la capa de servicio y evitar fugas bajo concurrencia.
 spring.jpa.open-in-view=false
+# [Actividad 2] [Actividad 4] Define el dialecto SQL específico de MariaDB para compatibilidad con MariaDB 10.4 y bloqueos pesimistas.
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MariaDBDialect
 
-# Actuator para monitoreo independiente (:8083) y salud del balanceador
+# --- Observabilidad y verificación de salud (Spring Boot Actuator) ---
+# [Actividad 3] Expone únicamente los endpoints web health e info para el monitor independiente (:8083) y el balanceador NGINX.
 management.endpoints.web.exposure.include=health,info
+# [Actividad 3] Muestra detalles completos del estado de salud (incluyendo estado de BD) en /actuator/health.
 management.endpoint.health.show-details=always
 
-# Seguridad OAuth 2.0 / JWT (reemplazar localmente; minimo 32 caracteres)
+# --- Seguridad OAuth 2.0 / JWT 100% STATELESS ---
+# [Actividad 2] [Actividad 3] [Actividad 11] Secreto simétrico HMAC-SHA (>= 32 caracteres) que DEBE ser idéntico
+# en Instancia A (:8080) e Instancia B (:8082) para validar JWT sin estado tras NGINX. Valor de marcador sin secreto real.
 app.security.jwt-secret=${JWT_SECRET:CAMBIAR_SECRETO_JWT_MINIMO_32_CARACTERES}
+# [Actividad 11] Vigencia en minutos del Access Token JWT emitido por POST /oauth/token (30 minutos).
 app.security.access-token-minutes=30
+# [Actividad 11] Vigencia en minutos del Refresh Token JWT emitido por POST /oauth/token (1200 minutos / 20 horas).
 app.security.refresh-token-minutes=1200
+# [Actividad 2] [Actividad 11] Identificador del cliente OAuth 2.0 verificado mediante Basic Auth en POST /oauth/token.
 app.security.client-id=${OAUTH_CLIENT_ID:vehiculos-cliente}
+# [Actividad 2] [Actividad 11] Secreto del cliente OAuth 2.0 (marcador de posición local; nunca colocar secretos reales en plantilla).
 app.security.client-secret=${OAUTH_CLIENT_SECRET:CAMBIAR_CLIENT_SECRET_LOCAL}
 
-# Clave interna compartida con Python FastAPI (ventas-api)
+# --- Seguridad de integración interna servicio-a-servicio ---
+# [Actividad 2] [Actividad 4] [Actividad 11] Clave compartida (>= 32 caracteres) validada por IntegrationFilter
+# en el encabezado X-Service-Key para autorizar llamadas de ventas-api (FastAPI) a los endpoints de reservas.
 app.security.ventas-key=${VENTAS_SERVICE_KEY:CAMBIAR_CLAVE_INTERNA_VENTAS_MIN_32_CAR}
 
-# Integracion con servicio de notificaciones (:8081)
+# --- Integración con microservicio externo de notificaciones ---
+# [Actividad 2] Dirección base HTTP del microservicio de notificaciones escuchando en loopback :8081.
 servicios.notificaciones.url=http://127.0.0.1:8081
+# [Actividad 2] [Actividad 11] Clave de autorización enviada en el encabezado X-Notification-Key (marcador de posición sin secreto real).
 servicios.notificaciones.key=${NOTIFICACIONES_KEY:CAMBIAR_CLAVE_NOTIFICACIONES_MIN_32_CAR}
+# [Actividad 2] Dirección de correo destinataria por defecto para los avisos de eventos CRUD de vehículos.
 servicios.notificaciones.destinatario=notificaciones@ejemplo.local

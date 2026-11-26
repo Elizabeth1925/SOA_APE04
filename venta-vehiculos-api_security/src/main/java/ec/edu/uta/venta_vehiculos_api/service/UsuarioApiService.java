@@ -1,70 +1,83 @@
-// Identifica el paquete de servicios donde se encuentra la lógica de autenticación.
+/**
+ * Archivo: UsuarioApiService.java
+ * Responsabilidad arquitectónica:
+ *   Capa de servicio encargada de autenticar cuentas de usuario de la API contra la
+ *   tabla compartida usuarios_api en MariaDB, verificando de forma segura la
+ *   contraseña en texto contra su hash BCrypt almacenado mediante PasswordEncoder.
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 1]: Implementa la lógica de negocio asociada al modelo de usuarios.
+ *   - [Actividad 11]: Soporta el flujo OAuth 2.0 en AuthController (POST /oauth/token),
+ *     validando credenciales con BCrypt sin comparar texto plano y devolviendo un
+ *     mensaje genérico de fallo para mitigar ataques de enumeración de cuentas.
+ */
+
+// Identifica el paquete de servicios donde reside la lógica de negocio y autenticación.
 package ec.edu.uta.venta_vehiculos_api.service;
 
-// Importa el contrato para verificar contraseñas codificadas sin compararlas en texto plano.
+// Importa PasswordEncoder (implementado por BCryptPasswordEncoder) para verificar hashes de contraseña.
 import org.springframework.security.crypto.password.PasswordEncoder;
-// Permite registrar esta clase como un servicio administrado por Spring.
+// Importa @Service para registrar la clase como bean administrado por Spring.
 import org.springframework.stereotype.Service;
 
-// Importa la entidad que contiene los datos de usuario.
+// Importa la entidad UsuarioApi que contiene el hash BCrypt y el rol RBAC del usuario.
 import ec.edu.uta.venta_vehiculos_api.model.UsuarioApi;
-// Importa el repositorio usado para consultar los usuarios persistidos.
+// Importa UsuarioApiRepository para consultar usuarios por username en MariaDB.
 import ec.edu.uta.venta_vehiculos_api.repository.UsuarioApiRepository;
 
-// Registra el servicio para que Spring pueda inyectarlo en otros componentes.
+// [Actividad 1] [Actividad 11] Registra el servicio de autenticación de usuarios para su inyección en AuthController.
 @Service
-// Agrupa la lógica relacionada con la autenticación de usuarios de la API.
+// Agrupa la lógica de validación de credenciales contra base de datos con BCrypt.
 public class UsuarioApiService {
 
-    // Repositorio inmutable utilizado para buscar usuarios en la base de datos.
+    // Repositorio inmutable que accede a la tabla usuarios_api compartida entre instancias A y B.
     private final UsuarioApiRepository repository;
-    // Codificador utilizado para comparar la contraseña recibida con la almacenada.
+    // Codificador criptográfico inmutable (BCrypt) inyectado desde SecurityConfig.
     private final PasswordEncoder passwordEncoder;
 
-    // Constructor de inyección de dependencias para recibir el repositorio y el codificador.
+    // Constructor con inyección de dependencias de repositorio y codificador de contraseñas.
     public UsuarioApiService(
-            // Repositorio con las operaciones de persistencia de usuarios.
+            // Repositorio JPA de cuentas de usuario.
             UsuarioApiRepository repository,
-            // Implementación configurada para verificar contraseñas codificadas.
+            // Implementación BCryptPasswordEncoder configurada en SecurityConfig.
             PasswordEncoder passwordEncoder) {
 
-        // Conserva el repositorio recibido para usarlo en las operaciones del servicio.
+        // Guarda el repositorio en el atributo de instancia.
         this.repository = repository;
-        // Conserva el codificador recibido para validar credenciales.
+        // Guarda el codificador BCrypt en el atributo de instancia.
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Busca al usuario por su nombre y comprueba la contraseña antes de autenticarlo.
+    // [Actividad 11] Autentica username y password contra usuarios_api y devuelve la entidad con su rol RBAC.
     public UsuarioApi autenticar(
-            // Nombre de usuario enviado en la solicitud de autenticación.
+            // Nombre de usuario recibido en POST /oauth/token.
             String username,
-            // Contraseña en texto recibida que se comparará con el valor codificado.
+            // Contraseña recibida en la petición para compararla contra el hash BCrypt persistido.
             String password) {
 
-        // Consulta el usuario por nombre y obtiene su entidad si existe.
+        // Busca el usuario por su nombre único en MariaDB; si no existe lanza IllegalArgumentException genérico.
         UsuarioApi usuario =
                 repository.findByUsername(username)
-                        // Si el usuario no existe, comunica que las credenciales no son válidas.
+                        // Traduce la ausencia del usuario al mismo mensaje genérico para evitar enumeración de cuentas.
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
                                         "Usuario o contraseña incorrectos"
                                 )
                         );
 
-        // Comprueba que la contraseña recibida corresponda a la contraseña guardada.
+        // [Actividad 11] Verifica criptográficamente la contraseña recibida contra el hash BCrypt almacenado.
         if (!passwordEncoder.matches(
-                // Contraseña recibida en la solicitud.
+                // Contraseña suministrada en el intento de autenticación.
                 password,
-                // Contraseña codificada asociada al usuario encontrado.
+                // Hash BCrypt persistido en la columna password de usuarios_api.
                 usuario.getPassword())) {
 
-            // Rechaza el inicio de sesión sin revelar cuál credencial fue incorrecta.
+            // Rechaza la autenticación con el mismo mensaje uniforme (AuthController lo traduce a HTTP 401).
             throw new IllegalArgumentException(
                     "Usuario o contraseña incorrectos"
             );
         }
 
-        // Devuelve la entidad del usuario autenticado para que el controlador use sus datos.
+        // Devuelve la entidad UsuarioApi verificada para que AuthController incorpore su rol en el JWT.
         return usuario;
     }
 }

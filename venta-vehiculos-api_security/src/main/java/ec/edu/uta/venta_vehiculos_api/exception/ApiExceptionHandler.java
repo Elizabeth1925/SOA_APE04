@@ -1,157 +1,176 @@
-// Identifica el paquete que contiene el manejo de errores de la API.
+/**
+ * Archivo: ApiExceptionHandler.java
+ * Responsabilidad arquitectónica:
+ *   Manejador global de excepciones REST (@RestControllerAdvice) que intercepta
+ *   errores provenientes de cualquier controlador o servicio y los traduce a
+ *   respuestas estandarizadas RFC 7807 (application/problem+json mediante ProblemDetail),
+ *   incorporando URI de tipo, instancia solicitada, código de negocio y traceId de
+ *   correlación. Complementa los rechazos HTTP 401/403 RFC 7807 generados directamente
+ *   en la cadena de filtros de Spring Security (SecurityConfig e IntegrationFilter).
+ * Actividades APE 04 en las que participa:
+ *   - [Actividad 1]: Garantiza contratos HTTP de error consistentes para validaciones
+ *     (422), JSON mal formado (400), conflictos de integridad (409) y no encontrados (404).
+ *   - [Actividad 4]: Traduce conflictos de reserva/estado (ApiError 409/404) hacia
+ *     ventas-api con formato estructurado Problem Details.
+ *   - [Actividad 11]: Unifica el estándar RFC 7807 (application/problem+json) para toda
+ *     la API junto con los rechazos 401/403 de seguridad, evitando fuga de stacktraces
+ *     en respuestas cliente (registrándolos solo en servidor cuando status >= 500).
+ */
+
+// Identifica el paquete que contiene el manejo centralizado de errores de la API.
 package ec.edu.uta.venta_vehiculos_api.exception;
 
-// Importa URI para construir los campos type e instance de Problem Details.
+// Importa URI para construir los atributos estándar "type" e "instance" del formato RFC 7807.
 import java.net.URI;
 
-// Importa UUID para generar un identificador de seguimiento para cada error.
+// Importa UUID para generar un identificador único de trazabilidad (traceId) por cada incidente.
 import java.util.UUID;
 
-// Importa el logger usado para registrar errores internos del servidor.
+// Importa LoggerFactory de SLF4J para registrar errores internos (5xx) en los logs del servidor.
 import org.slf4j.LoggerFactory;
 
-// Permite reconocer conflictos de integridad reportados por la base de datos.
+// Importa DataIntegrityViolationException para traducir violaciones de unicidad o llaves foráneas a HTTP 409.
 import org.springframework.dao.DataIntegrityViolationException;
 
-// Importa los tipos HTTP usados para crear respuestas y detalles de problema.
+// Importa HttpStatusCode, MediaType, ProblemDetail y ResponseEntity de Spring Web.
 import org.springframework.http.*;
 
-// Permite reconocer cuerpos HTTP ilegibles o JSON mal formado.
+// Importa HttpMessageNotReadableException para detectar cuerpos JSON sintácticamente inválidos o mal tipados.
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
-// Permite reconocer errores de validación de argumentos de métodos.
+// Importa MethodArgumentNotValidException para capturar errores de Jakarta Bean Validation (@Valid).
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-// Importa las anotaciones MVC para el consejo y la captura de excepciones.
+// Importa @RestControllerAdvice y @ExceptionHandler para la interceptación global de excepciones.
 import org.springframework.web.bind.annotation.*;
 
-// Proporciona los datos de respuestas HTTP estándar de Spring.
+// Importa ErrorResponse para manejar excepciones nativas de Spring MVC que ya portan un estado HTTP.
 import org.springframework.web.ErrorResponse;
 
-// Permite consultar información de la petición que produjo el error.
+// Importa HttpServletRequest para extraer la ruta solicitada (req.getRequestURI()) en el campo instance.
 import jakarta.servlet.http.HttpServletRequest;
 
-// Aplica el manejador a excepciones lanzadas por cualquier controlador REST.
+// [Actividad 1] [Actividad 11] Aplica este manejador transversalmente a todos los controladores REST.
 @RestControllerAdvice
-// Convierte excepciones de la aplicación en respuestas HTTP de error uniformes.
+// Traduce cualquier excepción no capturada en los controladores a una respuesta RFC 7807 uniforme.
 public class ApiExceptionHandler {
 
-    // Registra el método siguiente como manejador general de excepciones.
+    // [Actividad 1] [Actividad 4] [Actividad 11] Intercepta cualquier Exception lanzada durante el procesamiento de un endpoint.
     @ExceptionHandler(Exception.class)
 
-    // Construye una respuesta Problem Details con el estado y detalle adecuados.
+    // Clasifica la excepción, registra trazas si es error 5xx y construye la respuesta application/problem+json.
     public ResponseEntity<ProblemDetail> manejar(
-            // Excepción original que se traducirá a una respuesta de API.
+            // Excepción capturada y solicitud HTTP que originó el error.
             Exception ex, HttpServletRequest req) {
 
-        // Usa 500 como estado inicial para errores no clasificados.
+        // Valor por defecto para fallos inesperados del servidor: HTTP 500 Internal Server Error.
         int status = 500;
 
-        // Define el código inicial para errores internos no clasificados.
+        // Código simbólico por defecto para errores internos no clasificados.
         String codigo = "ERROR_INTERNO";
 
-        // Define un mensaje genérico para no revelar detalles internos por defecto.
+        // [Actividad 11] Mensaje genérico seguro que evita exponer detalles internos de infraestructura o SQL.
         String detalle = "No fue posible completar la solicitud";
 
-        // Comprueba si la excepción contiene un estado y código definidos por la API.
+        // [Actividad 1] [Actividad 4] Verifica si se trata de una excepción controlada de negocio (ApiError).
         if (ex instanceof ApiError e) {
 
-            // Conserva el estado HTTP definido en la excepción propia.
+            // Respeta el código HTTP definido por la regla de negocio (ej. 404, 409, 422).
             status = e.status;
-            // Conserva el código de error definido en la excepción propia.
+            // Respeta el código simbólico de negocio (ej. CONFLICTO_RESERVA, VEHICULO_NO_DISPONIBLE).
             codigo = e.codigo;
-            // Usa el mensaje asociado a la excepción como detalle de respuesta.
+            // Expone el mensaje controlado y apto para el cliente definido al lanzar ApiError.
             detalle = e.getMessage();
 
-        // Detecta errores generados por las restricciones de validación de entrada.
+        // [Actividad 1] Verifica si fallaron las validaciones declarativas (@Valid) en los DTOs de entrada.
         } else if (ex instanceof MethodArgumentNotValidException e) {
 
-            // Representa los datos rechazados como error de entidad no procesable.
+            // Clasifica los errores de validación semántica con HTTP 422 Unprocessable Entity.
             status = 422;
-            // Identifica la respuesta como un error de validación.
+            // Asigna el código estable VALIDACION para facilitar manejo programático por clientes.
             codigo = "VALIDACION";
 
-            // Obtiene los errores por campo y comienza a construir un texto legible.
+            // Recorre todos los errores por campo del BindingResult para resumirlos en una sola cadena.
             detalle = e.getBindingResult().getFieldErrors().stream()
 
-                // Convierte cada error en el formato "campo: descripción".
+                // Formatea cada violación como "nombreCampo: mensajeDeError".
                 .map(x -> x.getField() + ": " + x.getDefaultMessage())
 
-                // Une los mensajes de campos diferentes en una sola cadena.
+                // Concatena múltiples errores de campo separados por "; ".
                 .reduce((a,b) -> a + "; " + b)
 
-                // Usa un mensaje general si la validación no produjo errores de campo.
+                // Aplica un mensaje de respaldo si no hubo errores asociados a campos específicos.
                 .orElse("Datos inválidos");
 
-        // Detecta cuerpos de solicitud ilegibles o JSON incompatible con el DTO.
+        // [Actividad 1] Verifica si el cuerpo HTTP no pudo deserializarse (JSON roto o tipo incompatible).
         } else if (ex instanceof HttpMessageNotReadableException) {
 
-            // Indica que el cuerpo recibido no pudo interpretarse.
+            // Devuelve HTTP 400 Bad Request por solicitud sintácticamente incorrecta.
             status = 400;
-            // Asigna un código estable para errores de formato JSON.
+            // Asigna el código estable JSON_INVALIDO.
             codigo = "JSON_INVALIDO";
-            // Describe al cliente el problema de lectura de la solicitud.
+            // Informa el error de lectura sin exponer clases internas de Jackson.
             detalle = "JSON ilegible o tipo de dato incorrecto";
 
-        // Detecta violaciones de restricciones o conflictos de integridad de datos.
+        // [Actividad 1] [Actividad 4] Verifica violaciones de restricciones relacionales (clave única placa/chasis/operacion_id o FK).
         } else if (ex instanceof DataIntegrityViolationException) {
 
-            // Indica que la solicitud entra en conflicto con datos persistidos.
+            // Devuelve HTTP 409 Conflict por colisión con datos persistidos en MariaDB.
             status = 409;
-            // Asigna el código que identifica el conflicto de datos.
+            // Asigna el código estable CONFLICTO_DATOS.
             codigo = "CONFLICTO_DATOS";
-            // Describe el tipo general de conflicto sin exponer datos de base.
+            // Describe el conflicto en forma abstracta sin filtrar nombres de restricciones o sentencias SQL.
             detalle = "Duplicado o relación que impide la operación";
 
-        // Detecta argumentos inválidos enviados a la lógica de aplicación.
+        // [Actividad 1] Verifica argumentos inválidos detectados por la lógica de aplicación.
         } else if (ex instanceof IllegalArgumentException) {
 
-            // Traduce el argumento inválido a una solicitud HTTP incorrecta.
+            // Traduce el argumento inválido a HTTP 400 Bad Request.
             status = 400;
-            // Asigna el código de solicitud inválida.
+            // Asigna el código estable SOLICITUD_INVALIDA.
             codigo = "SOLICITUD_INVALIDA";
-            // Devuelve el mensaje de validación de la lógica del servicio.
+            // Transfiere el mensaje explicativo del argumento rechazado.
             detalle = ex.getMessage();
 
-        // Reconoce otras excepciones que ya transportan un estado HTTP.
+        // [Actividad 1] [Actividad 11] Reconoce excepciones estándar de Spring Web (ej. 405 Method Not Allowed, 415 Unsupported Media Type).
         } else if (ex instanceof ErrorResponse e) {
 
-            // Toma el código de estado definido por la respuesta original.
+            // Extrae el código HTTP provisto por la excepción estándar de Spring.
             status = e.getStatusCode().value();
 
-            // Identifica este caso como un error HTTP general.
+            // Asigna el código genérico ERROR_HTTP para errores de protocolo MVC.
             codigo = "ERROR_HTTP";
 
-            // Obtiene el detalle de la respuesta estándar de Spring.
+            // Recupera el detalle incluido en el ProblemDetail interno de Spring.
             detalle = e.getBody().getDetail();
         }
 
-        // Genera un identificador único para correlacionar esta respuesta con los logs.
+        // Genera un UUID de correlación que vincula la respuesta entregada al cliente con el log interno.
         String trace = UUID.randomUUID().toString();
 
-        // Registra la traza completa solo para errores internos del servidor.
+        // Registra el stacktrace completo exclusivamente para fallos del servidor (HTTP 5xx).
         if (status >= 500)
-            // Adjunta la excepción y el identificador al registro de errores.
+            // Emite el registro de error con el traceId y la excepción completa mediante SLF4J.
             LoggerFactory.getLogger(getClass())
                 .error("Error " + trace, ex);
 
-        // Construye el objeto Problem Details con estado y mensaje finales.
+        // [Actividad 11] Crea el objeto RFC 7807 ProblemDetail con el estado HTTP y el detalle determinados.
         ProblemDetail p = ProblemDetail.forStatusAndDetail(
             HttpStatusCode.valueOf(status), detalle);
 
-        // Define un URI que identifica la categoría del problema.
+        // Asigna el URI de tipo estándar RFC 7807 bajo el espacio de nombres urn:vehiculos:<codigo>.
         p.setType(URI.create("urn:vehiculos:" + codigo.toLowerCase()));
 
-        // Registra la ruta solicitada como instancia del problema.
+        // Asigna el URI de instancia RFC 7807 apuntando a la ruta exacta de la solicitud fallida.
         p.setInstance(URI.create(req.getRequestURI()));
 
-        // Agrega el código de aplicación al cuerpo JSON de error.
+        // Añade la propiedad de extensión "codigo" para diagnóstico automatizado.
         p.setProperty("codigo", codigo);
 
-        // Agrega el identificador que permite rastrear el evento en los logs.
+        // Añade la propiedad de extensión "traceId" para rastreo en bitácoras del servidor.
         p.setProperty("traceId", trace);
 
-        // Devuelve el estado calculado con el tipo de contenido Problem Details y el cuerpo construido.
+        // [Actividad 11] Devuelve la respuesta HTTP con Content-Type: application/problem+json y el cuerpo RFC 7807.
         return ResponseEntity.status(status)
             .contentType(MediaType.APPLICATION_PROBLEM_JSON)
             .body(p);
